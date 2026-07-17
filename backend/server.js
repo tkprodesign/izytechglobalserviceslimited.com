@@ -20,11 +20,44 @@ const db = new Pool({
 });
 
 db.connect()
-  .then(() => console.log('Connected to Neon PostgreSQL'))
+  .then(() => {
+    console.log('Connected to Neon PostgreSQL');
+    return initTestimonialsTable();
+  })
   .catch((err) => {
     console.error('Failed to connect to database:', err.message);
     process.exit(1);
   });
+
+async function initTestimonialsTable() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS testimonials (
+      id         SERIAL PRIMARY KEY,
+      name       TEXT        NOT NULL,
+      role       TEXT        NOT NULL,
+      company    TEXT        NOT NULL,
+      text       TEXT        NOT NULL,
+      rating     SMALLINT    NOT NULL DEFAULT 5,
+      avatar     TEXT        NOT NULL,
+      metric     TEXT        NOT NULL,
+      sort_order SMALLINT    NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  const { rows } = await db.query('SELECT COUNT(*)::int AS n FROM testimonials');
+  if (rows[0].n === 0) {
+    await db.query(`
+      INSERT INTO testimonials (name, role, company, text, rating, avatar, metric, sort_order) VALUES
+      ('Emeka Okonkwo',   'Factory Manager',        'PrecisionPack Industries, Aba',    'IZY Technologies transformed our factory''s electrical system. The industrial wiring and CCTV installation was completed on time and within budget. Our energy costs dropped by 60% after they added the solar component. Absolutely world-class service.',  5, 'EO', '60% energy cost reduction',  1),
+      ('Dr. Amara Nwosu', 'Hospital Administrator', 'Grace Medical Centre, Abuja',      'The electrical overhaul they carried out for our hospital was exceptional. Every detail was thought through — backup systems, UPS integration, clean installation. We''ve had zero power issues since the upgrade. Highly recommend.',                   5, 'AN', 'Zero downtime since upgrade', 2),
+      ('Chidi Adeyemi',   'Property Developer',     'Lekki Luxury Estates',             'We contracted IZY Technologies for smart home automation across 20 luxury units. The results exceeded client expectations — from lighting scenes to integrated security, everything just works. Our buyers love it.',                                     5, 'CA', '20 luxury units automated',  3),
+      ('Mrs. Funke Bello','School Principal',       'Sunshine Academy, Port Harcourt',  'The solar installation has been a game changer for our school. We used to lose 4-5 hours daily to NEPA issues. Now we run all day on solar. The team was professional, fast and very tidy in their work.',                                            5, 'FB', 'Full-day solar independence', 4),
+      ('Tunde Afolabi',   'CEO',                    'Meridian Hotels, Victoria Island', 'Our hotel security was a headache before IZY took over. After their complete CCTV and access control overhaul, we can monitor the entire property from one screen, on our phones, anywhere. Outstanding work.',                                           5, 'TA', 'Full property remote access', 5)
+    `);
+    console.log('Testimonials table seeded with initial data');
+  }
+}
 
 // Prevent dropped connections from crashing the process — pg Pool will reconnect automatically
 db.on('error', (err) => {
@@ -69,6 +102,18 @@ function requireDev(req, res, next) {
     next();
   });
 }
+
+// ── Testimonials (public) ─────────────────────────────────────────────────────
+app.get('/api/testimonials', async (_req, res) => {
+  try {
+    const { rows } = await db.query(
+      'SELECT id, name, role, company, text, rating, avatar, metric FROM testimonials ORDER BY sort_order ASC'
+    );
+    res.json({ data: rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ── Health ────────────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {

@@ -16,7 +16,13 @@ function figmaAssetResolver() {
   }
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // In development on Replit the proxy (below) routes /api/* to the local
+  // backend, so VITE_API_URL must be empty. The env-var is only used by the
+  // production Cloudflare Pages build.
+  define: mode === 'development' ? {
+    'import.meta.env.VITE_API_URL': JSON.stringify(''),
+  } : {},
   plugins: [
     figmaAssetResolver(),
     // The React and Tailwind plugins are both required for Make, even if
@@ -38,5 +44,11 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5000,
     allowedHosts: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+    },
   },
-})
+}))

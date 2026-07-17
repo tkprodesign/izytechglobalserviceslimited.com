@@ -7,6 +7,15 @@
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
+async function get<T>(path: string): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error((err as { error: string }).error ?? res.statusText);
+  }
+  return res.json() as Promise<T>;
+}
+
 async function post<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
@@ -37,10 +46,24 @@ export interface QuotePayload {
   details?: string;
 }
 
+export interface Testimonial {
+  id: number;
+  name: string;
+  role: string;
+  company: string;
+  text: string;
+  rating: number;
+  avatar: string;
+  metric: string;
+}
+
 export const api = {
   contact: (data: ContactPayload) =>
     post<{ success: boolean }>('/api/contact', data),
 
   quote: (data: QuotePayload) =>
     post<{ success: boolean }>('/api/quote', data),
+
+  testimonials: () =>
+    get<{ data: Testimonial[] }>('/api/testimonials'),
 };

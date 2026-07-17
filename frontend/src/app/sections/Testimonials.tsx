@@ -1,58 +1,18 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-
-const testimonials = [
-  {
-    name: "Emeka Okonkwo",
-    role: "Factory Manager",
-    company: "PrecisionPack Industries, Aba",
-    text: "IZY Technologies transformed our factory's electrical system. The industrial wiring and CCTV installation was completed on time and within budget. Our energy costs dropped by 60% after they added the solar component. Absolutely world-class service.",
-    rating: 5,
-    avatar: "EO",
-    metric: "60% energy cost reduction",
-  },
-  {
-    name: "Dr. Amara Nwosu",
-    role: "Hospital Administrator",
-    company: "Grace Medical Centre, Abuja",
-    text: "The electrical overhaul they carried out for our hospital was exceptional. Every detail was thought through — backup systems, UPS integration, clean installation. We've had zero power issues since the upgrade. Highly recommend.",
-    rating: 5,
-    avatar: "AN",
-    metric: "Zero downtime since upgrade",
-  },
-  {
-    name: "Chidi Adeyemi",
-    role: "Property Developer",
-    company: "Lekki Luxury Estates",
-    text: "We contracted IZY Technologies for smart home automation across 20 luxury units. The results exceeded client expectations — from lighting scenes to integrated security, everything just works. Our buyers love it.",
-    rating: 5,
-    avatar: "CA",
-    metric: "20 luxury units automated",
-  },
-  {
-    name: "Mrs. Funke Bello",
-    role: "School Principal",
-    company: "Sunshine Academy, Port Harcourt",
-    text: "The solar installation has been a game changer for our school. We used to lose 4-5 hours daily to NEPA issues. Now we run all day on solar. The team was professional, fast and very tidy in their work.",
-    rating: 5,
-    avatar: "FB",
-    metric: "Full-day solar independence",
-  },
-  {
-    name: "Tunde Afolabi",
-    role: "CEO",
-    company: "Meridian Hotels, Victoria Island",
-    text: "Our hotel security was a headache before IZY took over. After their complete CCTV and access control overhaul, we can monitor the entire property from one screen, on our phones, anywhere. Outstanding work.",
-    rating: 5,
-    avatar: "TA",
-    metric: "Full property remote access",
-  },
-];
+import { api, type Testimonial } from "@/lib/api";
 
 export function Testimonials() {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [idx, setIdx] = useState(0);
   const [dir, setDir] = useState(1);
+
+  useEffect(() => {
+    api.testimonials()
+      .then(({ data }) => setTestimonials(data))
+      .catch(() => {/* silently keep empty — section hides itself */});
+  }, []);
 
   const go = (newIdx: number) => {
     setDir(newIdx > idx ? 1 : -1);
@@ -62,14 +22,17 @@ export function Testimonials() {
   const next = () => go(idx === testimonials.length - 1 ? 0 : idx + 1);
 
   useEffect(() => {
+    if (testimonials.length === 0) return;
     const t = setInterval(() => {
       setDir(1);
       setIdx((i) => (i === testimonials.length - 1 ? 0 : i + 1));
     }, 6000);
     return () => clearInterval(t);
-  }, []);
+  }, [testimonials.length]);
 
   const t = testimonials[idx];
+
+  if (!t) return null;
 
   return (
     <section id="testimonials" className="py-28 overflow-hidden" style={{ background: "#041627" }}>
