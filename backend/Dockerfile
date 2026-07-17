@@ -4,11 +4,11 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev && ls node_modules | head -5
 
 COPY server.js ./
 COPY migrations/ ./migrations/
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["node", "/app/server.js"]
