@@ -1,9 +1,8 @@
-import express from 'express';
-import cors from 'cors';
-import pg from 'pg';
-import jwt from 'jsonwebtoken';
+const express = require('express');
+const cors = require('cors');
+const { Pool } = require('pg');
+const jwt = require('jsonwebtoken');
 
-const { Pool } = pg;
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.SESSION_SECRET || 'izy-dev-secret-change-in-prod';
@@ -44,7 +43,7 @@ app.use(express.json());
 // ── Auth middleware ───────────────────────────────────────────────────────────
 function requireAuth(req, res, next) {
   const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
+  if (!header || !header.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
   try {
     req.user = jwt.verify(header.slice(7), JWT_SECRET);
     next();
@@ -76,7 +75,7 @@ app.get('/api/health/db', async (_req, res) => {
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 app.post('/api/auth/login', (req, res) => {
-  const { email, password } = req.body ?? {};
+  const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
   const INFO_EMAIL = process.env.INFO_EMAIL;
@@ -142,12 +141,12 @@ app.get('/api/admin/quotes', requireAuth, async (req, res) => {
 
 // ── Admin: Submit contact form (public) ───────────────────────────────────────
 app.post('/api/contact', async (req, res) => {
-  const { name, email, message, subject } = req.body ?? {};
+  const { name, email, message, subject } = req.body || {};
   if (!name || !email || !message) return res.status(400).json({ error: 'name, email and message required' });
   try {
     await db.query(
       'INSERT INTO contact_submissions (name, email, subject, message, created_at) VALUES ($1,$2,$3,$4,NOW())',
-      [name, email, subject ?? null, message]
+      [name, email, subject || null, message]
     );
     res.status(201).json({ success: true });
   } catch (err) {
@@ -157,12 +156,12 @@ app.post('/api/contact', async (req, res) => {
 
 // ── Admin: Submit quote (public) ──────────────────────────────────────────────
 app.post('/api/quote', async (req, res) => {
-  const { name, email, company, service, details } = req.body ?? {};
+  const { name, email, company, service, details } = req.body || {};
   if (!name || !email || !service) return res.status(400).json({ error: 'name, email and service required' });
   try {
     await db.query(
       'INSERT INTO quote_requests (name, email, company, service, details, created_at) VALUES ($1,$2,$3,$4,$5,NOW())',
-      [name, email, company ?? null, service, details ?? null]
+      [name, email, company || null, service, details || null]
     );
     res.status(201).json({ success: true });
   } catch (err) {
@@ -186,7 +185,7 @@ app.get('/api/dev/system', requireDev, (_req, res) => {
     uptime: process.uptime(),
     nodeVersion: process.version,
     platform: process.platform,
-    env: process.env.NODE_ENV ?? 'development',
+    env: process.env.NODE_ENV || 'development',
     memoryUsed: mem.heapUsed,
     memoryTotal: mem.heapTotal,
     dbConnected: true,
