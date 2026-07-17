@@ -31,6 +31,24 @@ Custom domain: purchased, to be connected. Until then use Cloudflare Pages domai
 - ⏳ Frontend ↔ Backend API — pending
 - ⏳ Custom domain — pending
 
+## Deployment Architecture (Authoritative)
+
+```
+GitHub Repository
+      ↓
+Cloudflare Pages (Frontend)
+      ↓
+Railway (Backend)
+      ↓
+Neon PostgreSQL (Database)
+```
+
+- GitHub is the single source of truth.
+- **Never deploy directly from Replit.** Every change must be committed to GitHub first.
+- Railway and Cloudflare must always deploy from GitHub, never from local state.
+- Before making any infrastructure change, verify the current production configuration — never assume.
+- **Never recreate** Cloudflare Pages, Railway services, or the Neon database unless explicitly instructed.
+
 ## .github/workflows — STRICT RULE
 **Never create, modify, or manage any files inside `.github/workflows/`.**
 Cloudflare Pages deploys directly from GitHub — no GitHub Actions workflow is used or needed.
