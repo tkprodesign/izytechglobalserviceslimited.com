@@ -30,6 +30,11 @@ db.on('error', (err) => {
   console.error('PostgreSQL pool error (will reconnect):', err.message);
 });
 
+// Keep the pool alive — Neon closes idle connections after ~5 minutes
+setInterval(() => {
+  db.query('SELECT 1').catch(err => console.error('Keep-alive ping failed:', err.message));
+}, 4 * 60 * 1000); // every 4 minutes
+
 // ── CORS ──────────────────────────────────────────────────────────────────────
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
