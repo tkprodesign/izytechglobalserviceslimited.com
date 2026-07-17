@@ -1,0 +1,110 @@
+unpacking archive
+18.9 MB
+89ms
+using build driver nixpacks-v1.41.0
+ 
+╔═══ Nixpacks v1.41.0 ═══╗
+║ setup      │ nodejs_20 ║
+║────────────────────────║
+║ install    │ npm ci    ║
+║────────────────────────║
+║ start      │ npm start ║
+╚════════════════════════╝
+ 
+ 
+Saved output to:
+  snapshot-target-unpack/backend
+
+internal
+load build definition from Dockerfile
+0ms
+
+internal
+load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+300ms
+uploading snapshot
+17.6 MB
+767ms
+
+internal
+load .dockerignore
+0ms
+SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "ADMIN_EMAIL_PASSWORD") (line 11)(https://docs.docker.com/go/dockerfile/rule/secrets-used-in-arg-or-env/)
+ details: Sensitive data should not be used in the ARG or ENV commands
+SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "CLOUDFLARE_API_TOKEN") (line 11)(https://docs.docker.com/go/dockerfile/rule/secrets-used-in-arg-or-env/)
+ details: Sensitive data should not be used in the ARG or ENV commands
+SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "INFO_EMAIL_PASSWORD") (line 11)(https://docs.docker.com/go/dockerfile/rule/secrets-used-in-arg-or-env/)
+ details: Sensitive data should not be used in the ARG or ENV commands
+SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "SESSION_SECRET") (line 11)(https://docs.docker.com/go/dockerfile/rule/secrets-used-in-arg-or-env/)
+ details: Sensitive data should not be used in the ARG or ENV commands
+SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "ADMIN_EMAIL_PASSWORD") (line 12)(https://docs.docker.com/go/dockerfile/rule/secrets-used-in-arg-or-env/)
+ details: Sensitive data should not be used in the ARG or ENV commands
+SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "CLOUDFLARE_API_TOKEN") (line 12)(https://docs.docker.com/go/dockerfile/rule/secrets-used-in-arg-or-env/)
+ details: Sensitive data should not be used in the ARG or ENV commands
+SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "INFO_EMAIL_PASSWORD") (line 12)(https://docs.docker.com/go/dockerfile/rule/secrets-used-in-arg-or-env/)
+ details: Sensitive data should not be used in the ARG or ENV commands
+SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "SESSION_SECRET") (line 12)(https://docs.docker.com/go/dockerfile/rule/secrets-used-in-arg-or-env/)
+ details: Sensitive data should not be used in the ARG or ENV commands
+UndefinedVar: Usage of undefined variable '$NIXPACKS_PATH' (line 18)(https://docs.docker.com/go/dockerfile/rule/undefined-var/)
+ details: Variables should be defined before their use
+
+stage-0
+FROM ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+13ms
+
+internal
+load build context
+0ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-23f9169c4ccce521379e602cc82ed873a1f1b52b.nix && nix-collect-garbage -d cached
+1ms
+
+stage-0
+COPY .nixpacks/nixpkgs-23f9169c4ccce521379e602cc82ed873a1f1b52b.nix .nixpacks/nixpkgs-23f9169c4ccce521379e602cc82ed873a1f1b52b.nix cached
+0ms
+
+stage-0
+WORKDIR /app/ cached
+0ms
+
+stage-0
+COPY . /app/.
+332ms
+
+stage-0
+RUN npm ci
+1m 11s
+npm error A complete log of this run can be found in: /root/.npm/_logs/2026-07-17T05_30_17_810Z-debug-0.log
+scheduling build on Metal builder "builder-gfasfb"
+
+stage-0
+RUN printf '\nPATH=/app/node_modules/.bin:$PATH' >> /root/.profile
+205ms
+
+stage-0
+COPY . /app
+93ms
+
+exporting to docker image format
+1s
+containerimage.config.digest: sha256:eaf7ee30eb05c20bf5f021d151bb05ff6e73962bfa22d8ca21d927a916135469
+containerimage.digest: sha256:b10901b1b44e7a889b8e46745759471f6539f83ff82bd2bbc3ca5b8f8530459c
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6YjEwOTAxYjFiNDRlN2E4ODliOGU0Njc0NTc1OTQ3MWY2NTM5ZjgzZmY4MmJkMmJiYzNjYTViOGY4NTMwNDU5YyIsInNpemUiOjIzODAsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNy0xN1QwNTozMToyOVoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+image push
+258.3 MB
+22.2s
+ 
+====================
+Starting Healthcheck
+====================
+Path: /api/health
+Retry window: 30s
+ 
+Attempt #1 failed with service unavailable. Continuing to retry for 26s
+Attempt #2 failed with service unavailable. Continuing to retry for 15s
+Attempt #3 failed with service unavailable. Continuing to retry for 3s
+ 
+1/1 replicas never became healthy!
+
+Healthcheck failed!
