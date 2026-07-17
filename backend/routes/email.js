@@ -3,7 +3,6 @@
 const express = require('express');
 const router = express.Router();
 const { ImapFlow } = require('imapflow');
-const nodemailer = require('nodemailer');
 
 // ── Account registry ──────────────────────────────────────────────────────────
 function getAccounts() {
@@ -119,7 +118,7 @@ router.get('/message/:accountId/:uid', async (req, res) => {
   }
 });
 
-// ── Send ──────────────────────────────────────────────────────────────────────
+// ── Send (all accounts via Resend — SMTP is blocked on Railway) ───────────────
 router.post('/send', async (req, res) => {
   const { accountId, to, subject, bodyHtml, bodyText, replyTo } = req.body || {};
   if (!accountId || !to || !subject) {
@@ -130,57 +129,28 @@ router.post('/send', async (req, res) => {
   const acct = accounts.find(a => a.id === accountId);
   if (!acct) return res.status(404).json({ error: 'Account not found' });
 
-  // noreply → use Resend API
-  if (acct.sendOnly || accountId === 'noreply') {
-    try {
-      const resendKey = process.env.RESEND_API_KEY;
-      if (!resendKey) return res.status(500).json({ error: 'RESEND_API_KEY not configured' });
-
-      const r = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from: `IZY Technologies <${acct.email}>`,
-          to: Array.isArray(to) ? to : [to],
-          subject,
-          html: bodyHtml || '',
-          text: bodyText || '',
-          ...(replyTo ? { reply_to: replyTo } : {}),
-        }),
-      });
-      const data = await r.json();
-      if (!r.ok) return res.status(r.status).json({ error: data?.message || 'Resend error', detail: data });
-      return res.json({ success: true, messageId: data.id, via: 'resend' });
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
-    }
-  }
-
-  // All other accounts → SMTP via nodemailer
-  if (!acct.password) return res.status(400).json({ error: 'No SMTP credentials for this account' });
+  const resendKey = process.env.RESEND_API_KEY;
+  if (!resendKey) return res.status(500).json({ error: 'RESEND_API_KEY not configured' });
 
   try {
-    const transport = nodemailer.createTransport({
-      host: 'smtp.spacemail.com',
-      port: 587,
-      secure: false,
-      auth: { user: acct.email, pass: acct.password },
-      tls: { rejectUnauthorized: false },
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: `IZY Technologies <${acct.email}>`,
+        to: Array.isArray(to) ? to : [to],
+        subject,
+        html: bodyHtml || '',
+        text: bodyText || subject,
+        ...(replyTo ? { reply_to: replyTo } : {}),
+      }),
     });
-
-    const info = await transport.sendMail({
-      from: `IZY Technologies <${acct.email}>`,
-      to: Array.isArray(to) ? to.join(', ') : to,
-      subject,
-      html: bodyHtml || '',
-      text: bodyText || subject,
-      ...(replyTo ? { replyTo } : {}),
-    });
-
-    res.json({ success: true, messageId: info.messageId, via: 'smtp' });
+    const data = await r.json();
+    if (!r.ok) return res.status(r.status).json({ error: data?.message || 'Resend error', detail: data });
+    return res.json({ success: true, messageId: data.id, via: 'resend' });
   } catch (err) {
-    console.error('SMTP send error:', err.message);
-    res.status(502).json({ error: err.message });
+    console.error('Resend send error:', err.message);
+    return res.status(500).json({ error: err.message });
   }
 });
 
