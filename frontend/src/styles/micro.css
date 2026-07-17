@@ -1,6 +1,7 @@
-/* Custom cursor — hide system cursor on desktop */
+/* Custom cursor — hide system cursor only on the public site wrapper */
 @media (hover: hover) and (pointer: fine) {
-  * { cursor: none !important; }
+  .custom-cursor-active,
+  .custom-cursor-active * { cursor: none !important; }
 }
 
 /* Shimmer CTA button */

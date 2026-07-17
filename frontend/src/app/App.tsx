@@ -26,7 +26,7 @@ import { ProtectedRoute } from "./admin/ProtectedRoute";
 
 function PublicSite() {
   return (
-    <div className="min-h-screen w-full overflow-x-hidden">
+    <div className="custom-cursor-active min-h-screen w-full overflow-x-hidden">
       <CustomCursor />
       <ScrollProgress />
       <Navbar />
