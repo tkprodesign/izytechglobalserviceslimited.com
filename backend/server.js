@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
+const emailRoutes = require('./routes/email');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -178,6 +179,9 @@ app.post('/api/quote', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ── Dev: Email management ─────────────────────────────────────────────────────
+app.use('/api/dev/email', requireDev, emailRoutes);
 
 // ── Dev: System info ──────────────────────────────────────────────────────────
 app.get('/api/dev/system', requireDev, (_req, res) => {

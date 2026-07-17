@@ -7,6 +7,7 @@ import {
   Terminal,
   LogOut,
   Activity,
+  Inbox,
 } from 'lucide-react';
 
 interface Props {
@@ -116,6 +117,17 @@ export function DashboardLayout({ children }: Props) {
               >
                 <Terminal size={16} />
                 System Info
+              </NavLink>
+
+              <NavLink
+                to="/dev/email"
+                className={({ isActive }) =>
+                  `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
+                }
+                style={({ isActive }) => isActive ? { background: 'rgba(242,101,34,0.8)' } : {}}
+              >
+                <Inbox size={16} />
+                Email Manager
               </NavLink>
             </>
           )}

@@ -22,6 +22,7 @@ import { AdminDashboard } from "./admin/AdminDashboard";
 import { ContactsPage } from "./admin/ContactsPage";
 import { QuotesPage } from "./admin/QuotesPage";
 import { DevSystemPage } from "./admin/DevSystemPage";
+import { EmailPage } from "./admin/EmailPage";
 import { ProtectedRoute } from "./admin/ProtectedRoute";
 
 function PublicSite() {
@@ -71,6 +72,9 @@ export default function App() {
       } />
       <Route path="/dev/logs" element={
         <ProtectedRoute requiredRole="developer"><DevSystemPage /></ProtectedRoute>
+      } />
+      <Route path="/dev/email" element={
+        <ProtectedRoute requiredRole="developer"><EmailPage /></ProtectedRoute>
       } />
 
       {/* Fallback */}
