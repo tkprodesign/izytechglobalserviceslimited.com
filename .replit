@@ -42,3 +42,10 @@ externalPort = 3001
 deploymentTarget = "static"
 build = ["bash", "-c", "cd 'Website for Izy Tech' && pnpm run build"]
 publicDir = "Website for Izy Tech/dist"
+
+[userenv]
+
+[userenv.shared]
+INFO_EMAIL = "info@izytechglobalservices.com"
+SALES_EMAIL = "sales@izytechglobalservices.com"
+SUPPORT_EMAIL = "support@izytechglobalservices.com"
