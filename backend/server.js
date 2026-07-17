@@ -25,6 +25,11 @@ db.connect()
     process.exit(1);
   });
 
+// Prevent dropped connections from crashing the process — pg Pool will reconnect automatically
+db.on('error', (err) => {
+  console.error('PostgreSQL pool error (will reconnect):', err.message);
+});
+
 // ── CORS ──────────────────────────────────────────────────────────────────────
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
