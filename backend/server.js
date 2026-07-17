@@ -193,7 +193,8 @@ app.get('/api/dev/system', requireDev, (_req, res) => {
     'SUPPORT_EMAIL', 'SUPPORT_EMAIL_PASSWORD',
     'CAREERS_EMAIL', 'CAREERS_EMAIL_PASSWORD',
     'ADMIN_EMAIL', 'ADMIN_EMAIL_PASSWORD',
-    'ALLOWED_ORIGINS', 'VITE_API_URL',
+    'ALLOWED_ORIGINS',
+    // Note: VITE_API_URL is a Cloudflare Pages frontend variable — not present on the backend
   ];
   res.json({
     uptime: process.uptime(),
