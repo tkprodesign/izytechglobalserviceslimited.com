@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 8b6e4d60681c38a0039d4827bde197457c57c692 izytech-dev <62227476-izytech-dev@users.noreply.replit.com> 1784109860 +0000	branch: Created from origin/main
+8b6e4d60681c38a0039d4827bde197457c57c692 efb2d3b2bacef22fbe102b7bc25ee2ef5849dcd4 Replit Agent <agent@replit.com> 1784110102 +0000	commit: Add pasted source metadata file for disconnected repository
+efb2d3b2bacef22fbe102b7bc25ee2ef5849dcd4 f2cbfb96f4e5cfd35f20aa03e0ac336f07b66afa Replit Agent <agent@replit.com> 1784110413 +0000	commit: Initialize backend TypeScript project with migrations and update frontend API client
+f2cbfb96f4e5cfd35f20aa03e0ac336f07b66afa 838586ed83575c3cee7a0b1dfb8ae2e8f685c8cd Replit Agent <agent@replit.com> 1784111077 +0000	commit: Remove TypeScript configuration and consolidate backend setup with package-lock
+838586ed83575c3cee7a0b1dfb8ae2e8f685c8cd a98d477980880f17236192778ac0109f6965751e izytechgsl <izytechgsl@proton.me> 1784112597 +0000	commit: Fix Railway build: use npm install, add ESM type, drop build step
+a98d477980880f17236192778ac0109f6965751e 993a540e7f19ec527a06459fa008309430964a65 Replit Agent <agent@replit.com> 1784112614 +0000	commit: Add Railway Nixpacks Ubuntu stage 0 asset file
+993a540e7f19ec527a06459fa008309430964a65 2b3cf261ac7495550957ec34dece7f29b214b8a9 izytechgsl <izytechgsl@proton.me> 1784112847 +0000	commit: Fix Railway build: add nixpacks.toml to use npm install, remove package-lock.json
+2b3cf261ac7495550957ec34dece7f29b214b8a9 52634229978fc307157ed4ad0642867344f4e8de Replit Agent <agent@replit.com> 1784112864 +0000	commit: Add performance benchmark data for archive unpacking with build driver

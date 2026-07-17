@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "JQvLTgpCRgBcI4TEPN01L"
+uri = "file://Website for Izy Tech/SITE_GUIDE.md"
+type = "text"
+title = "IZY Technologies — Site Guide"

@@ -1,0 +1,1 @@
+- [Project Constitution](project-constitution.md) — IZY Technologies repo charter: GitHub is source of truth, deployment stack, dev rules
