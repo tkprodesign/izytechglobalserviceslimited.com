@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { DashboardLayout } from './DashboardLayout';
-import { getToken } from '../../lib/auth';
+import { getToken, removeToken } from '../../lib/auth';
 import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
@@ -49,6 +50,7 @@ export function DevSystemPage() {
   const [apiHealth, setApiHealth] = useState<'loading' | 'ok' | 'error'>('loading');
   const [dbHealth, setDbHealth] = useState<'loading' | 'ok' | 'error'>('loading');
   const token = getToken();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const headers = { Authorization: `Bearer ${token}` };
@@ -62,8 +64,15 @@ export function DevSystemPage() {
       .catch(() => setDbHealth('error'));
 
     fetch(`${API}/api/dev/system`, { headers })
-      .then(r => r.json())
-      .then(setInfo)
+      .then(r => {
+        if (r.status === 401 || r.status === 403) {
+          removeToken();
+          navigate('/dev/login');
+          return null;
+        }
+        return r.json();
+      })
+      .then(d => { if (d && !d.error) setInfo(d); })
       .catch(() => {});
   }, [token]);
 

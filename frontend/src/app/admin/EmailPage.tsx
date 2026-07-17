@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router';
 import { DashboardLayout } from './DashboardLayout';
-import { getToken } from '../../lib/auth';
+import { getToken, removeToken } from '../../lib/auth';
 import {
   Mail, Send, RefreshCw, PenSquare, X, ChevronRight,
   Inbox, AlertCircle, Loader2, Reply, Trash2
@@ -215,6 +216,7 @@ function ComposeModal({
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export function EmailPage() {
   const token = getToken();
+  const navigate = useNavigate();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [activeAccount, setActiveAccount] = useState<Account | null>(null);
   const [messages, setMessages] = useState<EmailMeta[]>([]);
@@ -228,10 +230,16 @@ export function EmailPage() {
 
   const headers = { Authorization: `Bearer ${token}` };
 
+  const handleUnauth = () => { removeToken(); navigate('/dev/login'); };
+
   useEffect(() => {
     fetch(`${API}/api/dev/email/accounts`, { headers })
-      .then(r => r.json())
+      .then(r => {
+        if (r.status === 401 || r.status === 403) { handleUnauth(); return null; }
+        return r.json();
+      })
       .then(d => {
+        if (!d) return;
         setAccounts(d.accounts || []);
         if (d.accounts?.length) setActiveAccount(d.accounts[0]);
       });
