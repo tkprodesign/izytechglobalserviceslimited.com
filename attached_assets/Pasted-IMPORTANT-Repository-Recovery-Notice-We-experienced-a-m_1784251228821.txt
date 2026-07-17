@@ -1,0 +1,56 @@
+IMPORTANT: Repository Recovery Notice
+
+We experienced a major GitHub incident that permanently changed this project's repository history.
+
+WHAT HAPPENED
+- The original GitHub repository (izytechgsl/izytech-website) became unusable after the GitHub account was suspended.
+- We temporarily switched repositories while attempting recovery.
+- Multiple Git history repairs, force-push attempts, and repository migrations resulted in a corrupted Git history.
+- Rather than continue with a damaged history, we intentionally created a completely new Git repository and migrated the project into it.
+- The previous Git history has been intentionally discarded. The project files are the source of truth.
+
+CURRENT AUTHORITATIVE REPOSITORY
+GitHub Repository:
+https://github.com/tkprodesign/izytechglobalserviceslimited.com
+
+IMPORTANT RULES
+- This repository is now the ONLY source of truth.
+- Never reference the old repository or its history.
+- Never attempt to recover, merge, or reconnect the previous Git history.
+- Never recreate or modify GitHub Actions workflows unless explicitly instructed.
+- Do not change the repository structure without approval.
+- Do not create additional repositories.
+- All work must be committed to the current repository only.
+
+CURRENT PROJECT ARCHITECTURE
+
+Root
+├── frontend/      → Cloudflare Pages deployment
+├── backend/       → Railway deployment
+├── docs/          → Documentation
+└── README.md
+
+Infrastructure
+- Frontend: Cloudflare Pages
+- Backend: Railway
+- Database: Neon PostgreSQL
+- GitHub: tkprodesign/izytechglobalserviceslimited.com
+
+CURRENT STATUS
+✓ Repository recovered
+✓ Fresh Git history established
+✓ GitHub push working
+✓ Cloudflare configured
+✓ Railway project created
+✓ Neon database created
+
+NEXT DEVELOPMENT PRIORITIES
+1. Finish Railway backend deployment.
+2. Connect backend to Neon PostgreSQL.
+3. Connect frontend to backend API.
+4. Configure production environment variables.
+5. Connect the purchased custom domain.
+6. Continue feature development.
+
+WORKING PRINCIPLE
+Treat this repository as a mature production repository. Preserve architecture, keep commits clean, avoid unnecessary refactoring, and ask before making structural or infrastructure changes.
