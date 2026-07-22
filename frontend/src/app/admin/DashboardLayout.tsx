@@ -127,6 +127,17 @@ export function DashboardLayout({ children }: Props) {
             Store Enquiries
           </NavLink>
 
+          <NavLink
+            to="/dev/email"
+            className={({ isActive }) =>
+              `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
+            }
+            style={({ isActive }) => isActive ? { background: 'var(--izy-blue)' } : {}}
+          >
+            <Inbox size={16} />
+            Email Manager
+          </NavLink>
+
           {dev && (
             <>
               <p className="px-4 text-xs font-semibold uppercase tracking-wider mb-2 mt-5" style={{ color: '#4a6a85' }}>
@@ -153,17 +164,6 @@ export function DashboardLayout({ children }: Props) {
               >
                 <Terminal size={16} />
                 System Info
-              </NavLink>
-
-              <NavLink
-                to="/dev/email"
-                className={({ isActive }) =>
-                  `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
-                }
-                style={({ isActive }) => isActive ? { background: 'rgba(242,101,34,0.8)' } : {}}
-              >
-                <Inbox size={16} />
-                Email Manager
               </NavLink>
             </>
           )}
