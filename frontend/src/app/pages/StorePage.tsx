@@ -1,16 +1,15 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ShoppingCart, ArrowRight, Tag, Zap, Sun, Shield, Home, Cpu, Filter, Star } from "lucide-react";
-import { Link } from "react-router";
+import { ShoppingCart, ArrowRight, Tag, Zap, Sun, Shield, Home, Cpu, Filter, Star, CheckCircle } from "lucide-react";
+import { Link, useNavigate } from "react-router";
 import { PageLayout } from "../components/PageLayout";
+import { useCart } from "../contexts/CartContext";
 
 type Product = {
   id: number;
   name: string;
   category: string;
   tag: string;
-  price: number;
-  originalPrice?: number;
   unit: string;
   description: string;
   badge?: string;
@@ -27,7 +26,6 @@ const products: Product[] = [
     name: "400W Monocrystalline Solar Panel",
     category: "Solar",
     tag: "Solar",
-    price: 185000,
     unit: "per panel",
     description: "High-efficiency mono panel with 25-year performance warranty. Ideal for residential and commercial rooftop installations.",
     badge: "BESTSELLER",
@@ -41,7 +39,6 @@ const products: Product[] = [
     name: "550W Bifacial Solar Panel",
     category: "Solar",
     tag: "Solar",
-    price: 265000,
     unit: "per panel",
     description: "Dual-sided bifacial cell technology captures reflected light for up to 30% more energy output. Perfect for large commercial arrays.",
     rating: 5,
@@ -54,8 +51,6 @@ const products: Product[] = [
     name: "5kVA Hybrid Solar Inverter",
     category: "Inverters",
     tag: "Inverters",
-    price: 320000,
-    originalPrice: 365000,
     unit: "per unit",
     description: "All-in-one hybrid inverter with built-in MPPT charge controller. Supports grid-tie, off-grid and battery backup modes.",
     badge: "SALE",
@@ -69,7 +64,6 @@ const products: Product[] = [
     name: "10kVA Three-Phase Inverter",
     category: "Inverters",
     tag: "Inverters",
-    price: 680000,
     unit: "per unit",
     description: "Industrial-grade three-phase inverter for factories, hospitals and commercial buildings with 24/7 critical loads.",
     rating: 4,
@@ -82,7 +76,6 @@ const products: Product[] = [
     name: "200Ah Lithium LiFePO4 Battery",
     category: "Batteries",
     tag: "Batteries",
-    price: 450000,
     unit: "per unit",
     description: "Lithium iron phosphate battery with 6,000+ cycle life. Lightweight, safe and virtually maintenance-free.",
     badge: "NEW",
@@ -96,7 +89,6 @@ const products: Product[] = [
     name: "100Ah AGM Deep Cycle Battery",
     category: "Batteries",
     tag: "Batteries",
-    price: 95000,
     unit: "per unit",
     description: "Sealed AGM deep cycle battery, ideal for solar backup systems. Spill-proof, vibration-resistant and reliable.",
     rating: 4,
@@ -109,7 +101,6 @@ const products: Product[] = [
     name: "4-Channel 4K CCTV Kit",
     category: "Security",
     tag: "Security",
-    price: 145000,
     unit: "per kit",
     description: "Complete kit with 4× 4K outdoor cameras, 4-channel NVR, 1TB HDD and all cables. Night vision up to 30m.",
     badge: "POPULAR",
@@ -123,7 +114,6 @@ const products: Product[] = [
     name: "Smart Wi-Fi Video Doorbell",
     category: "Security",
     tag: "Security",
-    price: 38000,
     unit: "per unit",
     description: "1080p HD doorbell with two-way audio, motion alerts and cloud recording. Works with any smartphone.",
     rating: 4,
@@ -136,7 +126,6 @@ const products: Product[] = [
     name: "Smart Home Starter Pack",
     category: "Smart Home",
     tag: "Smart Home",
-    price: 78000,
     unit: "per pack",
     description: "4 smart switches + Zigbee hub + app control. Turn any home smart — works with Alexa, Google Home and Apple HomeKit.",
     badge: "NEW",
@@ -150,7 +139,6 @@ const products: Product[] = [
     name: "50W Smart LED Flood Light",
     category: "Smart Home",
     tag: "Smart Home",
-    price: 22000,
     unit: "per unit",
     description: "App-controlled outdoor flood light with colour temperature adjustment, scheduling and motion trigger.",
     rating: 4,
@@ -163,7 +151,6 @@ const products: Product[] = [
     name: "6-Outlet Surge Protector Strip",
     category: "Electrical",
     tag: "Electrical",
-    price: 12500,
     unit: "per unit",
     description: "Heavy-duty surge protector with 6 outlets, 2 USB ports and 2500 joule protection rating. 3-metre cable.",
     rating: 4,
@@ -175,7 +162,6 @@ const products: Product[] = [
     name: "63A Automatic Transfer Switch",
     category: "Electrical",
     tag: "Electrical",
-    price: 48000,
     unit: "per unit",
     description: "Automatic changeover switch that seamlessly transfers between mains and generator power. Suitable for homes and offices.",
     rating: 5,
@@ -206,10 +192,6 @@ const CAT_COLORS: Record<string, string> = {
   Electrical: "#F59E0B",
 };
 
-function formatPrice(n: number) {
-  return "₦" + n.toLocaleString("en-NG");
-}
-
 function Stars({ n }: { n: number }) {
   return (
     <div className="flex gap-0.5">
@@ -228,6 +210,19 @@ function Stars({ n }: { n: number }) {
 function ProductCard({ product }: { product: Product }) {
   const color = CAT_COLORS[product.tag] ?? "#F0A20E";
   const Icon = CAT_ICONS[product.tag] ?? Zap;
+  const { add, items } = useCart();
+  const inBasket = items.some((i) => i.id === product.id);
+
+  function handleAdd() {
+    add({
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      tag: product.tag,
+      description: product.description,
+      unit: product.unit,
+    });
+  }
 
   return (
     <motion.div
@@ -243,7 +238,6 @@ function ProductCard({ product }: { product: Product }) {
         className="relative flex items-center justify-center"
         style={{ height: 200, background: `${color}0d` }}
       >
-        {/* Badge */}
         {product.badge && (
           <span
             className="absolute top-3 left-3 px-2.5 py-1 text-[10px] font-bold tracking-widest text-white"
@@ -260,9 +254,7 @@ function ProductCard({ product }: { product: Product }) {
             OUT OF STOCK
           </span>
         )}
-        {/* Category icon as visual */}
         <Icon size={56} style={{ color: `${color}55` }} strokeWidth={1} />
-        {/* Category pill */}
         <span
           className="absolute bottom-3 right-3 text-[10px] font-bold tracking-wide px-2.5 py-1"
           style={{ background: `${color}18`, color, fontFamily: "var(--font-ui)" }}
@@ -286,53 +278,42 @@ function ProductCard({ product }: { product: Product }) {
           {product.description}
         </p>
 
-        {/* Rating */}
-        <div className="flex items-center gap-1.5 mb-4">
+        <div className="flex items-center gap-1.5 mb-5">
           <Stars n={product.rating} />
           <span className="text-[11px] text-[#041627]/35" style={{ fontFamily: "var(--font-ui)" }}>
             ({product.reviews})
           </span>
         </div>
 
-        {/* Price */}
-        <div className="flex items-end gap-2 mb-4">
-          <span
-            className="font-black text-[#041627]"
-            style={{ fontFamily: "var(--font-display)", fontSize: "1.2rem", letterSpacing: "-0.02em" }}
-          >
-            {formatPrice(product.price)}
-          </span>
-          {product.originalPrice && (
-            <span
-              className="text-xs text-[#041627]/35 line-through mb-0.5"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              {formatPrice(product.originalPrice)}
-            </span>
-          )}
-          <span className="text-[11px] text-[#041627]/35 mb-0.5" style={{ fontFamily: "var(--font-ui)" }}>
-            {product.unit}
-          </span>
-        </div>
-
         {/* CTA */}
-        <Link
-          to="/contact"
-          className="flex items-center justify-center gap-2 py-3 text-xs font-bold tracking-wider transition-all"
-          style={{
-            background: product.inStock ? "linear-gradient(135deg,#F0A20E 0%,#FFB830 100%)" : "#e2e8f0",
-            color: product.inStock ? "#041627" : "#94a3b8",
-            fontFamily: "var(--font-ui)",
-            letterSpacing: "0.06em",
-            pointerEvents: product.inStock ? "auto" : "none",
-          }}
-        >
-          {product.inStock ? (
-            <><ShoppingCart size={13} /> ENQUIRE TO ORDER</>
-          ) : (
-            "OUT OF STOCK"
-          )}
-        </Link>
+        {product.inStock ? (
+          <button
+            onClick={handleAdd}
+            className="flex items-center justify-center gap-2 py-3 text-xs font-bold tracking-wider transition-all"
+            style={{
+              background: inBasket
+                ? "rgba(16,185,129,0.1)"
+                : "linear-gradient(135deg,#F0A20E 0%,#FFB830 100%)",
+              color: inBasket ? "#10B981" : "#041627",
+              border: inBasket ? "1px solid rgba(16,185,129,0.3)" : "none",
+              fontFamily: "var(--font-ui)",
+              letterSpacing: "0.06em",
+            }}
+          >
+            {inBasket ? (
+              <><CheckCircle size={13} /> ADDED TO ENQUIRY</>
+            ) : (
+              <><ShoppingCart size={13} /> ADD TO ENQUIRY</>
+            )}
+          </button>
+        ) : (
+          <div
+            className="flex items-center justify-center py-3 text-xs font-bold tracking-wider"
+            style={{ background: "#f1f5f9", color: "#94a3b8", fontFamily: "var(--font-ui)", letterSpacing: "0.06em" }}
+          >
+            OUT OF STOCK
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -340,6 +321,8 @@ function ProductCard({ product }: { product: Product }) {
 
 export function StorePage() {
   const [active, setActive] = useState("All");
+  const { count } = useCart();
+  const navigate = useNavigate();
 
   const visible = active === "All" ? products : products.filter(p => p.tag === active);
 
@@ -423,6 +406,40 @@ export function StorePage() {
         </div>
       </div>
 
+      {/* ── Floating enquiry bar ── */}
+      <AnimatePresence>
+        {count > 0 && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 380, damping: 32 }}
+            className="fixed bottom-6 left-1/2 z-50"
+            style={{ transform: "translateX(-50%)" }}
+          >
+            <button
+              onClick={() => navigate("/store/enquire")}
+              className="flex items-center gap-4 px-7 py-4 shadow-xl shadow-black/20 font-bold text-sm tracking-wider"
+              style={{
+                background: "linear-gradient(135deg,#F0A20E 0%,#FFB830 100%)",
+                color: "#041627",
+                fontFamily: "var(--font-ui)",
+                letterSpacing: "0.06em",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <span
+                className="w-6 h-6 rounded-full bg-[#041627] text-[#F0A20E] flex items-center justify-center text-xs font-black"
+              >
+                {count}
+              </span>
+              PROCEED TO ENQUIRY
+              <ArrowRight size={15} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Installation note ── */}
       <div className="py-14 bg-white border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-6">
@@ -483,10 +500,10 @@ export function StorePage() {
               className="text-white mb-4"
               style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.6rem,3vw,2.4rem)", fontWeight: 800, letterSpacing: "-0.025em" }}
             >
-              Need a custom order or bulk pricing?
+              Need a custom order or bulk supply?
             </h2>
             <p className="text-white/40 mb-7 text-sm" style={{ fontFamily: "var(--font-body)" }}>
-              Contact our team for volume discounts, custom system design and nationwide delivery.
+              Contact our team for volume supply, custom system design and nationwide delivery.
             </p>
             <Link
               to="/contact"

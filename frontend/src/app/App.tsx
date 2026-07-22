@@ -32,7 +32,9 @@ import { ProjectsPage } from "./pages/ProjectsPage";
 import { TestimonialsPage } from "./pages/TestimonialsPage";
 import { ContactPage } from "./pages/ContactPage";
 import { StorePage } from "./pages/StorePage";
+import { StoreEnquiryPage } from "./pages/StoreEnquiryPage";
 import { Store } from "./sections/Store";
+import { CartProvider } from "./contexts/CartContext";
 
 function PublicSite() {
   return (
@@ -59,6 +61,7 @@ function PublicSite() {
 
 export default function App() {
   return (
+    <CartProvider>
     <Routes>
       {/* Public site */}
       <Route path="/" element={<PublicSite />} />
@@ -68,6 +71,7 @@ export default function App() {
       <Route path="/testimonials" element={<TestimonialsPage />} />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/store" element={<StorePage />} />
+      <Route path="/store/enquire" element={<StoreEnquiryPage />} />
 
       {/* Auth */}
       <Route path="/admin/login" element={<LoginPage />} />
@@ -101,5 +105,6 @@ export default function App() {
       <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
       <Route path="/dev" element={<Navigate to="/admin/login" replace />} />
     </Routes>
+    </CartProvider>
   );
 }
