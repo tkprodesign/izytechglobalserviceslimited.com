@@ -16,6 +16,20 @@ async function get<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+async function authPut<T>(path: string, body: unknown): Promise<T> {
+  const token = localStorage.getItem('izy_admin_token') ?? '';
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error((err as { error: string }).error ?? res.statusText);
+  }
+  return res.json() as Promise<T>;
+}
+
 async function post<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
@@ -46,6 +60,13 @@ export interface QuotePayload {
   details?: string;
 }
 
+export interface SocialLinks {
+  facebook: string;
+  instagram: string;
+  x: string;
+  whatsapp: string;
+}
+
 export interface Testimonial {
   id: number;
   name: string;
@@ -66,4 +87,10 @@ export const api = {
 
   testimonials: () =>
     get<{ data: Testimonial[] }>('/api/testimonials'),
+
+  socials: () =>
+    get<SocialLinks>('/api/settings/socials'),
+
+  updateSocials: (data: SocialLinks) =>
+    authPut<{ success: boolean }>('/api/settings/socials', data),
 };

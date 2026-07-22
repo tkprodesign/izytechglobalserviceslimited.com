@@ -24,6 +24,7 @@ db.connect()
     console.log('Connected to Neon PostgreSQL');
     return initTestimonialsTable();
   })
+  .then(() => initSiteSettingsTable())
   .catch((err) => {
     console.error('Failed to connect to database:', err.message);
     process.exit(1);
@@ -57,6 +58,25 @@ async function initTestimonialsTable() {
     `);
     console.log('Testimonials table seeded with initial data');
   }
+}
+
+async function initSiteSettingsTable() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS site_settings (
+      key        TEXT PRIMARY KEY,
+      value      TEXT NOT NULL DEFAULT '',
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  // Seed defaults — only insert if key doesn't already exist
+  await db.query(`
+    INSERT INTO site_settings (key, value) VALUES
+      ('social_facebook',  ''),
+      ('social_instagram', ''),
+      ('social_x',        ''),
+      ('social_whatsapp', '')
+    ON CONFLICT (key) DO NOTHING
+  `);
 }
 
 // Prevent dropped connections from crashing the process — pg Pool will reconnect automatically
@@ -110,6 +130,41 @@ app.get('/api/testimonials', async (_req, res) => {
       'SELECT id, name, role, company, text, rating, avatar, metric FROM testimonials ORDER BY sort_order ASC'
     );
     res.json({ data: rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Site Settings: Socials (public read, auth write) ─────────────────────────
+app.get('/api/settings/socials', async (_req, res) => {
+  try {
+    const { rows } = await db.query(
+      "SELECT key, value FROM site_settings WHERE key LIKE 'social_%'"
+    );
+    const map = Object.fromEntries(rows.map(r => [r.key, r.value]));
+    res.json({
+      facebook:  map['social_facebook']  ?? '',
+      instagram: map['social_instagram'] ?? '',
+      x:         map['social_x']         ?? '',
+      whatsapp:  map['social_whatsapp']  ?? '',
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/settings/socials', requireAuth, async (req, res) => {
+  const { facebook = '', instagram = '', x = '', whatsapp = '' } = req.body || {};
+  try {
+    await db.query(`
+      INSERT INTO site_settings (key, value, updated_at) VALUES
+        ('social_facebook',  $1, NOW()),
+        ('social_instagram', $2, NOW()),
+        ('social_x',        $3, NOW()),
+        ('social_whatsapp', $4, NOW())
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+    `, [facebook, instagram, x, whatsapp]);
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

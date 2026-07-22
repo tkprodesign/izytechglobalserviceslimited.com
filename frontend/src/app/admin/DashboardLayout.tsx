@@ -8,6 +8,7 @@ import {
   LogOut,
   Activity,
   Inbox,
+  Share2,
 } from 'lucide-react';
 
 interface Props {
@@ -89,6 +90,17 @@ export function DashboardLayout({ children }: Props) {
           >
             <FileText size={16} />
             Quote Requests
+          </NavLink>
+
+          <NavLink
+            to="/admin/socials"
+            className={({ isActive }) =>
+              `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
+            }
+            style={({ isActive }) => isActive ? { background: 'var(--izy-blue)' } : {}}
+          >
+            <Share2 size={16} />
+            Social Media
           </NavLink>
 
           {dev && (

@@ -1,6 +1,8 @@
-import { Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin, Youtube, ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Phone, Mail, MapPin, Facebook, Twitter, Instagram, MessageCircle, ArrowRight } from "lucide-react";
 import logoIcon from "../../imports/izy-technologies_icon_v1.png";
 import logoHorizontal from "../../imports/izy-technologies_logo-variation-horizontal_v1.png";
+import { api, type SocialLinks } from "../../lib/api";
 
 const services = [
   "Solar Energy Systems",
@@ -19,15 +21,25 @@ const quickLinks = [
   { label: "Emergency Service", href: "tel:+2348101262814" },
 ];
 
-const socials = [
-  { icon: Facebook, href: "#", label: "Facebook" },
-  { icon: Twitter, href: "#", label: "Twitter" },
-  { icon: Instagram, href: "#", label: "Instagram" },
-  { icon: Linkedin, href: "#", label: "LinkedIn" },
-  { icon: Youtube, href: "#", label: "YouTube" },
-];
+const SOCIAL_META = {
+  facebook:  { Icon: Facebook,       label: "Facebook" },
+  instagram: { Icon: Instagram,      label: "Instagram" },
+  x:         { Icon: Twitter,        label: "X" },
+  whatsapp:  { Icon: MessageCircle,  label: "WhatsApp" },
+} as const;
 
 export function Footer() {
+  const [socials, setSocials] = useState<{ Icon: React.ElementType; href: string; label: string }[]>([]);
+
+  useEffect(() => {
+    api.socials().then((links) => {
+      const entries = (Object.keys(SOCIAL_META) as (keyof typeof SOCIAL_META)[])
+        .filter((k) => links[k]?.trim())
+        .map((k) => ({ ...SOCIAL_META[k], href: links[k] }));
+      setSocials(entries);
+    }).catch(() => {});
+  }, []);
+
   return (
     <footer style={{ background: "#030e1a" }}>
       {/* Full-bleed CTA band */}

@@ -24,6 +24,7 @@ import { ContactsPage } from "./admin/ContactsPage";
 import { QuotesPage } from "./admin/QuotesPage";
 import { DevSystemPage } from "./admin/DevSystemPage";
 import { EmailPage } from "./admin/EmailPage";
+import { SocialsPage } from "./admin/SocialsPage";
 import { ProtectedRoute } from "./admin/ProtectedRoute";
 
 function PublicSite() {
@@ -66,6 +67,9 @@ export default function App() {
       } />
       <Route path="/admin/quotes" element={
         <ProtectedRoute><QuotesPage /></ProtectedRoute>
+      } />
+      <Route path="/admin/socials" element={
+        <ProtectedRoute><SocialsPage /></ProtectedRoute>
       } />
 
       {/* Developer-only */}
