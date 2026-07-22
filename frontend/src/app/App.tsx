@@ -26,6 +26,9 @@ import { DevSystemPage } from "./admin/DevSystemPage";
 import { EmailPage } from "./admin/EmailPage";
 import { SocialsPage } from "./admin/SocialsPage";
 import { ProtectedRoute } from "./admin/ProtectedRoute";
+import { AboutPage } from "./pages/AboutPage";
+import { ServicesPage } from "./pages/ServicesPage";
+import { ProjectsPage } from "./pages/ProjectsPage";
 
 function PublicSite() {
   return (
@@ -54,6 +57,9 @@ export default function App() {
     <Routes>
       {/* Public site */}
       <Route path="/" element={<PublicSite />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/services" element={<ServicesPage />} />
+      <Route path="/projects" element={<ProjectsPage />} />
 
       {/* Auth */}
       <Route path="/admin/login" element={<LoginPage />} />
