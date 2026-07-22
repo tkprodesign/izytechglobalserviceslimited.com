@@ -26,8 +26,8 @@ const navLinks: NavLink[] = [
   },
   { label: "About Us",     to: "/about" },
   { label: "Projects",     to: "/projects" },
-  { label: "Testimonials", href: "/#testimonials" },
-  { label: "Contact",      href: "/#contact" },
+  { label: "Testimonials", to: "/testimonials" },
+  { label: "Contact",      to: "/contact" },
 ];
 
 function NavItem({
