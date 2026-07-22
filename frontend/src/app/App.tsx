@@ -31,6 +31,8 @@ import { ServicesPage } from "./pages/ServicesPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { TestimonialsPage } from "./pages/TestimonialsPage";
 import { ContactPage } from "./pages/ContactPage";
+import { StorePage } from "./pages/StorePage";
+import { Store } from "./sections/Store";
 
 function PublicSite() {
   return (
@@ -45,6 +47,7 @@ function PublicSite() {
         <Statement />
         <About />
         <Projects />
+        <Store />
         <VideoReel />
         <Testimonials />
         <Contact />
@@ -64,6 +67,7 @@ export default function App() {
       <Route path="/projects" element={<ProjectsPage />} />
       <Route path="/testimonials" element={<TestimonialsPage />} />
       <Route path="/contact" element={<ContactPage />} />
+      <Route path="/store" element={<StorePage />} />
 
       {/* Auth */}
       <Route path="/admin/login" element={<LoginPage />} />
