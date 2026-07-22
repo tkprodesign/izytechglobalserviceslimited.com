@@ -83,6 +83,7 @@ router.get('/inbox/:accountId', async (req, res) => {
 });
 
 // ── Body structure walker ─────────────────────────────────────────────────────
+// Returns { html: { section, encoding, charset }, text: { section, encoding, charset } }
 function findTextParts(struct, path) {
   if (!struct) return {};
   const type = (struct.type || '').toLowerCase();
@@ -90,8 +91,13 @@ function findTextParts(struct, path) {
 
   if (type === 'text') {
     const section = path || '1';
-    if (subtype === 'html') return { html: section };
-    if (subtype === 'plain') return { text: section };
+    const meta = {
+      section,
+      encoding: (struct.encoding || '7bit').toLowerCase(),
+      charset: (struct.parameters?.charset || 'utf-8').toLowerCase(),
+    };
+    if (subtype === 'html') return { html: meta };
+    if (subtype === 'plain') return { text: meta };
     return {};
   }
 
@@ -107,6 +113,26 @@ function findTextParts(struct, path) {
   }
 
   return {};
+}
+
+// ── Content-Transfer-Encoding decoder ─────────────────────────────────────────
+function decodeBodyPart(buffer, encoding, charset) {
+  const enc = (encoding || '').toLowerCase();
+  let decoded;
+
+  if (enc === 'base64') {
+    decoded = Buffer.from(buffer.toString().replace(/\s+/g, ''), 'base64');
+  } else if (enc === 'quoted-printable') {
+    const raw = buffer.toString('binary');
+    const bytes = raw
+      .replace(/=\r?\n/g, '')  // soft line breaks
+      .replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+    decoded = Buffer.from(bytes, 'binary');
+  } else {
+    decoded = buffer;
+  }
+
+  return decoded.toString('utf-8');
 }
 
 // ── Message body ──────────────────────────────────────────────────────────────
@@ -132,22 +158,22 @@ router.get('/message/:accountId/:uid', async (req, res) => {
       // Mark as seen now that the fetch loop has fully completed
       await client.messageFlagsAdd({ uid }, ['\\Seen']).catch(() => {});
 
-      // Determine which IMAP sections hold the text parts
-      const { html: htmlSection, text: textSection } = findTextParts(bodyStructure, '');
-      const sections = [...new Set([htmlSection, textSection].filter(Boolean))];
+      // Determine which IMAP sections hold the text parts (with encoding/charset meta)
+      const { html: htmlMeta, text: textMeta } = findTextParts(bodyStructure, '');
+      const sections = [...new Set([htmlMeta?.section, textMeta?.section].filter(Boolean))];
       if (sections.length === 0) sections.push('1'); // fallback for unknown structures
 
-      // Pass 2: fetch only the needed body parts (auto-decoded by imapflow)
+      // Pass 2: fetch only the needed body parts, then decode properly
       for await (const msg of client.fetch({ uid }, { bodyParts: sections })) {
-        if (htmlSection && msg.bodyParts?.get(htmlSection)) {
-          html = msg.bodyParts.get(htmlSection).toString();
+        if (htmlMeta && msg.bodyParts?.get(htmlMeta.section)) {
+          html = decodeBodyPart(msg.bodyParts.get(htmlMeta.section), htmlMeta.encoding, htmlMeta.charset);
         }
-        if (textSection && msg.bodyParts?.get(textSection)) {
-          text = msg.bodyParts.get(textSection).toString();
+        if (textMeta && msg.bodyParts?.get(textMeta.section)) {
+          text = decodeBodyPart(msg.bodyParts.get(textMeta.section), textMeta.encoding, textMeta.charset);
         }
         // Fallback: if neither section resolved, use whatever came back for '1'
         if (!html && !text && msg.bodyParts?.get('1')) {
-          text = msg.bodyParts.get('1').toString();
+          text = msg.bodyParts.get('1').toString('utf-8');
         }
       }
 

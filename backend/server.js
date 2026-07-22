@@ -159,6 +159,9 @@ async function initStoreTable() {
     )
   `);
 
+  // Add images column if it doesn't exist yet (safe migration)
+  await db.query(`ALTER TABLE store_products ADD COLUMN IF NOT EXISTS images TEXT[] DEFAULT '{}'`);
+
   await db.query(`
     CREATE TABLE IF NOT EXISTS store_enquiries (
       id          SERIAL PRIMARY KEY,
@@ -205,7 +208,7 @@ async function initStoreTable() {
 app.get('/api/store/products', async (_req, res) => {
   try {
     const { rows } = await db.query(
-      'SELECT id,name,category,tag,unit,description,badge,rating,reviews,in_stock,featured FROM store_products ORDER BY sort_order ASC, id ASC'
+      'SELECT id,name,category,tag,unit,description,badge,rating,reviews,in_stock,featured,images FROM store_products ORDER BY sort_order ASC, id ASC'
     );
     res.json({ data: rows });
   } catch (err) {
@@ -266,14 +269,15 @@ app.get('/api/admin/store/products', requireAuth, async (_req, res) => {
 });
 
 app.post('/api/admin/store/products', requireAuth, async (req, res) => {
-  const { name, category, tag, unit, description, badge, rating, reviews, in_stock, featured } = req.body || {};
+  const { name, category, tag, unit, description, badge, rating, reviews, in_stock, featured, images } = req.body || {};
   if (!name || !category) return res.status(400).json({ error: 'name and category required' });
   try {
     const { rows } = await db.query(
-      `INSERT INTO store_products (name,category,tag,unit,description,badge,rating,reviews,in_stock,featured)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+      `INSERT INTO store_products (name,category,tag,unit,description,badge,rating,reviews,in_stock,featured,images)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
       [name, category, tag || category, unit || 'per unit', description || '', badge || null,
-       rating ?? 5, reviews ?? 0, in_stock !== false, featured === true]
+       rating ?? 5, reviews ?? 0, in_stock !== false, featured === true,
+       Array.isArray(images) ? images.filter(Boolean) : []]
     );
     res.status(201).json({ data: rows[0] });
   } catch (err) {
@@ -282,14 +286,15 @@ app.post('/api/admin/store/products', requireAuth, async (req, res) => {
 });
 
 app.put('/api/admin/store/products/:id', requireAuth, async (req, res) => {
-  const { name, category, tag, unit, description, badge, rating, reviews, in_stock, featured } = req.body || {};
+  const { name, category, tag, unit, description, badge, rating, reviews, in_stock, featured, images } = req.body || {};
   if (!name || !category) return res.status(400).json({ error: 'name and category required' });
   try {
     const { rows } = await db.query(
       `UPDATE store_products SET name=$1,category=$2,tag=$3,unit=$4,description=$5,badge=$6,
-       rating=$7,reviews=$8,in_stock=$9,featured=$10 WHERE id=$11 RETURNING *`,
+       rating=$7,reviews=$8,in_stock=$9,featured=$10,images=$11 WHERE id=$12 RETURNING *`,
       [name, category, tag || category, unit || 'per unit', description || '', badge || null,
-       rating ?? 5, reviews ?? 0, in_stock !== false, featured === true, req.params.id]
+       rating ?? 5, reviews ?? 0, in_stock !== false, featured === true,
+       Array.isArray(images) ? images.filter(Boolean) : [], req.params.id]
     );
     if (!rows.length) return res.status(404).json({ error: 'not found' });
     res.json({ data: rows[0] });

@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { DashboardLayout } from './DashboardLayout';
 import { getToken } from '../../lib/auth';
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Star, X, Save } from 'lucide-react';
+import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Star, X, Save, ImagePlus, Link, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
 
@@ -28,11 +28,13 @@ interface Product {
   featured: boolean;
   sort_order: number;
   created_at: string;
+  images: string[];
 }
 
 const blank: Omit<Product, 'id' | 'sort_order' | 'created_at'> = {
   name: '', category: 'Solar', tag: 'Solar', unit: 'per unit',
   description: '', badge: null, rating: 5, reviews: 0, in_stock: true, featured: false,
+  images: [],
 };
 
 function Stars({ n }: { n: number }) {
@@ -45,6 +47,35 @@ function Stars({ n }: { n: number }) {
   );
 }
 
+function ProductThumb({ images }: { images: string[] }) {
+  const [idx, setIdx] = useState(0);
+  const valid = (images || []).filter(Boolean);
+  if (!valid.length) {
+    return (
+      <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: '#f0f3f8' }}>
+        <ImagePlus size={16} style={{ color: '#b0bec5' }} />
+      </div>
+    );
+  }
+  return (
+    <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 group" style={{ background: '#f0f3f8' }}>
+      <img src={valid[idx]} alt="" className="w-full h-full object-cover" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+      {valid.length > 1 && (
+        <>
+          <button
+            className="absolute left-0 inset-y-0 px-0.5 hidden group-hover:flex items-center bg-black/30 text-white"
+            onClick={e => { e.stopPropagation(); setIdx(i => (i - 1 + valid.length) % valid.length); }}
+          ><ChevronLeft size={10} /></button>
+          <button
+            className="absolute right-0 inset-y-0 px-0.5 hidden group-hover:flex items-center bg-black/30 text-white"
+            onClick={e => { e.stopPropagation(); setIdx(i => (i + 1) % valid.length); }}
+          ><ChevronRight size={10} /></button>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function StoreProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +84,7 @@ export function StoreProductsPage() {
   const [form, setForm] = useState({ ...blank });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [newImageUrl, setNewImageUrl] = useState('');
   const token = getToken();
 
   function load() {
@@ -68,6 +100,7 @@ export function StoreProductsPage() {
   function openNew() {
     setEditing(null);
     setForm({ ...blank });
+    setNewImageUrl('');
     setFormOpen(true);
   }
 
@@ -77,7 +110,9 @@ export function StoreProductsPage() {
       name: p.name, category: p.category, tag: p.tag, unit: p.unit,
       description: p.description, badge: p.badge, rating: p.rating,
       reviews: p.reviews, in_stock: p.in_stock, featured: p.featured,
+      images: p.images || [],
     });
+    setNewImageUrl('');
     setFormOpen(true);
   }
 
@@ -85,6 +120,26 @@ export function StoreProductsPage() {
 
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm(f => ({ ...f, [k]: v }));
+  }
+
+  function addImage() {
+    const url = newImageUrl.trim();
+    if (!url) return;
+    setForm(f => ({ ...f, images: [...f.images, url] }));
+    setNewImageUrl('');
+  }
+
+  function removeImage(idx: number) {
+    setForm(f => ({ ...f, images: f.images.filter((_, i) => i !== idx) }));
+  }
+
+  function moveImage(from: number, to: number) {
+    setForm(f => {
+      const imgs = [...f.images];
+      const [item] = imgs.splice(from, 1);
+      imgs.splice(to, 0, item);
+      return { ...f, images: imgs };
+    });
   }
 
   async function save() {
@@ -155,24 +210,30 @@ export function StoreProductsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: '1px solid #eef1f6' }}>
-                  {['Product', 'Category', 'Badge', 'Rating', 'Featured', 'Stock', 'Actions'].map(h => (
-                    <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: '#8fadc8' }}>{h}</th>
+                  {['', 'Product', 'Category', 'Badge', 'Rating', 'Featured', 'Stock', 'Actions'].map(h => (
+                    <th key={h} className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: '#8fadc8' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {products.map(p => (
                   <tr key={p.id} className="transition-colors hover:bg-[#f8fafc]" style={{ borderBottom: '1px solid #eef1f6' }}>
-                    <td className="px-5 py-4">
+                    <td className="pl-4 py-3">
+                      <ProductThumb images={p.images || []} />
+                    </td>
+                    <td className="px-4 py-3">
                       <p className="font-medium" style={{ color: 'var(--izy-navy)' }}>{p.name}</p>
                       <p className="text-xs mt-0.5 text-gray-400">{p.unit}</p>
+                      {(p.images || []).length > 0 && (
+                        <p className="text-xs mt-0.5" style={{ color: '#8fadc8' }}>{p.images.length} image{p.images.length !== 1 ? 's' : ''}</p>
+                      )}
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: '#f0f6ff', color: 'var(--izy-blue)' }}>
                         {p.category}
                       </span>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       {p.badge ? (
                         <span className="text-[10px] font-bold px-2 py-0.5 text-white" style={{ background: BADGE_COLORS[p.badge] ?? '#041627' }}>
                           {p.badge}
@@ -181,27 +242,23 @@ export function StoreProductsPage() {
                         <span className="text-xs text-gray-300">—</span>
                       )}
                     </td>
-                    <td className="px-5 py-4"><Stars n={p.rating} /></td>
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3"><Stars n={p.rating} /></td>
+                    <td className="px-4 py-3">
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${p.featured ? 'text-amber-700' : 'text-gray-400'}`}
                         style={{ background: p.featured ? 'rgba(240,162,14,0.12)' : '#f8fafc' }}>
                         {p.featured ? 'Yes' : 'No'}
                       </span>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       <button onClick={() => toggleStock(p)} className="flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-70">
                         {p.in_stock
                           ? <><ToggleRight size={18} style={{ color: '#10B981' }} /><span style={{ color: '#10B981' }}>In stock</span></>
                           : <><ToggleLeft size={18} style={{ color: '#94a3b8' }} /><span style={{ color: '#94a3b8' }}>Out of stock</span></>}
                       </button>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => openEdit(p)}
-                          className="p-1.5 rounded-lg transition-colors hover:bg-blue-50"
-                          title="Edit"
-                        >
+                        <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg transition-colors hover:bg-blue-50" title="Edit">
                           <Pencil size={14} style={{ color: 'var(--izy-blue)' }} />
                         </button>
                         <button
@@ -225,10 +282,8 @@ export function StoreProductsPage() {
       {/* ── Slide-over form ── */}
       {formOpen && (
         <div className="fixed inset-0 z-50 flex">
-          {/* Backdrop */}
           <div className="flex-1 bg-black/30" onClick={closeForm} />
-          {/* Panel */}
-          <div className="w-[480px] bg-white h-full overflow-y-auto shadow-2xl flex flex-col">
+          <div className="w-[520px] bg-white h-full overflow-y-auto shadow-2xl flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between px-7 py-5 border-b" style={{ borderColor: '#eef1f6' }}>
               <h2 className="font-bold text-base" style={{ color: 'var(--izy-navy)' }}>
@@ -241,6 +296,73 @@ export function StoreProductsPage() {
 
             {/* Body */}
             <div className="flex-1 px-7 py-6 space-y-5">
+
+              {/* Images */}
+              <Field label="Product Images">
+                {/* Current images */}
+                {form.images.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {form.images.map((url, i) => (
+                      <div key={i} className="relative group rounded-lg overflow-hidden border" style={{ borderColor: '#e2e8f0', aspectRatio: '4/3' }}>
+                        <img src={url} alt="" className="w-full h-full object-cover" onError={e => { (e.currentTarget as HTMLImageElement).style.opacity = '0.3'; }} />
+                        {/* Position badge */}
+                        {i === 0 && (
+                          <span className="absolute top-1 left-1 text-[9px] font-bold px-1.5 py-0.5 rounded text-white" style={{ background: 'var(--izy-blue)' }}>MAIN</span>
+                        )}
+                        {/* Overlay controls */}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                          {i > 0 && (
+                            <button
+                              onClick={() => moveImage(i, i - 1)}
+                              className="p-1 rounded bg-white/80 text-gray-700 hover:bg-white text-xs"
+                              title="Move left"
+                            ><ChevronLeft size={12} /></button>
+                          )}
+                          <button
+                            onClick={() => removeImage(i)}
+                            className="p-1 rounded bg-red-500 text-white hover:bg-red-600"
+                            title="Remove"
+                          ><X size={12} /></button>
+                          {i < form.images.length - 1 && (
+                            <button
+                              onClick={() => moveImage(i, i + 1)}
+                              className="p-1 rounded bg-white/80 text-gray-700 hover:bg-white"
+                              title="Move right"
+                            ><ChevronRight size={12} /></button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Add image URL */}
+                <div className="flex gap-2">
+                  <div className="flex-1 flex items-center gap-2 border rounded-lg px-3 py-2.5" style={{ borderColor: '#e2e8f0' }}>
+                    <Link size={13} style={{ color: '#8fadc8', flexShrink: 0 }} />
+                    <input
+                      type="url"
+                      value={newImageUrl}
+                      onChange={e => setNewImageUrl(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addImage())}
+                      placeholder="Paste image URL and press Enter…"
+                      className="flex-1 text-sm focus:outline-none bg-transparent"
+                      style={{ color: 'var(--izy-navy)' }}
+                    />
+                  </div>
+                  <button
+                    onClick={addImage}
+                    disabled={!newImageUrl.trim()}
+                    className="px-3 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-40 transition-opacity hover:opacity-90"
+                    style={{ background: 'var(--izy-blue)' }}
+                  >
+                    Add
+                  </button>
+                </div>
+                <p className="text-xs mt-1.5" style={{ color: '#94a3b8' }}>
+                  First image is the main product photo. Hover an image to reorder or remove.
+                </p>
+              </Field>
+
               {/* Name */}
               <Field label="Product Name *">
                 <input
