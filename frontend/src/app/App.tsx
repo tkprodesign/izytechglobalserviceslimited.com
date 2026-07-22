@@ -92,6 +92,14 @@ export default function App() {
         <ProtectedRoute><SocialsPage /></ProtectedRoute>
       } />
 
+      {/* Store management — both roles */}
+      <Route path="/admin/products" element={
+        <ProtectedRoute><StoreProductsPage /></ProtectedRoute>
+      } />
+      <Route path="/admin/enquiries" element={
+        <ProtectedRoute><StoreEnquiriesPage /></ProtectedRoute>
+      } />
+
       {/* Developer-only */}
       <Route path="/dev/dashboard" element={
         <ProtectedRoute requiredRole="developer"><DevSystemPage /></ProtectedRoute>

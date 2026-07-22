@@ -82,6 +82,33 @@ router.get('/inbox/:accountId', async (req, res) => {
   }
 });
 
+// ── Body structure walker ─────────────────────────────────────────────────────
+function findTextParts(struct, path) {
+  if (!struct) return {};
+  const type = (struct.type || '').toLowerCase();
+  const subtype = (struct.subtype || '').toLowerCase();
+
+  if (type === 'text') {
+    const section = path || '1';
+    if (subtype === 'html') return { html: section };
+    if (subtype === 'plain') return { text: section };
+    return {};
+  }
+
+  if (Array.isArray(struct.childNodes) && struct.childNodes.length) {
+    let html = null, text = null;
+    for (let i = 0; i < struct.childNodes.length; i++) {
+      const childPath = path ? `${path}.${i + 1}` : `${i + 1}`;
+      const parts = findTextParts(struct.childNodes[i], childPath);
+      if (parts.html && !html) html = parts.html;
+      if (parts.text && !text) text = parts.text;
+    }
+    return { html, text };
+  }
+
+  return {};
+}
+
 // ── Message body ──────────────────────────────────────────────────────────────
 router.get('/message/:accountId/:uid', async (req, res) => {
   const accounts = getAccounts();
@@ -92,24 +119,44 @@ router.get('/message/:accountId/:uid', async (req, res) => {
     const uid = parseInt(req.params.uid, 10);
     const result = await withImap(acct.email, acct.password, async (client) => {
       await client.mailboxOpen('INBOX');
-      let html = '', text = '', headers = {};
-      for await (const msg of client.fetch({ uid }, { source: true, envelope: true, flags: true })) {
-        // Mark as seen
+      let html = '', text = '', envelope = null, bodyStructure = null;
+
+      // Pass 1: fetch envelope + body structure (no body download yet)
+      for await (const msg of client.fetch({ uid }, { envelope: true, flags: true, bodyStructure: true })) {
+        envelope = msg.envelope;
+        bodyStructure = msg.bodyStructure;
         await client.messageFlagsAdd({ uid }, ['\\Seen']).catch(() => {});
-        const raw = msg.source.toString();
-        // Simple extract of HTML / text parts from raw
-        const htmlMatch = raw.match(/Content-Type: text\/html[^\r\n]*[\r\n]{1,4}([\s\S]*?)(?=--|\Z)/i);
-        const textMatch = raw.match(/Content-Type: text\/plain[^\r\n]*[\r\n]{1,4}([\s\S]*?)(?=--|\Z)/i);
-        html = htmlMatch?.[1]?.trim() || '';
-        text = textMatch?.[1]?.trim() || raw.slice(raw.lastIndexOf('\r\n\r\n') + 4);
-        headers = {
-          subject: msg.envelope?.subject,
-          from: msg.envelope?.from?.[0],
-          to: msg.envelope?.to?.[0],
-          date: msg.envelope?.date,
-        };
       }
-      return { html, text, headers };
+
+      // Determine which IMAP sections hold the text parts
+      const { html: htmlSection, text: textSection } = findTextParts(bodyStructure, '');
+      const sections = [...new Set([htmlSection, textSection].filter(Boolean))];
+      if (sections.length === 0) sections.push('1'); // fallback for unknown structures
+
+      // Pass 2: fetch only the needed body parts (auto-decoded by imapflow)
+      for await (const msg of client.fetch({ uid }, { bodyParts: sections })) {
+        if (htmlSection && msg.bodyParts?.get(htmlSection)) {
+          html = msg.bodyParts.get(htmlSection).toString();
+        }
+        if (textSection && msg.bodyParts?.get(textSection)) {
+          text = msg.bodyParts.get(textSection).toString();
+        }
+        // Fallback: if neither section resolved, use whatever came back for '1'
+        if (!html && !text && msg.bodyParts?.get('1')) {
+          text = msg.bodyParts.get('1').toString();
+        }
+      }
+
+      return {
+        html,
+        text,
+        headers: {
+          subject: envelope?.subject,
+          from: envelope?.from?.[0],
+          to: envelope?.to?.[0],
+          date: envelope?.date,
+        },
+      };
     });
     res.json(result);
   } catch (err) {
