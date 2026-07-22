@@ -108,7 +108,7 @@ export default function App() {
         <ProtectedRoute requiredRole="developer"><DevSystemPage /></ProtectedRoute>
       } />
       <Route path="/dev/email" element={
-        <ProtectedRoute requiredRole="developer"><EmailPage /></ProtectedRoute>
+        <ProtectedRoute><EmailPage /></ProtectedRoute>
       } />
 
       {/* Fallback */}

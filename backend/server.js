@@ -474,7 +474,7 @@ app.post('/api/quote', async (req, res) => {
 });
 
 // ── Dev: Email management ─────────────────────────────────────────────────────
-app.use('/api/dev/email', requireDev, emailRoutes);
+app.use('/api/dev/email', requireAuth, emailRoutes);
 
 // ── Dev: System info ──────────────────────────────────────────────────────────
 app.get('/api/dev/system', requireDev, (_req, res) => {

@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { ImapFlow } = require('imapflow');
+const { simpleParser } = require('mailparser');
 
 // ── Account registry ──────────────────────────────────────────────────────────
 function getAccounts() {
@@ -82,60 +83,10 @@ router.get('/inbox/:accountId', async (req, res) => {
   }
 });
 
-// ── Body structure walker ─────────────────────────────────────────────────────
-// Returns { html: { section, encoding, charset }, text: { section, encoding, charset } }
-function findTextParts(struct, path) {
-  if (!struct) return {};
-  const type = (struct.type || '').toLowerCase();
-  const subtype = (struct.subtype || '').toLowerCase();
-
-  if (type === 'text') {
-    const section = path || '1';
-    const meta = {
-      section,
-      encoding: (struct.encoding || '7bit').toLowerCase(),
-      charset: (struct.parameters?.charset || 'utf-8').toLowerCase(),
-    };
-    if (subtype === 'html') return { html: meta };
-    if (subtype === 'plain') return { text: meta };
-    return {};
-  }
-
-  if (Array.isArray(struct.childNodes) && struct.childNodes.length) {
-    let html = null, text = null;
-    for (let i = 0; i < struct.childNodes.length; i++) {
-      const childPath = path ? `${path}.${i + 1}` : `${i + 1}`;
-      const parts = findTextParts(struct.childNodes[i], childPath);
-      if (parts.html && !html) html = parts.html;
-      if (parts.text && !text) text = parts.text;
-    }
-    return { html, text };
-  }
-
-  return {};
-}
-
-// ── Content-Transfer-Encoding decoder ─────────────────────────────────────────
-function decodeBodyPart(buffer, encoding, charset) {
-  const enc = (encoding || '').toLowerCase();
-  let decoded;
-
-  if (enc === 'base64') {
-    decoded = Buffer.from(buffer.toString().replace(/\s+/g, ''), 'base64');
-  } else if (enc === 'quoted-printable') {
-    const raw = buffer.toString('binary');
-    const bytes = raw
-      .replace(/=\r?\n/g, '')  // soft line breaks
-      .replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
-    decoded = Buffer.from(bytes, 'binary');
-  } else {
-    decoded = buffer;
-  }
-
-  return decoded.toString('utf-8');
-}
-
 // ── Message body ──────────────────────────────────────────────────────────────
+// Uses mailparser (simpleParser) on the raw RFC-822 source so that all
+// Content-Transfer-Encodings (base64, quoted-printable) and charsets are
+// handled correctly without fragile manual MIME walking.
 router.get('/message/:accountId/:uid', async (req, res) => {
   const accounts = getAccounts();
   const acct = accounts.find(a => a.id === req.params.accountId);
@@ -145,46 +96,32 @@ router.get('/message/:accountId/:uid', async (req, res) => {
     const uid = parseInt(req.params.uid, 10);
     const result = await withImap(acct.email, acct.password, async (client) => {
       await client.mailboxOpen('INBOX');
-      let html = '', text = '', envelope = null, bodyStructure = null;
+      let rawSource = null;
+      let envelope = null;
 
-      // Pass 1: fetch envelope + body structure (no body download yet)
-      // IMPORTANT: no IMAP commands (e.g. messageFlagsAdd) inside this loop —
-      // imapflow deadlocks if you issue a command while a FETCH is in progress.
-      for await (const msg of client.fetch({ uid }, { envelope: true, flags: true, bodyStructure: true })) {
+      // Fetch the full raw source — no other IMAP commands inside this loop
+      // (imapflow deadlocks if you call another command while FETCH is in-flight)
+      for await (const msg of client.fetch({ uid }, { source: true, envelope: true })) {
+        rawSource = msg.source;
         envelope = msg.envelope;
-        bodyStructure = msg.bodyStructure;
       }
 
-      // Mark as seen now that the fetch loop has fully completed
+      // Mark as seen only after the fetch loop has fully completed
       await client.messageFlagsAdd({ uid }, ['\\Seen']).catch(() => {});
 
-      // Determine which IMAP sections hold the text parts (with encoding/charset meta)
-      const { html: htmlMeta, text: textMeta } = findTextParts(bodyStructure, '');
-      const sections = [...new Set([htmlMeta?.section, textMeta?.section].filter(Boolean))];
-      if (sections.length === 0) sections.push('1'); // fallback for unknown structures
+      if (!rawSource) return { html: '', text: '(message not found)', headers: {} };
 
-      // Pass 2: fetch only the needed body parts, then decode properly
-      for await (const msg of client.fetch({ uid }, { bodyParts: sections })) {
-        if (htmlMeta && msg.bodyParts?.get(htmlMeta.section)) {
-          html = decodeBodyPart(msg.bodyParts.get(htmlMeta.section), htmlMeta.encoding, htmlMeta.charset);
-        }
-        if (textMeta && msg.bodyParts?.get(textMeta.section)) {
-          text = decodeBodyPart(msg.bodyParts.get(textMeta.section), textMeta.encoding, textMeta.charset);
-        }
-        // Fallback: if neither section resolved, use whatever came back for '1'
-        if (!html && !text && msg.bodyParts?.get('1')) {
-          text = msg.bodyParts.get('1').toString('utf-8');
-        }
-      }
+      // mailparser handles all MIME types, QP, base64, charsets automatically
+      const parsed = await simpleParser(rawSource);
 
       return {
-        html,
-        text,
+        html: parsed.html || '',
+        text: parsed.text || '',
         headers: {
-          subject: envelope?.subject,
-          from: envelope?.from?.[0],
-          to: envelope?.to?.[0],
-          date: envelope?.date,
+          subject: envelope?.subject ?? parsed.subject ?? '',
+          from: envelope?.from?.[0] ?? null,
+          to: envelope?.to?.[0] ?? null,
+          date: envelope?.date ?? parsed.date ?? null,
         },
       };
     });
