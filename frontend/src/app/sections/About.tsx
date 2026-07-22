@@ -132,18 +132,28 @@ export function About() {
             viewport={{ once: true }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           >
-            {/* Logo mark with glow */}
-            <div className="flex justify-center mb-10">
+            {/* Real project photo */}
+            <div className="relative mb-10 overflow-hidden" style={{ borderRadius: 0 }}>
               <motion.div
-                whileHover={{ scale: 1.08 }}
-                transition={{ type: "spring", stiffness: 300, damping: 18 }}
-                className="w-24 h-24 flex items-center justify-center"
-                style={{
-                  background: "#f5f7fa",
-                  boxShadow: "0 0 0 1px rgba(240,162,14,0.15), 0 8px 32px rgba(240,162,14,0.12)",
-                }}
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="relative h-56 overflow-hidden"
               >
-                <img src={iconLogo} alt="IZY Technologies" className="w-16 h-16 object-contain" />
+                <img
+                  src="/site-images/about-team.jpg"
+                  alt="IZY Technologies team on site"
+                  className="w-full h-full object-cover object-top"
+                />
+                <div
+                  className="absolute inset-0"
+                  style={{ background: "linear-gradient(to top, rgba(4,22,39,0.55) 0%, transparent 60%)" }}
+                />
+                <div
+                  className="absolute bottom-4 left-4 text-white/80 text-xs font-semibold tracking-widest uppercase"
+                  style={{ fontFamily: "var(--font-ui)" }}
+                >
+                  Our Team · On Site
+                </div>
               </motion.div>
             </div>
 

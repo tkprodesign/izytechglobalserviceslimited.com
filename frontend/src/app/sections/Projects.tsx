@@ -7,7 +7,7 @@ const projects = [
     location: "Trans Amadi, Port Harcourt",
     category: "Solar Energy",
     description: "Full design and installation of a 150kW grid-tie solar system for a manufacturing facility, reducing their electricity bill by 78%.",
-    image: "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=900&h=600&fit=crop&auto=format",
+    image: "/site-images/project-commercial-solar.jpg",
     tag: "Commercial",
     featured: true,
   },
@@ -16,7 +16,7 @@ const projects = [
     location: "GRA Phase 2, Port Harcourt",
     category: "Smart Home",
     description: "Complete smart home integration for a 5-bedroom villa including lighting, HVAC control, entertainment and security.",
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=400&fit=crop&auto=format",
+    image: "/site-images/project-smart-home.jpg",
     tag: "Residential",
   },
   {
@@ -24,7 +24,7 @@ const projects = [
     location: "Aba, Abia State",
     category: "Security",
     description: "96-camera CCTV network with biometric access control for a 20-acre industrial facility, monitored 24/7 remotely.",
-    image: "https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=600&h=400&fit=crop&auto=format",
+    image: "/site-images/project-industrial.jpg",
     tag: "Industrial",
   },
   {
@@ -32,7 +32,7 @@ const projects = [
     location: "Abuja, FCT",
     category: "Industrial Wiring",
     description: "Complete electrical infrastructure upgrade for a 200-bed hospital including UPS systems, distribution boards and emergency backup.",
-    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&h=400&fit=crop&auto=format",
+    image: "/site-images/project-power-unit.jpg",
     tag: "Healthcare",
   },
   {
@@ -40,7 +40,7 @@ const projects = [
     location: "Port Harcourt, Rivers",
     category: "Solar + IT",
     description: "Off-grid solar installation and complete IT infrastructure upgrade for a private school, powering 40 classrooms reliably.",
-    image: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=600&h=400&fit=crop&auto=format",
+    image: "/site-images/project-residential-solar.jpg",
     tag: "Education",
   },
   {
@@ -48,7 +48,7 @@ const projects = [
     location: "Peter Odili Road, Port Harcourt",
     category: "Security",
     description: "Luxury hotel security overhaul with smart locks, 128 CCTV cameras, perimeter sensors and centralized monitoring.",
-    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=400&fit=crop&auto=format",
+    image: "/site-images/project-site-team.jpg",
     tag: "Hospitality",
   },
 ];

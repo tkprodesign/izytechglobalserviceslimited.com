@@ -1,0 +1,8 @@
+upload-assets/VID_20231128_163522.mp4 filter=lfs diff=lfs merge=lfs -text
+upload-assets/VID_20240328_221921.mp4 filter=lfs diff=lfs merge=lfs -text
+upload-assets/VID_20240510_182754.mp4 filter=lfs diff=lfs merge=lfs -text
+upload-assets/VID_20240529_121809.mp4 filter=lfs diff=lfs merge=lfs -text
+upload-assets/VID_20240605_190135.mp4 filter=lfs diff=lfs merge=lfs -text
+upload-assets/VID_20251108_121102.mp4 filter=lfs diff=lfs merge=lfs -text
+upload-assets/VID_20260314_193257.mp4 filter=lfs diff=lfs merge=lfs -text
+upload-assets/VID_20260501_141724.mp4 filter=lfs diff=lfs merge=lfs -text

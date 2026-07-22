@@ -10,6 +10,7 @@ import { Services } from "./sections/Services";
 import { Statement } from "./sections/Statement";
 import { About } from "./sections/About";
 import { Projects } from "./sections/Projects";
+import { VideoReel } from "./sections/VideoReel";
 import { Testimonials } from "./sections/Testimonials";
 import { Contact } from "./sections/Contact";
 import { Footer } from "./sections/Footer";
@@ -38,6 +39,7 @@ function PublicSite() {
         <Statement />
         <About />
         <Projects />
+        <VideoReel />
         <Testimonials />
         <Contact />
       </main>
