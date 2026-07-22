@@ -105,6 +105,28 @@ export function DashboardLayout({ children }: Props) {
             Social Media
           </NavLink>
 
+          <NavLink
+            to="/admin/products"
+            className={({ isActive }) =>
+              `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
+            }
+            style={({ isActive }) => isActive ? { background: 'var(--izy-blue)' } : {}}
+          >
+            <ShoppingBag size={16} />
+            Store Products
+          </NavLink>
+
+          <NavLink
+            to="/admin/enquiries"
+            className={({ isActive }) =>
+              `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
+            }
+            style={({ isActive }) => isActive ? { background: 'var(--izy-blue)' } : {}}
+          >
+            <ClipboardList size={16} />
+            Store Enquiries
+          </NavLink>
+
           {dev && (
             <>
               <p className="px-4 text-xs font-semibold uppercase tracking-wider mb-2 mt-5" style={{ color: '#4a6a85' }}>

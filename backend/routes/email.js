@@ -122,11 +122,15 @@ router.get('/message/:accountId/:uid', async (req, res) => {
       let html = '', text = '', envelope = null, bodyStructure = null;
 
       // Pass 1: fetch envelope + body structure (no body download yet)
+      // IMPORTANT: no IMAP commands (e.g. messageFlagsAdd) inside this loop —
+      // imapflow deadlocks if you issue a command while a FETCH is in progress.
       for await (const msg of client.fetch({ uid }, { envelope: true, flags: true, bodyStructure: true })) {
         envelope = msg.envelope;
         bodyStructure = msg.bodyStructure;
-        await client.messageFlagsAdd({ uid }, ['\\Seen']).catch(() => {});
       }
+
+      // Mark as seen now that the fetch loop has fully completed
+      await client.messageFlagsAdd({ uid }, ['\\Seen']).catch(() => {});
 
       // Determine which IMAP sections hold the text parts
       const { html: htmlSection, text: textSection } = findTextParts(bodyStructure, '');
