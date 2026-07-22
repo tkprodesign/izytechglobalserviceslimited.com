@@ -25,6 +25,7 @@ db.connect()
     return initTestimonialsTable();
   })
   .then(() => initSiteSettingsTable())
+  .then(() => initStoreTable())
   .catch((err) => {
     console.error('Failed to connect to database:', err.message);
     process.exit(1);
@@ -138,6 +139,173 @@ function requireDev(req, res, next) {
     next();
   });
 }
+
+async function initStoreTable() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS store_products (
+      id          SERIAL PRIMARY KEY,
+      name        TEXT        NOT NULL,
+      category    TEXT        NOT NULL,
+      tag         TEXT        NOT NULL,
+      unit        TEXT        NOT NULL DEFAULT 'per unit',
+      description TEXT        NOT NULL DEFAULT '',
+      badge       TEXT,
+      rating      SMALLINT    NOT NULL DEFAULT 5,
+      reviews     INT         NOT NULL DEFAULT 0,
+      in_stock    BOOLEAN     NOT NULL DEFAULT TRUE,
+      featured    BOOLEAN     NOT NULL DEFAULT FALSE,
+      sort_order  SMALLINT    NOT NULL DEFAULT 0,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS store_enquiries (
+      id          SERIAL PRIMARY KEY,
+      name        TEXT        NOT NULL,
+      phone       TEXT        NOT NULL,
+      email       TEXT        NOT NULL,
+      company     TEXT,
+      location    TEXT        NOT NULL,
+      message     TEXT,
+      items       JSONB       NOT NULL DEFAULT '[]',
+      status      TEXT        NOT NULL DEFAULT 'new',
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  const { rows } = await db.query('SELECT COUNT(*)::int AS n FROM store_products');
+  if (rows[0].n === 0) {
+    const seed = [
+      ['400W Monocrystalline Solar Panel',  'Solar',     'Solar',     'per panel', 'High-efficiency mono panel with 25-year performance warranty. Ideal for residential and commercial rooftop installations.',   'BESTSELLER', 5, 48, true,  true,  1],
+      ['550W Bifacial Solar Panel',          'Solar',     'Solar',     'per panel', 'Dual-sided bifacial cell technology captures reflected light for up to 30% more energy output.',                             null,         5, 21, true,  false, 2],
+      ['5kVA Hybrid Solar Inverter',         'Inverters', 'Inverters', 'per unit',  'All-in-one hybrid inverter with built-in MPPT charge controller. Supports grid-tie, off-grid and battery backup modes.',     'SALE',       5, 33, true,  true,  3],
+      ['10kVA Three-Phase Inverter',         'Inverters', 'Inverters', 'per unit',  'Industrial-grade three-phase inverter for factories, hospitals and commercial buildings with 24/7 critical loads.',           null,         4, 12, true,  false, 4],
+      ['200Ah Lithium LiFePO4 Battery',      'Batteries', 'Batteries', 'per unit',  'Lithium iron phosphate battery with 6,000+ cycle life. Lightweight, safe and virtually maintenance-free.',                   'NEW',        5, 19, true,  true,  5],
+      ['100Ah AGM Deep Cycle Battery',       'Batteries', 'Batteries', 'per unit',  'Sealed AGM deep cycle battery, ideal for solar backup systems. Spill-proof, vibration-resistant and reliable.',              null,         4, 37, true,  false, 6],
+      ['4-Channel 4K CCTV Kit',              'Security',  'Security',  'per kit',   'Complete kit with 4× 4K outdoor cameras, 4-channel NVR, 1TB HDD and all cables. Night vision up to 30m.',                   'POPULAR',    5, 55, true,  true,  7],
+      ['Smart Wi-Fi Video Doorbell',         'Security',  'Security',  'per unit',  '1080p HD doorbell with two-way audio, motion alerts and cloud recording. Works with any smartphone.',                        null,         4, 26, true,  false, 8],
+      ['Smart Home Starter Pack',            'Smart Home','Smart Home','per pack',  '4 smart switches + Zigbee hub + app control. Turn any home smart — works with Alexa, Google Home and Apple HomeKit.',        'NEW',        5, 14, true,  true,  9],
+      ['50W Smart LED Flood Light',          'Smart Home','Smart Home','per unit',  'App-controlled outdoor flood light with colour temperature adjustment, scheduling and motion trigger.',                        null,         4,  8, false, false, 10],
+      ['6-Outlet Surge Protector Strip',     'Electrical','Electrical','per unit',  'Heavy-duty surge protector with 6 outlets, 2 USB ports and 2500 joule protection rating. 3-metre cable.',                   null,         4, 62, true,  false, 11],
+      ['63A Automatic Transfer Switch',      'Electrical','Electrical','per unit',  'Automatic changeover switch that seamlessly transfers between mains and generator power. Suitable for homes and offices.',    null,         5, 29, true,  true,  12],
+    ];
+    for (const [name, category, tag, unit, description, badge, rating, reviews, in_stock, featured, sort_order] of seed) {
+      await db.query(
+        `INSERT INTO store_products (name,category,tag,unit,description,badge,rating,reviews,in_stock,featured,sort_order)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+        [name, category, tag, unit, description, badge, rating, reviews, in_stock, featured, sort_order]
+      );
+    }
+    console.log('Store products seeded with 12 initial products');
+  }
+}
+
+// ── Store: Products (public) ───────────────────────────────────────────────────
+app.get('/api/store/products', async (_req, res) => {
+  try {
+    const { rows } = await db.query(
+      'SELECT id,name,category,tag,unit,description,badge,rating,reviews,in_stock,featured FROM store_products ORDER BY sort_order ASC, id ASC'
+    );
+    res.json({ data: rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Store: Submit enquiry (public) ────────────────────────────────────────────
+app.post('/api/store/enquire', async (req, res) => {
+  const { name, phone, email, company, location, message, items } = req.body || {};
+  if (!name || !phone || !email || !location || !Array.isArray(items) || items.length === 0)
+    return res.status(400).json({ error: 'name, phone, email, location and items are required' });
+  try {
+    await db.query(
+      `INSERT INTO store_enquiries (name,phone,email,company,location,message,items) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [name, phone, email, company || null, location, message || null, JSON.stringify(items)]
+    );
+    res.status(201).json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Admin: Store enquiries ─────────────────────────────────────────────────────
+app.get('/api/admin/store/enquiries', requireAuth, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 200, 500);
+    const { rows } = await db.query(
+      'SELECT * FROM store_enquiries ORDER BY created_at DESC LIMIT $1', [limit]
+    );
+    res.json({ data: rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/store/enquiries/:id/status', requireAuth, async (req, res) => {
+  const { status } = req.body || {};
+  if (!['new','reviewed','closed'].includes(status)) return res.status(400).json({ error: 'invalid status' });
+  try {
+    await db.query('UPDATE store_enquiries SET status=$1 WHERE id=$2', [status, req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Admin: Store products CRUD ────────────────────────────────────────────────
+app.get('/api/admin/store/products', requireAuth, async (_req, res) => {
+  try {
+    const { rows } = await db.query(
+      'SELECT * FROM store_products ORDER BY sort_order ASC, id ASC'
+    );
+    res.json({ data: rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/store/products', requireAuth, async (req, res) => {
+  const { name, category, tag, unit, description, badge, rating, reviews, in_stock, featured } = req.body || {};
+  if (!name || !category) return res.status(400).json({ error: 'name and category required' });
+  try {
+    const { rows } = await db.query(
+      `INSERT INTO store_products (name,category,tag,unit,description,badge,rating,reviews,in_stock,featured)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+      [name, category, tag || category, unit || 'per unit', description || '', badge || null,
+       rating ?? 5, reviews ?? 0, in_stock !== false, featured === true]
+    );
+    res.status(201).json({ data: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/store/products/:id', requireAuth, async (req, res) => {
+  const { name, category, tag, unit, description, badge, rating, reviews, in_stock, featured } = req.body || {};
+  if (!name || !category) return res.status(400).json({ error: 'name and category required' });
+  try {
+    const { rows } = await db.query(
+      `UPDATE store_products SET name=$1,category=$2,tag=$3,unit=$4,description=$5,badge=$6,
+       rating=$7,reviews=$8,in_stock=$9,featured=$10 WHERE id=$11 RETURNING *`,
+      [name, category, tag || category, unit || 'per unit', description || '', badge || null,
+       rating ?? 5, reviews ?? 0, in_stock !== false, featured === true, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'not found' });
+    res.json({ data: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/store/products/:id', requireAuth, async (req, res) => {
+  try {
+    await db.query('DELETE FROM store_products WHERE id=$1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ── Testimonials (public) ─────────────────────────────────────────────────────
 app.get('/api/testimonials', async (_req, res) => {

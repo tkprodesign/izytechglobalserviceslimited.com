@@ -26,6 +26,8 @@ import { DevSystemPage } from "./admin/DevSystemPage";
 import { EmailPage } from "./admin/EmailPage";
 import { SocialsPage } from "./admin/SocialsPage";
 import { ProtectedRoute } from "./admin/ProtectedRoute";
+import { StoreProductsPage } from "./admin/StoreProductsPage";
+import { StoreEnquiriesPage } from "./admin/StoreEnquiriesPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ServicesPage } from "./pages/ServicesPage";
 import { ProjectsPage } from "./pages/ProjectsPage";

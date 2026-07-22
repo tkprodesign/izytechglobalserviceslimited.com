@@ -9,6 +9,8 @@ import {
   Activity,
   Inbox,
   Share2,
+  ShoppingBag,
+  ClipboardList,
 } from 'lucide-react';
 
 interface Props {
