@@ -26,6 +26,8 @@ db.connect()
   })
   .then(() => initSiteSettingsTable())
   .then(() => initStoreTable())
+  .then(() => initMilestonesTable())
+  .then(() => initFounderTable())
   .catch((err) => {
     console.error('Failed to connect to database:', err.message);
     process.exit(1);
@@ -471,6 +473,155 @@ app.post('/api/quote', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// ── Milestones ────────────────────────────────────────────────────────────────
+async function initMilestonesTable() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS milestones (
+      id          SERIAL PRIMARY KEY,
+      year        TEXT        NOT NULL,
+      title       TEXT        NOT NULL,
+      description TEXT        NOT NULL DEFAULT '',
+      icon_name   TEXT        NOT NULL DEFAULT 'Star',
+      sort_order  SMALLINT    NOT NULL DEFAULT 0,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  const { rows } = await db.query('SELECT COUNT(*)::int AS n FROM milestones');
+  if (rows[0].n === 0) {
+    const seed = [
+      ['Late 2017', 'The Idea Takes Shape',        'A vision to bring reliable solar energy to Nigerian communities begins to take shape — driven by the belief that energy independence should be accessible to all.',                                                                                              'Lightbulb',  1],
+      ['March 2018','Official Incorporation',       'IZY Technologies Global Services Limited is officially founded by Israel Ideozu, launching with a clear mission: accessible, reliable solar energy solutions for every Nigerian home and business.',                                                           'Building2',  2],
+      ['2019',      'First Major Installations',    'First major residential and commercial solar installations completed across Rivers State, earning early recognition for engineering quality and professional service delivery.',                                                                                 'Zap',        3],
+      ['2020',      'Expanding Our Reach',          'Service portfolio expands to include Smart Home Automation and CCTV Security Systems, establishing IZY as a full-spectrum energy and technology company.',                                                                                                     'Home',       4],
+      ['2022',      '500+ Installations Milestone', 'Celebrated 500 successful installations across residential and commercial clients — a milestone affirming our reputation for excellence and reliability.',                                                                                                     'TrendingUp', 5],
+      ['2023',      'Industry Recognition',         'Surpassed 1,000 installations and received industry recognition for innovation and outstanding contribution to Nigeria\'s renewable energy sector.',                                                                                                            'Award',      6],
+      ['2024',      'Nationwide & Community Impact','Deepened reach across all 36 states and FCT while launching community solar education programmes, advocating for sustainability and energy independence nationwide.',                                                                                           'Globe',      7],
+    ];
+    for (const [year, title, description, icon_name, sort_order] of seed) {
+      await db.query(
+        `INSERT INTO milestones (year, title, description, icon_name, sort_order) VALUES ($1,$2,$3,$4,$5)`,
+        [year, title, description, icon_name, sort_order]
+      );
+    }
+    console.log('Milestones table seeded with initial data');
+  }
+}
+
+// ── Founder profile ───────────────────────────────────────────────────────────
+async function initFounderTable() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS founder_profile (
+      id         SERIAL PRIMARY KEY,
+      name       TEXT NOT NULL DEFAULT '',
+      title      TEXT NOT NULL DEFAULT '',
+      bio        TEXT NOT NULL DEFAULT '',
+      photo_url  TEXT NOT NULL DEFAULT '',
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  const { rows } = await db.query('SELECT COUNT(*)::int AS n FROM founder_profile');
+  if (rows[0].n === 0) {
+    await db.query(
+      `INSERT INTO founder_profile (name, title, bio, photo_url) VALUES ($1,$2,$3,$4)`,
+      [
+        'Israel Ideozu',
+        'Founder & Chief Executive Officer',
+        'Israel Ideozu founded IZY Technologies Global Services Limited on March 8, 2018, driven by a conviction that quality solar energy and technology solutions should be within reach for every Nigerian. Under his leadership, the company has grown from a small team of solar enthusiasts into a trusted name across the country, completing thousands of installations and earning recognition for innovation in Nigeria\'s renewable energy sector. His commitment to excellence, community impact, and a cleaner future continues to shape every project IZY undertakes.',
+        '',
+      ]
+    );
+    console.log('Founder profile seeded');
+  }
+}
+
+// ── Public: Milestones ────────────────────────────────────────────────────────
+app.get('/api/public/milestones', async (_req, res) => {
+  try {
+    const { rows } = await db.query(
+      'SELECT id, year, title, description, icon_name, sort_order FROM milestones ORDER BY sort_order ASC, id ASC'
+    );
+    res.json({ data: rows });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── Admin: Milestones CRUD ────────────────────────────────────────────────────
+app.get('/api/admin/milestones', requireAuth, async (_req, res) => {
+  try {
+    const { rows } = await db.query('SELECT * FROM milestones ORDER BY sort_order ASC, id ASC');
+    res.json({ data: rows });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/admin/milestones', requireAuth, async (req, res) => {
+  const { year, title, description, icon_name, sort_order } = req.body || {};
+  if (!year || !title) return res.status(400).json({ error: 'year and title required' });
+  try {
+    const { rows } = await db.query(
+      `INSERT INTO milestones (year, title, description, icon_name, sort_order) VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [year, title, description || '', icon_name || 'Star', sort_order ?? 0]
+    );
+    res.status(201).json({ data: rows[0] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/admin/milestones/:id', requireAuth, async (req, res) => {
+  const { year, title, description, icon_name, sort_order } = req.body || {};
+  if (!year || !title) return res.status(400).json({ error: 'year and title required' });
+  try {
+    const { rows } = await db.query(
+      `UPDATE milestones SET year=$1, title=$2, description=$3, icon_name=$4, sort_order=$5 WHERE id=$6 RETURNING *`,
+      [year, title, description || '', icon_name || 'Star', sort_order ?? 0, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'not found' });
+    res.json({ data: rows[0] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/admin/milestones/:id', requireAuth, async (req, res) => {
+  try {
+    await db.query('DELETE FROM milestones WHERE id=$1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── Public: Founder profile ───────────────────────────────────────────────────
+app.get('/api/public/founder', async (_req, res) => {
+  try {
+    const { rows } = await db.query(
+      'SELECT name, title, bio, photo_url FROM founder_profile ORDER BY id LIMIT 1'
+    );
+    res.json({ data: rows[0] || null });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── Admin: Founder profile ────────────────────────────────────────────────────
+app.get('/api/admin/founder', requireAuth, async (_req, res) => {
+  try {
+    const { rows } = await db.query('SELECT * FROM founder_profile ORDER BY id LIMIT 1');
+    res.json({ data: rows[0] || null });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/admin/founder', requireAuth, async (req, res) => {
+  const { name, title, bio, photo_url } = req.body || {};
+  try {
+    const existing = await db.query('SELECT id FROM founder_profile LIMIT 1');
+    if (existing.rows.length) {
+      const { rows } = await db.query(
+        `UPDATE founder_profile SET name=$1, title=$2, bio=$3, photo_url=$4, updated_at=NOW() WHERE id=$5 RETURNING *`,
+        [name || '', title || '', bio || '', photo_url || '', existing.rows[0].id]
+      );
+      res.json({ data: rows[0] });
+    } else {
+      const { rows } = await db.query(
+        `INSERT INTO founder_profile (name, title, bio, photo_url) VALUES ($1,$2,$3,$4) RETURNING *`,
+        [name || '', title || '', bio || '', photo_url || '']
+      );
+      res.status(201).json({ data: rows[0] });
+    }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ── Dev: Email management ─────────────────────────────────────────────────────

@@ -11,6 +11,8 @@ import {
   Share2,
   ShoppingBag,
   ClipboardList,
+  Milestone,
+  UserCircle,
 } from 'lucide-react';
 
 interface Props {
@@ -125,6 +127,28 @@ export function DashboardLayout({ children }: Props) {
           >
             <ClipboardList size={16} />
             Store Enquiries
+          </NavLink>
+
+          <NavLink
+            to="/admin/milestones"
+            className={({ isActive }) =>
+              `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
+            }
+            style={({ isActive }) => isActive ? { background: 'var(--izy-blue)' } : {}}
+          >
+            <Milestone size={16} />
+            Milestones
+          </NavLink>
+
+          <NavLink
+            to="/admin/founder"
+            className={({ isActive }) =>
+              `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
+            }
+            style={({ isActive }) => isActive ? { background: 'var(--izy-blue)' } : {}}
+          >
+            <UserCircle size={16} />
+            Founder Profile
           </NavLink>
 
           <NavLink

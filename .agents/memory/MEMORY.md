@@ -1,1 +1,2 @@
 - [Project Constitution](project-constitution.md) — IZY Technologies repo charter: GitHub is source of truth, deployment stack, dev rules
+- [Company Bio Decisions](company-bio-decisions.md) — Founding date (2018), tagline, install count, milestones/founder in DB, SEO still noindex

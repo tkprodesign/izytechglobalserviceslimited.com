@@ -3,10 +3,10 @@ import { ArrowRight } from "lucide-react";
 import { motion, useScroll, useTransform } from "motion/react";
 
 const stats = [
-  { value: 500, suffix: "+", label: "Projects Completed" },
-  { value: 12, suffix: "+", label: "Years Experience" },
-  { value: 98, suffix: "%", label: "Client Satisfaction" },
-  { value: 24, suffix: "/7", label: "Support Available" },
+  { value: 1000, suffix: "+", label: "Installations" },
+  { value: 8,    suffix: "+", label: "Years of Excellence" },
+  { value: 98,   suffix: "%", label: "Client Satisfaction" },
+  { value: 24,   suffix: "/7", label: "Support Available" },
 ];
 
 function AnimatedStat({ value, suffix, label, delay }: { value: number; suffix: string; label: string; delay: number }) {
@@ -36,7 +36,11 @@ function AnimatedStat({ value, suffix, label, delay }: { value: number; suffix: 
   );
 }
 
-const words = ["Power", "The", "Future."];
+// Full tagline split into two animated lines
+// Line 1: "Power the Future,"
+// Line 2: "Future-Ready Solutions," + "Today" (highlighted)
+const line1 = ["Power", "the", "Future,"];
+const line2 = ["Future-Ready", "Solutions,"];
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
@@ -61,7 +65,6 @@ export function Hero() {
               "linear-gradient(100deg, rgba(4,22,39,0.95) 0%, rgba(4,22,39,0.80) 45%, rgba(4,22,39,0.38) 100%)",
           }}
         />
-        {/* Bottom fade for stats bar */}
         <div className="absolute bottom-0 left-0 right-0 h-40"
           style={{ background: "linear-gradient(to top, rgba(4,22,39,0.85), transparent)" }} />
       </motion.div>
@@ -69,7 +72,7 @@ export function Hero() {
       {/* Content */}
       <motion.div className="relative flex-1 flex flex-col" style={{ opacity }}>
         <div className="flex-1 max-w-7xl mx-auto w-full px-6 flex items-center">
-          <div className="max-w-2xl pt-36 pb-20 lg:pt-0 lg:pb-0">
+          <div className="max-w-3xl pt-36 pb-20 lg:pt-0 lg:pb-0">
 
             {/* Eyebrow */}
             <motion.div
@@ -87,44 +90,61 @@ export function Hero() {
               </span>
             </motion.div>
 
-            {/* Headline — word by word */}
+            {/* Headline — full tagline animated word by word */}
             <h1
-              className="text-white mb-3 leading-[1.0]"
+              className="text-white mb-3 leading-[1.05]"
               style={{
                 fontFamily: "var(--font-display)",
-                fontSize: "clamp(3.2rem, 7.5vw, 6rem)",
+                fontSize: "clamp(2.8rem, 6.5vw, 5.5rem)",
                 fontWeight: 800,
                 letterSpacing: "-0.03em",
               }}
             >
-              {words.map((word, i) => (
+              {/* Line 1 */}
+              <span className="block">
+                {line1.map((word, i) => (
+                  <motion.span
+                    key={word}
+                    initial={{ opacity: 0, y: 40, skewY: 4 }}
+                    animate={{ opacity: 1, y: 0, skewY: 0 }}
+                    transition={{ duration: 0.7, delay: 0.15 + i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                    className="inline-block mr-[0.2em]"
+                  >
+                    {word}
+                  </motion.span>
+                ))}
+              </span>
+              {/* Line 2 */}
+              <span className="block">
+                {line2.map((word, i) => (
+                  <motion.span
+                    key={word}
+                    initial={{ opacity: 0, y: 40, skewY: 4 }}
+                    animate={{ opacity: 1, y: 0, skewY: 0 }}
+                    transition={{ duration: 0.7, delay: 0.45 + i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                    className="inline-block mr-[0.2em]"
+                  >
+                    {word}
+                  </motion.span>
+                ))}
+                {/* "Today" highlighted */}
                 <motion.span
-                  key={word}
                   initial={{ opacity: 0, y: 40, skewY: 4 }}
                   animate={{ opacity: 1, y: 0, skewY: 0 }}
-                  transition={{ duration: 0.7, delay: 0.15 + i * 0.12, ease: [0.16, 1, 0.3, 1] }}
-                  className="inline-block mr-[0.22em]"
+                  transition={{ duration: 0.7, delay: 0.65, ease: [0.16, 1, 0.3, 1] }}
+                  className="inline-block"
+                  style={{ color: "#F0A20E" }}
                 >
-                  {word}
+                  Today
                 </motion.span>
-              ))}
-              <br />
-              <motion.span
-                initial={{ opacity: 0, y: 40, skewY: 4 }}
-                animate={{ opacity: 1, y: 0, skewY: 0 }}
-                transition={{ duration: 0.7, delay: 0.55, ease: [0.16, 1, 0.3, 1] }}
-                className="inline-block"
-                style={{ color: "#F0A20E" }}
-              >
-                Today.
-              </motion.span>
+              </span>
             </h1>
 
             {/* Subtext */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.65 }}
+              transition={{ duration: 0.7, delay: 0.75 }}
               className="text-white/55 text-lg leading-relaxed max-w-xl mb-10"
               style={{ fontFamily: "var(--font-body)" }}
             >
@@ -135,7 +155,7 @@ export function Hero() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.75 }}
+              transition={{ duration: 0.6, delay: 0.85 }}
               className="flex flex-wrap gap-4"
             >
               <a
@@ -168,7 +188,7 @@ export function Hero() {
         >
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 lg:grid-cols-4 divide-x divide-white/10">
             {stats.map((s, i) => (
-              <AnimatedStat key={s.label} {...s} delay={0.8 + i * 0.1} />
+              <AnimatedStat key={s.label} {...s} delay={0.9 + i * 0.1} />
             ))}
           </div>
         </div>

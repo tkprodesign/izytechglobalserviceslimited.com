@@ -28,6 +28,8 @@ import { SocialsPage } from "./admin/SocialsPage";
 import { ProtectedRoute } from "./admin/ProtectedRoute";
 import { StoreProductsPage } from "./admin/StoreProductsPage";
 import { StoreEnquiriesPage } from "./admin/StoreEnquiriesPage";
+import { MilestonesPage } from "./admin/MilestonesPage";
+import { FounderPage } from "./admin/FounderPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ServicesPage } from "./pages/ServicesPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
@@ -98,6 +100,14 @@ export default function App() {
       } />
       <Route path="/admin/enquiries" element={
         <ProtectedRoute><StoreEnquiriesPage /></ProtectedRoute>
+      } />
+
+      {/* Company content — both roles */}
+      <Route path="/admin/milestones" element={
+        <ProtectedRoute><MilestonesPage /></ProtectedRoute>
+      } />
+      <Route path="/admin/founder" element={
+        <ProtectedRoute><FounderPage /></ProtectedRoute>
       } />
 
       {/* Developer-only */}

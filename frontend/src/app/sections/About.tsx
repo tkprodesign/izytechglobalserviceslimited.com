@@ -1,7 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle, Award, Users, Globe } from "lucide-react";
+import {
+  CheckCircle, Award, Users, Globe, Lightbulb, Building2, Zap,
+  Home, TrendingUp, Star, Rocket, Shield, Calendar, Target, Compass,
+  Sun, Wrench, Package, Flag, Heart, Layers, Map, Settings, User,
+} from "lucide-react";
 import { motion, useInView } from "motion/react";
-import iconLogo from "../../imports/izy-technologies_icon_v1.png";
+
+const API = import.meta.env.VITE_API_URL ?? '';
+
+// ── Icon map for DB-driven milestones ────────────────────────────────────────
+const ICON_MAP: Record<string, React.ElementType> = {
+  Lightbulb, Building2, Zap, Home, TrendingUp, Award, Globe, Star, Rocket,
+  Shield, Calendar, Target, Compass, Sun, Wrench, Package, Flag, Heart,
+  Layers, Map, Settings, User, CheckCircle, Users,
+};
 
 const whyUs = [
   {
@@ -26,14 +38,21 @@ const whyUs = [
   },
 ];
 
-const milestones = [
-  { year: "2012", event: "Company founded in Port Harcourt" },
-  { year: "2015", event: "Expanded to industrial wiring sector" },
-  { year: "2018", event: "Launched solar division" },
-  { year: "2020", event: "Smart home & CCTV integration rollout" },
-  { year: "2023", event: "500+ projects milestone reached" },
-  { year: "2024", event: "Nationwide expansion to all 36 states" },
-];
+interface Milestone {
+  id: number;
+  year: string;
+  title: string;
+  description: string;
+  icon_name: string;
+  sort_order: number;
+}
+
+interface Founder {
+  name: string;
+  title: string;
+  bio: string;
+  photo_url: string;
+}
 
 function Counter({ to, suffix }: { to: number; suffix: string }) {
   const [count, setCount] = useState(0);
@@ -58,10 +77,26 @@ function Counter({ to, suffix }: { to: number; suffix: string }) {
 }
 
 export function About() {
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [founder, setFounder] = useState<Founder | null>(null);
+
+  useEffect(() => {
+    fetch(`${API}/api/public/milestones`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.data) setMilestones(d.data); })
+      .catch(() => {});
+
+    fetch(`${API}/api/public/founder`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.data) setFounder(d.data); })
+      .catch(() => {});
+  }, []);
+
   return (
     <section id="about" className="py-28 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
-        {/* About intro */}
+
+        {/* ── About intro ─────────────────────────────────────────────────── */}
         <div className="grid lg:grid-cols-2 gap-20 items-center mb-28">
           {/* Left */}
           <motion.div
@@ -89,18 +124,18 @@ export function About() {
                 letterSpacing: "-0.025em",
               }}
             >
-              Built on Expertise,<br />
-              Driven by Innovation
+              Illuminating the Future<br />
+              of Solar Energy
             </h2>
             <div className="space-y-4 text-[#64748b] leading-relaxed text-[0.95rem]" style={{ fontFamily: "var(--font-body)" }}>
               <p>
-                Izy Technologies Global Services Limited is a leading Nigerian technology and energy company dedicated to powering homes, businesses and industries with smart, sustainable solutions.
+                Since our inception in 2018, IZY Technologies Global Services Limited has emerged as a leader in the solar energy sector, dedicated to providing innovative and sustainable energy solutions across Nigeria.
               </p>
               <p>
-                Founded on the principle that technology should be accessible, reliable and impactful, we have grown from a small electrical firm to a comprehensive tech services company serving clients across the country.
+                With a strong commitment to excellence and customer satisfaction, we have grown from a small team of solar enthusiasts into a comprehensive energy and technology company — transforming the way individuals and businesses harness solar power for a cleaner, more sustainable future.
               </p>
               <p>
-                Our multidisciplinary team brings together electrical engineers, solar specialists, smart home integrators and security experts — all under one roof for a seamless client experience.
+                Our mission is to empower communities through accessible and reliable solar energy solutions, reducing dependence on fossil fuels and enhancing energy independence for every client we serve.
               </p>
             </div>
             <div className="mt-8 flex flex-wrap gap-4">
@@ -125,15 +160,14 @@ export function About() {
             </div>
           </motion.div>
 
-          {/* Right — visual + timeline */}
+          {/* Right — photo + timeline */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           >
-            {/* Real project photo */}
-            <div className="relative mb-10 overflow-hidden" style={{ borderRadius: 0 }}>
+            <div className="relative mb-10 overflow-hidden">
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
@@ -157,36 +191,44 @@ export function About() {
               </motion.div>
             </div>
 
-            {/* Timeline */}
+            {/* Timeline — DB-driven */}
             <div className="space-y-0">
-              {milestones.map((m, i) => (
-                <motion.div
-                  key={m.year}
-                  initial={{ opacity: 0, x: 16 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.07, ease: [0.16, 1, 0.3, 1] }}
-                  className="flex items-start gap-5 py-4 border-b border-[#f0f1f3] last:border-0 group"
-                >
-                  <div
-                    className="flex-shrink-0 w-12 text-right text-xs font-bold text-[#0d1b2e]/35 pt-0.5 group-hover:text-[#F0A20E] transition-colors"
-                    style={{ fontFamily: "var(--font-display)" }}
+              {milestones.map((m, i) => {
+                const IconComp = ICON_MAP[m.icon_name] || Star;
+                return (
+                  <motion.div
+                    key={m.id}
+                    initial={{ opacity: 0, x: 16 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.07, ease: [0.16, 1, 0.3, 1] }}
+                    className="flex items-start gap-5 py-4 border-b border-[#f0f1f3] last:border-0 group"
                   >
-                    {m.year}
-                  </div>
-                  <div className="flex-shrink-0 mt-1.5">
-                    <div className="w-2 h-2 rounded-full transition-transform group-hover:scale-125" style={{ background: "#F0A20E" }} />
-                  </div>
-                  <p className="text-[#0d1b2e]/65 text-sm leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-                    {m.event}
-                  </p>
-                </motion.div>
-              ))}
+                    <div
+                      className="flex-shrink-0 w-16 text-right text-xs font-bold text-[#0d1b2e]/35 pt-0.5 group-hover:text-[#F0A20E] transition-colors leading-tight"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      {m.year}
+                    </div>
+                    <div className="flex-shrink-0 mt-1 p-1 rounded transition-colors" style={{ color: "#F0A20E" }}>
+                      <IconComp size={13} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[#0d1b2e] text-sm font-semibold mb-0.5 leading-tight" style={{ fontFamily: "var(--font-display)" }}>
+                        {m.title}
+                      </p>
+                      <p className="text-[#0d1b2e]/55 text-xs leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                        {m.description}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           </motion.div>
         </div>
 
-        {/* Animated stat counters */}
+        {/* ── Animated stat counters ───────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -195,11 +237,11 @@ export function About() {
           className="mb-20 grid grid-cols-2 lg:grid-cols-4 gap-0 border border-[#e8edf3] divide-x divide-[#e8edf3]"
         >
           {[
-            { to: 500, suffix: "+", label: "Projects Completed" },
-            { to: 12, suffix: "+", label: "Years of Excellence" },
-            { to: 36, suffix: "", label: "States Covered" },
-            { to: 98, suffix: "%", label: "Client Satisfaction" },
-          ].map(({ to, suffix, label }, i) => (
+            { to: 1000, suffix: "+", label: "Installations" },
+            { to: 8,    suffix: "+", label: "Years of Excellence" },
+            { to: 36,   suffix: "",  label: "States Covered" },
+            { to: 98,   suffix: "%", label: "Client Satisfaction" },
+          ].map(({ to, suffix, label }) => (
             <div key={label} className="px-8 py-7 text-center">
               <div
                 className="mb-1"
@@ -220,7 +262,72 @@ export function About() {
           ))}
         </motion.div>
 
-        {/* Why Choose Us */}
+        {/* ── Founder section ──────────────────────────────────────────────── */}
+        {founder && founder.name && (
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            className="mb-20 border border-[#e8edf3] overflow-hidden"
+          >
+            <div className="grid lg:grid-cols-3">
+              {/* Photo */}
+              <div
+                className="flex items-center justify-center p-10 lg:p-14"
+                style={{ background: "linear-gradient(135deg, #0d1b2e 0%, #1a3a5c 100%)" }}
+              >
+                {founder.photo_url ? (
+                  <img
+                    src={founder.photo_url}
+                    alt={founder.name}
+                    className="w-36 h-36 rounded-full object-cover object-top ring-4"
+                    style={{ ringColor: "rgba(240,162,14,0.4)" }}
+                  />
+                ) : (
+                  <div
+                    className="w-36 h-36 rounded-full flex items-center justify-center text-white"
+                    style={{ background: "rgba(240,162,14,0.15)", border: "2px dashed rgba(240,162,14,0.4)" }}
+                  >
+                    <User size={48} style={{ color: "rgba(240,162,14,0.6)" }} />
+                  </div>
+                )}
+              </div>
+
+              {/* Details */}
+              <div className="lg:col-span-2 p-10 lg:p-14 flex flex-col justify-center">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-6 h-px" style={{ background: "#F0A20E" }} />
+                  <span
+                    className="text-xs font-semibold tracking-widest uppercase"
+                    style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}
+                  >
+                    Our Founder
+                  </span>
+                </div>
+                <h3
+                  className="text-[#0d1b2e] mb-1"
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontSize: "clamp(1.4rem, 2.5vw, 2rem)",
+                    fontWeight: 800,
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  {founder.name}
+                </h3>
+                <p className="text-sm font-medium mb-5" style={{ color: "#F0A20E", fontFamily: "var(--font-ui)" }}>
+                  {founder.title}
+                </p>
+                <p className="text-[#64748b] leading-relaxed text-[0.95rem]" style={{ fontFamily: "var(--font-body)" }}>
+                  {founder.bio}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── Why Choose Us ────────────────────────────────────────────────── */}
         <div>
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-4">
