@@ -4,7 +4,8 @@ import { DashboardLayout } from './DashboardLayout';
 import { getToken, removeToken } from '../../lib/auth';
 import {
   Mail, Send, RefreshCw, PenSquare, X, ChevronRight,
-  Inbox, AlertCircle, Loader2, Reply, Trash2
+  Inbox, AlertCircle, Loader2, Reply, Trash2,
+  FileEdit, ShieldAlert, Archive,
 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
@@ -37,6 +38,22 @@ interface EmailBody {
     date?: string;
   };
 }
+
+interface Folder {
+  name: string;   // display label
+  imap: string;   // IMAP mailbox name
+  icon: React.ReactNode;
+  sendOnly?: boolean; // show even for send-only accounts
+}
+
+const FOLDERS: Folder[] = [
+  { name: 'Inbox',   imap: 'INBOX',   icon: <Inbox      size={14} /> },
+  { name: 'Drafts',  imap: 'Drafts',  icon: <FileEdit   size={14} /> },
+  { name: 'Sent',    imap: 'Sent',    icon: <Send       size={14} />, sendOnly: true },
+  { name: 'Spam',    imap: 'Spam',    icon: <ShieldAlert size={14} /> },
+  { name: 'Trash',   imap: 'Trash',   icon: <Trash2     size={14} /> },
+  { name: 'Archive', imap: 'Archive', icon: <Archive    size={14} /> },
+];
 
 function fmt(d: string | null) {
   if (!d) return '';
@@ -219,6 +236,7 @@ export function EmailPage() {
   const navigate = useNavigate();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [activeAccount, setActiveAccount] = useState<Account | null>(null);
+  const [activeFolder, setActiveFolder] = useState<Folder>(FOLDERS[0]);
   const [messages, setMessages] = useState<EmailMeta[]>([]);
   const [selected, setSelected] = useState<EmailBody | null>(null);
   const [selectedMeta, setSelectedMeta] = useState<EmailMeta | null>(null);
@@ -245,17 +263,21 @@ export function EmailPage() {
       });
   }, []);
 
-  const loadInbox = useCallback(async (acct: Account) => {
+  const loadFolder = useCallback(async (acct: Account, folder: Folder) => {
     setMessages([]);
     setSelected(null);
     setSelectedMeta(null);
     setInboxError('');
-    if (acct.sendOnly) return;
+    if (acct.sendOnly && !folder.sendOnly) return;
+    if (acct.sendOnly) return; // send-only accounts have no IMAP
     setLoadingInbox(true);
     try {
-      const res = await fetch(`${API}/api/dev/email/inbox/${acct.id}`, { headers });
+      const res = await fetch(
+        `${API}/api/dev/email/messages/${acct.id}/${encodeURIComponent(folder.imap)}`,
+        { headers }
+      );
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to load inbox');
+      if (!res.ok) throw new Error(data.error || 'Failed to load folder');
       setMessages(data.messages || []);
     } catch (err: unknown) {
       setInboxError(err instanceof Error ? err.message : 'Failed to load');
@@ -264,9 +286,16 @@ export function EmailPage() {
     }
   }, [token]);
 
+  // Reload when account or folder changes
   useEffect(() => {
-    if (activeAccount) loadInbox(activeAccount);
-  }, [activeAccount]);
+    if (activeAccount) loadFolder(activeAccount, activeFolder);
+  }, [activeAccount, activeFolder]);
+
+  // Reset to Inbox when switching accounts
+  function switchAccount(acct: Account) {
+    setActiveAccount(acct);
+    setActiveFolder(FOLDERS[0]);
+  }
 
   async function openMessage(msg: EmailMeta) {
     if (!activeAccount) return;
@@ -274,10 +303,12 @@ export function EmailPage() {
     setSelected(null);
     setLoadingMsg(true);
     try {
-      const res = await fetch(`${API}/api/dev/email/message/${activeAccount.id}/${msg.uid}`, { headers });
+      const res = await fetch(
+        `${API}/api/dev/email/message/${activeAccount.id}/${msg.uid}?folder=${encodeURIComponent(activeFolder.imap)}`,
+        { headers }
+      );
       const data = await res.json();
       setSelected(data);
-      // Mark as seen in state
       setMessages(prev => prev.map(m => m.uid === msg.uid ? { ...m, seen: true } : m));
     } catch {
       setSelected({ html: '', text: '(Could not load message body)', headers: {} });
@@ -297,20 +328,27 @@ export function EmailPage() {
 
   const unread = messages.filter(m => !m.seen).length;
 
+  // Visible folders depend on whether account is send-only
+  const visibleFolders = activeAccount?.sendOnly
+    ? [] // send-only: no folders (compose-only UI shown)
+    : FOLDERS;
+
   return (
     <DashboardLayout>
       <div className="flex h-screen overflow-hidden" style={{ background: '#f0f3f8' }}>
 
-        {/* Account sidebar */}
-        <div className="w-52 flex-shrink-0 border-r overflow-y-auto" style={{ background: '#fff', borderColor: '#eef1f6' }}>
-          <div className="px-4 py-5 border-b" style={{ borderColor: '#eef1f6' }}>
+        {/* Left sidebar: Mailboxes + Folders */}
+        <div className="w-52 flex-shrink-0 border-r overflow-y-auto flex flex-col" style={{ background: '#fff', borderColor: '#eef1f6' }}>
+
+          {/* Mailboxes section */}
+          <div className="px-4 py-4 border-b" style={{ borderColor: '#eef1f6' }}>
             <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#5a6a82' }}>Mailboxes</p>
           </div>
           <div className="py-2">
             {accounts.map(acct => (
               <button
                 key={acct.id}
-                onClick={() => setActiveAccount(acct)}
+                onClick={() => switchAccount(acct)}
                 className="w-full flex items-center gap-3 px-4 py-2.5 transition-colors text-left"
                 style={{
                   background: activeAccount?.id === acct.id ? '#f0f6ff' : 'transparent',
@@ -330,6 +368,49 @@ export function EmailPage() {
               </button>
             ))}
           </div>
+
+          {/* Folders section — shown for accounts with IMAP */}
+          {visibleFolders.length > 0 && (
+            <>
+              <div className="px-4 pt-4 pb-2 border-t" style={{ borderColor: '#eef1f6' }}>
+                <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#5a6a82' }}>Folders</p>
+              </div>
+              <div className="pb-3">
+                {visibleFolders.map(folder => {
+                  const isActive = activeFolder.imap === folder.imap;
+                  return (
+                    <button
+                      key={folder.imap}
+                      onClick={() => setActiveFolder(folder)}
+                      className="w-full flex items-center gap-3 px-4 py-2 transition-colors text-left"
+                      style={{
+                        background: isActive ? '#f0f6ff' : 'transparent',
+                        borderRight: isActive ? `3px solid ${activeAccount?.color || '#1a56db'}` : '3px solid transparent',
+                      }}
+                    >
+                      <span style={{ color: isActive ? (activeAccount?.color || '#1a56db') : '#8fadc8' }}>
+                        {folder.icon}
+                      </span>
+                      <span
+                        className="text-sm flex-1 text-left"
+                        style={{ color: isActive ? (activeAccount?.color || '#1a56db') : '#3a4a5c', fontWeight: isActive ? 600 : 400 }}
+                      >
+                        {folder.name}
+                      </span>
+                      {folder.imap === 'INBOX' && unread > 0 && (
+                        <span
+                          className="text-xs font-bold px-1.5 py-0.5 rounded-full text-white"
+                          style={{ background: activeAccount?.color || '#1a56db' }}
+                        >
+                          {unread}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Message list */}
@@ -338,7 +419,9 @@ export function EmailPage() {
             <div>
               <p className="font-semibold text-sm" style={{ color: '#041627' }}>
                 {activeAccount?.label || 'Inbox'}
-                {unread > 0 && (
+                {' · '}
+                <span style={{ color: '#8fadc8', fontWeight: 400 }}>{activeFolder.name}</span>
+                {unread > 0 && activeFolder.imap === 'INBOX' && (
                   <span className="ml-2 text-xs font-bold px-1.5 py-0.5 rounded-full text-white" style={{ background: '#1a56db' }}>
                     {unread}
                   </span>
@@ -348,7 +431,7 @@ export function EmailPage() {
             </div>
             <div className="flex items-center gap-1">
               <button
-                onClick={() => activeAccount && loadInbox(activeAccount)}
+                onClick={() => activeAccount && loadFolder(activeAccount, activeFolder)}
                 className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
                 title="Refresh"
               >
@@ -391,7 +474,7 @@ export function EmailPage() {
             ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-48">
                 <Inbox size={28} style={{ color: '#dce8ff' }} />
-                <p className="text-sm mt-3" style={{ color: '#8fadc8' }}>No messages</p>
+                <p className="text-sm mt-3" style={{ color: '#8fadc8' }}>No messages in {activeFolder.name}</p>
               </div>
             ) : (
               <div>

@@ -94,8 +94,9 @@ router.get('/message/:accountId/:uid', async (req, res) => {
 
   try {
     const uid = parseInt(req.params.uid, 10);
+    const folder = String(req.query.folder || 'INBOX');
     const result = await withImap(acct.email, acct.password, async (client) => {
-      await client.mailboxOpen('INBOX');
+      await client.mailboxOpen(folder);
       let rawSource = null;
       let envelope = null;
 
@@ -165,6 +166,50 @@ router.post('/send', async (req, res) => {
   } catch (err) {
     console.error('Resend send error:', err.message);
     return res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Messages by folder (generic) ──────────────────────────────────────────────
+// Used by the Email Manager for Inbox, Drafts, Sent, Spam, Trash, Archive.
+// Folder name is passed as a URL segment; use encodeURIComponent on the client.
+router.get('/messages/:accountId/*', async (req, res) => {
+  const accounts = getAccounts();
+  const acct = accounts.find(a => a.id === req.params.accountId);
+  if (!acct) return res.status(404).json({ error: 'Account not found' });
+  if (acct.sendOnly) return res.json({ messages: [], note: 'Send-only account' });
+  if (!acct.password) return res.status(400).json({ error: 'No IMAP credentials for this account' });
+
+  const folder = req.params[0] || 'INBOX';
+
+  try {
+    const messages = await withImap(acct.email, acct.password, async (client) => {
+      const mailbox = await client.mailboxOpen(folder);
+      const total = mailbox.exists;
+      if (total === 0) return [];
+
+      const fetchFrom = Math.max(1, total - 49);
+      const msgs = [];
+      for await (const msg of client.fetch(`${fetchFrom}:*`, {
+        envelope: true,
+        flags: true,
+        bodyStructure: false,
+      })) {
+        msgs.push({
+          uid: msg.uid,
+          seq: msg.seq,
+          subject: msg.envelope?.subject || '(no subject)',
+          from: msg.envelope?.from?.[0] || null,
+          to: msg.envelope?.to?.[0] || null,
+          date: msg.envelope?.date || null,
+          seen: msg.flags?.has('\\Seen') ?? false,
+        });
+      }
+      return msgs.reverse();
+    });
+    res.json({ messages });
+  } catch (err) {
+    console.error(`IMAP folder error for ${acct.email} [${folder}]:`, err.message);
+    res.status(502).json({ error: err.message });
   }
 });
 
