@@ -49,8 +49,8 @@ export function Hero() {
       {/* Parallax background */}
       <motion.div className="absolute inset-0 will-change-transform" style={{ y: bgY }}>
         <img
-          src="/site-images/hero-bg.jpg"
-          alt="IZY Technologies team installing solar panels"
+          src="https://images.unsplash.com/photo-1613665813446-82a78c468a1d?w=1920&h=1080&fit=crop&auto=format"
+          alt=""
           className="w-full h-full object-cover object-center scale-110"
           loading="eager"
         />
