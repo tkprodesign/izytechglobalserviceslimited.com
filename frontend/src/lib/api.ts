@@ -60,11 +60,14 @@ export interface QuotePayload {
   details?: string;
 }
 
+export interface SocialPlatform {
+  key: string;
+  enabled: boolean;
+  url: string;
+}
+
 export interface SocialLinks {
-  facebook: string;
-  instagram: string;
-  x: string;
-  whatsapp: string;
+  platforms: SocialPlatform[];
 }
 
 export interface Testimonial {
@@ -91,6 +94,6 @@ export const api = {
   socials: () =>
     get<SocialLinks>('/api/settings/socials'),
 
-  updateSocials: (data: SocialLinks) =>
+  updateSocials: (data: { platforms: SocialPlatform[] }) =>
     authPut<{ success: boolean }>('/api/settings/socials', data),
 };

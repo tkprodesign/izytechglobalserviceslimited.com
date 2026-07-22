@@ -21,21 +21,26 @@ const quickLinks = [
   { label: "Emergency Service", href: "tel:+2348101262814" },
 ];
 
-const SOCIAL_META = {
-  facebook:  { Icon: Facebook,       label: "Facebook" },
-  instagram: { Icon: Instagram,      label: "Instagram" },
-  x:         { Icon: Twitter,        label: "X" },
-  whatsapp:  { Icon: MessageCircle,  label: "WhatsApp" },
-} as const;
+import { Linkedin, Youtube, Send } from "lucide-react";
+
+const SOCIAL_ICONS: Record<string, { Icon: React.ElementType; label: string }> = {
+  facebook:  { Icon: Facebook,      label: "Facebook" },
+  instagram: { Icon: Instagram,     label: "Instagram" },
+  whatsapp:  { Icon: MessageCircle, label: "WhatsApp" },
+  x:         { Icon: Twitter,       label: "X" },
+  linkedin:  { Icon: Linkedin,      label: "LinkedIn" },
+  youtube:   { Icon: Youtube,       label: "YouTube" },
+  telegram:  { Icon: Send,          label: "Telegram" },
+};
 
 export function Footer() {
   const [socials, setSocials] = useState<{ Icon: React.ElementType; href: string; label: string }[]>([]);
 
   useEffect(() => {
-    api.socials().then((links) => {
-      const entries = (Object.keys(SOCIAL_META) as (keyof typeof SOCIAL_META)[])
-        .filter((k) => links[k]?.trim())
-        .map((k) => ({ ...SOCIAL_META[k], href: links[k] }));
+    api.socials().then(({ platforms }) => {
+      const entries = platforms
+        .filter(p => p.enabled && p.url.trim())
+        .map(p => ({ ...(SOCIAL_ICONS[p.key] ?? { Icon: MessageCircle, label: p.key }), href: p.url }));
       setSocials(entries);
     }).catch(() => {});
   }, []);

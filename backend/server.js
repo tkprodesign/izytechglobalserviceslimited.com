@@ -68,15 +68,31 @@ async function initSiteSettingsTable() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
-  // Seed defaults — only insert if key doesn't already exist
-  await db.query(`
-    INSERT INTO site_settings (key, value) VALUES
-      ('social_facebook',  ''),
-      ('social_instagram', ''),
-      ('social_x',        ''),
-      ('social_whatsapp', '')
-    ON CONFLICT (key) DO NOTHING
-  `);
+
+  // Default platform configs: {enabled, url}
+  const defaults = [
+    { key: 'social_facebook',  val: JSON.stringify({ enabled: true,  url: '' }) },
+    { key: 'social_instagram', val: JSON.stringify({ enabled: true,  url: '' }) },
+    { key: 'social_whatsapp',  val: JSON.stringify({ enabled: true,  url: '' }) },
+    { key: 'social_x',        val: JSON.stringify({ enabled: false, url: '' }) },
+    { key: 'social_linkedin',  val: JSON.stringify({ enabled: false, url: '' }) },
+    { key: 'social_youtube',   val: JSON.stringify({ enabled: false, url: '' }) },
+    { key: 'social_telegram',  val: JSON.stringify({ enabled: false, url: '' }) },
+  ];
+
+  for (const { key, val } of defaults) {
+    await db.query(`
+      INSERT INTO site_settings (key, value) VALUES ($1, $2)
+      ON CONFLICT (key) DO UPDATE
+        SET value = EXCLUDED.value
+        WHERE site_settings.value NOT LIKE '{%'
+    `, [key, val]);
+    // If key didn't exist yet (new platforms), insert it
+    await db.query(`
+      INSERT INTO site_settings (key, value) VALUES ($1, $2)
+      ON CONFLICT (key) DO NOTHING
+    `, [key, val]);
+  }
 }
 
 // Prevent dropped connections from crashing the process — pg Pool will reconnect automatically
@@ -136,34 +152,38 @@ app.get('/api/testimonials', async (_req, res) => {
 });
 
 // ── Site Settings: Socials (public read, auth write) ─────────────────────────
+const SOCIAL_KEYS = ['social_facebook','social_instagram','social_whatsapp','social_x','social_linkedin','social_youtube','social_telegram'];
+
 app.get('/api/settings/socials', async (_req, res) => {
   try {
     const { rows } = await db.query(
-      "SELECT key, value FROM site_settings WHERE key LIKE 'social_%'"
+      "SELECT key, value FROM site_settings WHERE key LIKE 'social_%' ORDER BY key"
     );
-    const map = Object.fromEntries(rows.map(r => [r.key, r.value]));
-    res.json({
-      facebook:  map['social_facebook']  ?? '',
-      instagram: map['social_instagram'] ?? '',
-      x:         map['social_x']         ?? '',
-      whatsapp:  map['social_whatsapp']  ?? '',
+    const platforms = rows.map(r => {
+      const slug = r.key.replace('social_', '');
+      let parsed = { enabled: false, url: '' };
+      try { parsed = JSON.parse(r.value); } catch { /* legacy empty string */ }
+      return { key: slug, enabled: parsed.enabled ?? false, url: parsed.url ?? '' };
     });
+    res.json({ platforms });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 app.put('/api/settings/socials', requireAuth, async (req, res) => {
-  const { facebook = '', instagram = '', x = '', whatsapp = '' } = req.body || {};
+  const { platforms } = req.body || {};
+  if (!Array.isArray(platforms)) return res.status(400).json({ error: 'platforms array required' });
   try {
-    await db.query(`
-      INSERT INTO site_settings (key, value, updated_at) VALUES
-        ('social_facebook',  $1, NOW()),
-        ('social_instagram', $2, NOW()),
-        ('social_x',        $3, NOW()),
-        ('social_whatsapp', $4, NOW())
-      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
-    `, [facebook, instagram, x, whatsapp]);
+    for (const { key, enabled, url } of platforms) {
+      const dbKey = `social_${key}`;
+      if (!SOCIAL_KEYS.includes(dbKey)) continue; // safety — ignore unknown keys
+      const val = JSON.stringify({ enabled: Boolean(enabled), url: (url ?? '').trim() });
+      await db.query(`
+        INSERT INTO site_settings (key, value, updated_at) VALUES ($1, $2, NOW())
+        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+      `, [dbKey, val]);
+    }
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
