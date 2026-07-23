@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router';
 import { getUser, removeToken, isDeveloper } from '../../lib/auth';
 import {
@@ -41,6 +41,23 @@ export function DashboardLayout({ children }: Props) {
     if (typeof window === 'undefined') return false;
     return window.localStorage.getItem('admin-sidebar-collapsed') === 'true';
   });
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setSidebarOpen(false);
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [sidebarOpen]);
 
   function logout() {
     removeToken();
@@ -94,17 +111,19 @@ export function DashboardLayout({ children }: Props) {
       data-sidebar-collapsed={sidebarCollapsed}
       style={{ background: '#f0f3f8' }}
     >
-      {sidebarOpen && (
-        <button
-          type="button"
-          aria-label="Close navigation"
-          className="fixed inset-0 z-40 bg-[#041627]/55 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      <button
+        type="button"
+        aria-label="Close navigation"
+        aria-hidden={!sidebarOpen}
+        tabIndex={sidebarOpen ? 0 : -1}
+        className={`admin-sidebar-backdrop fixed inset-0 z-40 bg-[#041627]/55 md:hidden ${
+          sidebarOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+        onClick={() => setSidebarOpen(false)}
+      />
 
       <aside
-        className={`admin-sidebar fixed inset-y-0 left-0 z-50 flex w-64 flex-shrink-0 flex-col transition-[width,transform] duration-200 ease-out md:relative md:z-auto md:translate-x-0 ${
+        className={`admin-sidebar fixed inset-y-0 left-0 z-50 flex w-[min(16rem,calc(100vw-1rem))] flex-shrink-0 flex-col transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] md:relative md:z-auto md:w-64 md:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } ${
           sidebarCollapsed ? 'md:w-[72px]' : 'md:w-64'

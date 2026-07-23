@@ -192,6 +192,17 @@
   transition: opacity 160ms ease, width 160ms ease;
 }
 
+.admin-shell .admin-sidebar,
+.admin-shell .admin-sidebar-backdrop {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+.admin-shell .admin-sidebar-backdrop {
+  transition: opacity 280ms ease;
+}
+
 @media (min-width: 768px) and (max-width: 1023px) {
   .admin-shell .admin-sidebar {
     width: 72px !important;
