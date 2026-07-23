@@ -1,2 +1,3 @@
 - [Project Constitution](project-constitution.md) — IZY Technologies repo charter: GitHub is source of truth, deployment stack, dev rules
 - [Company Bio Decisions](company-bio-decisions.md) — Founding date (2018), tagline, install count, milestones/founder in DB, SEO still noindex
+- [Bio Update Plan](bio-update-plan.md) — Wrong email domain + "since 2012" fixes + full AboutPage.tsx rewrite — NOT YET DONE, for new agent
