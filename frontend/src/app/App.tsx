@@ -1,6 +1,16 @@
-import { Routes, Route, Navigate } from "react-router";
+import { Routes, Route, Navigate, useLocation } from "react-router";
+import { useEffect } from "react";
 import "../styles/fonts.css";
 import "../styles/micro.css";
+
+/** Scrolls to the top of the page whenever the route pathname changes. */
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname]);
+  return null;
+}
 
 // Public site
 import { Navbar } from "./sections/Navbar";
@@ -66,6 +76,7 @@ function PublicSite() {
 export default function App() {
   return (
     <CartProvider>
+    <ScrollToTop />
     <Routes>
       {/* Public site */}
       <Route path="/" element={<PublicSite />} />

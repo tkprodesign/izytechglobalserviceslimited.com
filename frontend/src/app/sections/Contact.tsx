@@ -32,10 +32,10 @@ export function Contact() {
   const [form, setForm] = useState({ name: "", email: "", phone: "", service: "", message: "" });
   const [searchParams] = useSearchParams();
 
-  // Pre-select the service if the link that brought the user here passed ?service=
+  // Sync service field with ?service= param — clears back to default when param is absent
   useEffect(() => {
     const svc = searchParams.get("service") ?? "";
-    if (svc) setForm(f => ({ ...f, service: svc }));
+    setForm(f => ({ ...f, service: svc }));
   }, [searchParams]);
 
   const handleSubmit = (e: React.FormEvent) => {
