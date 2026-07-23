@@ -19,12 +19,12 @@ interface SystemInfo {
 
 function StatusDot({ ok, label }: { ok: boolean; label: string }) {
   return (
-    <div className="flex items-center gap-2.5 py-3 border-b last:border-0" style={{ borderColor: '#eef1f6' }}>
+    <div className="flex min-w-0 items-start gap-2.5 border-b py-3 last:border-0" style={{ borderColor: '#eef1f6' }}>
       {ok
         ? <CheckCircle size={16} style={{ color: 'var(--izy-green)' }} />
         : <XCircle size={16} style={{ color: 'var(--destructive)' }} />}
-      <span className="text-sm" style={{ color: 'var(--izy-navy)' }}>{label}</span>
-      <span className="ml-auto text-xs font-medium px-2 py-0.5 rounded-full" style={{
+      <span className="min-w-0 flex-1 break-words text-xs sm:text-sm" style={{ color: 'var(--izy-navy)' }}>{label}</span>
+      <span className="ml-auto shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" style={{
         background: ok ? 'rgba(57,181,74,0.12)' : 'rgba(212,24,61,0.12)',
         color: ok ? 'var(--izy-green)' : 'var(--destructive)',
       }}>
@@ -83,7 +83,7 @@ export function DevSystemPage() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 max-w-5xl mx-auto">
+      <div className="mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold" style={{ color: 'var(--izy-navy)' }}>System Status</h1>
           <p className="text-sm mt-1" style={{ color: '#5a6a82' }}>Developer-only view — live infrastructure health</p>
@@ -91,15 +91,15 @@ export function DevSystemPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* API Health */}
-          <div className="bg-white rounded-2xl shadow-sm p-6">
+          <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-6">
             <h2 className="font-semibold text-sm mb-4" style={{ color: 'var(--izy-navy)' }}>Service Health</h2>
             <div className="space-y-0">
-              <div className="flex items-center gap-2.5 py-3 border-b" style={{ borderColor: '#eef1f6' }}>
+              <div className="flex min-w-0 flex-wrap items-center gap-2.5 border-b py-3" style={{ borderColor: '#eef1f6' }}>
                 {statusIcon(apiHealth)}
                 <span className="text-sm" style={{ color: 'var(--izy-navy)' }}>API server</span>
-                <span className="ml-auto text-xs" style={{ color: '#8fadc8' }}>{API || 'localhost'}</span>
+                <span className="ml-auto min-w-0 break-all text-right text-xs" style={{ color: '#8fadc8' }}>{API || 'localhost'}</span>
               </div>
-              <div className="flex items-center gap-2.5 py-3">
+              <div className="flex min-w-0 flex-wrap items-center gap-2.5 py-3">
                 {statusIcon(dbHealth)}
                 <span className="text-sm" style={{ color: 'var(--izy-navy)' }}>Neon PostgreSQL</span>
                 <span className="ml-auto text-xs" style={{ color: '#8fadc8' }}>DATABASE_URL</span>
@@ -109,7 +109,7 @@ export function DevSystemPage() {
 
           {/* Runtime */}
           {info && (
-            <div className="bg-white rounded-2xl shadow-sm p-6">
+            <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-6">
               <h2 className="font-semibold text-sm mb-4" style={{ color: 'var(--izy-navy)' }}>Runtime</h2>
               <dl className="space-y-2">
                 {[
@@ -131,9 +131,9 @@ export function DevSystemPage() {
 
           {/* Secrets check */}
           {info?.configuredSecrets && (
-            <div className="bg-white rounded-2xl shadow-sm p-6 lg:col-span-2">
+            <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-6 lg:col-span-2">
               <h2 className="font-semibold text-sm mb-4" style={{ color: 'var(--izy-navy)' }}>Environment Secrets</h2>
-              <div className="grid grid-cols-2 gap-x-8">
+              <div className="grid min-w-0 grid-cols-1 gap-x-8 sm:grid-cols-2">
                 <div>
                   {Object.entries(info.configuredSecrets).slice(0, Math.ceil(Object.entries(info.configuredSecrets).length / 2)).map(([k, v]) => (
                     <StatusDot key={k} ok={v} label={k} />
