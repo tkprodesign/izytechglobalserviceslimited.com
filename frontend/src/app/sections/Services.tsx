@@ -89,7 +89,7 @@ export function Services() {
               className="text-[#64748b] max-w-sm text-sm leading-relaxed lg:text-right"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              From solar panels to smart homes — we bring the future of technology to your doorstep, backed by a decade of excellence.
+              From solar panels to smart homes — we bring the future of technology to your doorstep, backed by 8 years of excellence.
             </p>
             <Link
               to="/services"

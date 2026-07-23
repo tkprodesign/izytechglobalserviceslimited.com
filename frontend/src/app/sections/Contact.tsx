@@ -129,7 +129,7 @@ export function Contact() {
                 24/7 emergency call-out for critical electrical faults and security failures.
               </p>
               <a
-                href="tel:+2348000000000"
+                href="tel:+2348101262814"
                 className="btn-shimmer inline-flex items-center gap-2 px-5 py-2.5 font-bold text-[#041627] text-sm transition-all hover:shadow-[0_4px_20px_rgba(240,162,14,0.4)]"
                 style={{ background: "linear-gradient(135deg, #F0A20E 0%, #FFB830 100%)", fontFamily: "var(--font-ui)" }}
               >
@@ -183,7 +183,7 @@ export function Contact() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   {[
                     { label: "Full Name", key: "name", type: "text", placeholder: "John Adeyemi", required: true },
-                    { label: "Phone Number", key: "phone", type: "tel", placeholder: "+234 800 000 0000", required: true },
+                    { label: "Phone Number", key: "phone", type: "tel", placeholder: "+234 810 126 2814", required: true },
                   ].map(({ label, key, type, placeholder, required }) => (
                     <div key={key}>
                       <label className="block text-xs font-semibold text-white/35 mb-2 uppercase tracking-wide" style={{ fontFamily: "var(--font-ui)" }}>
