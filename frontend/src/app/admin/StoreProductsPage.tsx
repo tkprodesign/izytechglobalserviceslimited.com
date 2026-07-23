@@ -226,9 +226,9 @@ export function StoreProductsPage() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 max-w-6xl mx-auto">
+      <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
         {/* Header */}
-        <div className="mb-8 flex items-start justify-between gap-4">
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-4 sm:mb-8">
           <div>
             <h1 className="text-2xl font-bold" style={{ color: 'var(--izy-navy)' }}>Store Products</h1>
             <p className="text-sm mt-1" style={{ color: '#5a6a82' }}>{products.length} products in catalogue</p>
@@ -243,7 +243,7 @@ export function StoreProductsPage() {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
           {loading ? (
             <div className="flex items-center justify-center h-40">
               <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--izy-blue)', borderTopColor: 'transparent' }} />
@@ -251,7 +251,9 @@ export function StoreProductsPage() {
           ) : products.length === 0 ? (
             <p className="p-8 text-sm text-center" style={{ color: '#8fadc8' }}>No products yet. Add your first one.</p>
           ) : (
-            <table className="w-full text-sm">
+            <>
+            <div className="hidden overflow-x-auto sm:block">
+            <table className="w-full min-w-[760px] text-sm">
               <thead>
                 <tr style={{ borderBottom: '1px solid #eef1f6' }}>
                   {['', 'Product', 'Category', 'Badge', 'Rating', 'Featured', 'Stock', 'Actions'].map(h => (
@@ -319,6 +321,59 @@ export function StoreProductsPage() {
                 ))}
               </tbody>
             </table>
+            </div>
+
+            {/* Compact product cards for phones. The desktop table has too many
+                columns to remain readable at handset widths. */}
+            <div className="divide-y sm:hidden" style={{ borderColor: '#eef1f6' }}>
+              {products.map(p => (
+                <article key={p.id} className="flex min-w-0 gap-3 px-4 py-4" style={{ borderColor: '#eef1f6' }}>
+                  <ProductThumb images={p.images || []} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="break-words text-sm font-semibold leading-snug" style={{ color: 'var(--izy-navy)' }}>{p.name}</p>
+                        <p className="mt-0.5 text-xs text-gray-400">{p.unit}</p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button onClick={() => openEdit(p)} className="rounded-lg p-1.5 hover:bg-blue-50" title="Edit product" aria-label={`Edit ${p.name}`}>
+                          <Pencil size={14} style={{ color: 'var(--izy-blue)' }} />
+                        </button>
+                        <button
+                          onClick={() => remove(p)}
+                          disabled={deleting === p.id}
+                          className="rounded-lg p-1.5 hover:bg-red-50 disabled:opacity-40"
+                          title="Delete product"
+                          aria-label={`Delete ${p.name}`}
+                        >
+                          <Trash2 size={14} style={{ color: '#ef4444' }} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2">
+                      <span className="rounded-full px-2 py-1 text-[11px] font-semibold" style={{ background: '#f0f6ff', color: 'var(--izy-blue)' }}>
+                        {p.category}
+                      </span>
+                      {p.badge && (
+                        <span className="px-2 py-0.5 text-[10px] font-bold text-white" style={{ background: BADGE_COLORS[p.badge] ?? '#041627' }}>
+                          {p.badge}
+                        </span>
+                      )}
+                      <span className="text-xs" style={{ color: '#8fadc8' }}>★ {p.rating}</span>
+                      {p.featured && <span className="text-xs font-medium text-amber-700">Featured</span>}
+                    </div>
+
+                    <button onClick={() => toggleStock(p)} className="mt-2 flex items-center gap-1.5 text-xs font-medium hover:opacity-70">
+                      {p.in_stock
+                        ? <><ToggleRight size={18} style={{ color: '#10B981' }} /><span style={{ color: '#10B981' }}>In stock</span></>
+                        : <><ToggleLeft size={18} style={{ color: '#94a3b8' }} /><span style={{ color: '#94a3b8' }}>Out of stock</span></>}
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+            </>
           )}
         </div>
       </div>
@@ -327,9 +382,9 @@ export function StoreProductsPage() {
       {formOpen && (
         <div className="fixed inset-0 z-50 flex">
           <div className="flex-1 bg-black/30" onClick={closeForm} />
-          <div className="w-[520px] bg-white h-full overflow-y-auto shadow-2xl flex flex-col">
+          <div className="flex h-full w-[min(520px,100vw)] flex-col overflow-y-auto bg-white shadow-2xl">
             {/* Header */}
-            <div className="flex items-center justify-between px-7 py-5 border-b" style={{ borderColor: '#eef1f6' }}>
+            <div className="flex items-center justify-between border-b px-4 py-5 sm:px-7" style={{ borderColor: '#eef1f6' }}>
               <h2 className="font-bold text-base" style={{ color: 'var(--izy-navy)' }}>
                 {editing ? 'Edit Product' : 'Add New Product'}
               </h2>
@@ -339,7 +394,7 @@ export function StoreProductsPage() {
             </div>
 
             {/* Body */}
-            <div className="flex-1 px-7 py-6 space-y-5">
+            <div className="flex-1 space-y-5 px-4 py-6 sm:px-7">
 
               {/* Images */}
               <Field label="Product Images">
@@ -529,7 +584,7 @@ export function StoreProductsPage() {
             </div>
 
             {/* Footer */}
-            <div className="px-7 py-5 border-t flex gap-3" style={{ borderColor: '#eef1f6' }}>
+            <div className="flex gap-3 border-t px-4 py-5 sm:px-7" style={{ borderColor: '#eef1f6' }}>
               <button
                 onClick={closeForm}
                 className="flex-1 py-2.5 rounded-xl text-sm font-medium border transition-colors hover:bg-gray-50"
