@@ -119,6 +119,7 @@ export default function App() {
 
       {/* Auth */}
       <Route path="/admin/login" element={<LoginPage />} />
+      <Route path="/dev/login" element={<LoginPage />} />
 
       {/* Admin panel — both roles */}
       <Route path="/admin/dashboard" element={
