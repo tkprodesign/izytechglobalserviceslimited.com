@@ -28,6 +28,7 @@ db.connect()
   .then(() => initStoreTable())
   .then(() => initMilestonesTable())
   .then(() => initFounderTable())
+  .then(() => initProjectsTable())
   .catch((err) => {
     console.error('Failed to connect to database:', err.message);
     process.exit(1);
@@ -558,6 +559,271 @@ async function initFounderTable() {
     console.log('Founder profile seeded');
   }
 }
+
+// ── Projects ──────────────────────────────────────────────────────────────────
+async function initProjectsTable() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS projects (
+      id                SERIAL PRIMARY KEY,
+      title             TEXT        NOT NULL,
+      slug              TEXT        NOT NULL UNIQUE,
+      category          TEXT        NOT NULL,
+      location          TEXT        NOT NULL DEFAULT '',
+      year              TEXT        NOT NULL DEFAULT '',
+      short_description TEXT        NOT NULL DEFAULT '',
+      full_description  TEXT        NOT NULL DEFAULT '',
+      result_metric     TEXT        NOT NULL DEFAULT '',
+      services          TEXT[]      NOT NULL DEFAULT '{}',
+      images            TEXT[]      NOT NULL DEFAULT '{}',
+      main_image_url    TEXT        NOT NULL DEFAULT '',
+      featured          BOOLEAN     NOT NULL DEFAULT FALSE,
+      sort_order        SMALLINT    NOT NULL DEFAULT 0,
+      published         BOOLEAN     NOT NULL DEFAULT FALSE,
+      created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await db.query('CREATE INDEX IF NOT EXISTS projects_category_idx ON projects (category)');
+  await db.query('CREATE INDEX IF NOT EXISTS projects_published_order_idx ON projects (published, sort_order, id)');
+
+  const { rows } = await db.query('SELECT COUNT(*)::int AS n FROM projects');
+  if (rows[0].n === 0) {
+    const seed = [
+      ['150kW Commercial Solar Farm', '150kw-commercial-solar-farm', 'Solar Energy', 'Trans Amadi, Port Harcourt', '2024', 'Full design and installation of a 150kW grid-tie solar system for a manufacturing facility.', 'Full design and installation of a 150kW grid-tie solar system for a manufacturing facility, reducing their electricity bill by 78%. Project included 300 panels, 4 industrial inverters and a 200kWh battery bank.', '78% bill reduction', ['Solar design', 'Solar installation', 'Battery storage'], ['/site-images/project-commercial-solar.jpg']],
+      ['Smart Villa Automation', 'smart-villa-automation', 'Smart Home', 'GRA Phase 2, Port Harcourt', '2024', 'Complete smart home integration for a 5-bedroom villa.', 'Complete smart home integration for a 5-bedroom villa including lighting, HVAC control, entertainment and security. All systems integrated into a single app interface.', 'Full home integration', ['Smart home automation', 'Lighting control', 'Security integration'], ['/site-images/project-smart-home.jpg']],
+      ['Factory CCTV & Access Control', 'factory-cctv-access-control', 'Security', 'Aba, Abia State', '2023', '96-camera CCTV network with biometric access control for a 20-acre industrial facility.', '96-camera CCTV network with biometric access control for a 20-acre industrial facility. Full remote monitoring capability with 30-day storage and licence plate recognition.', '96 cameras deployed', ['CCTV installation', 'Access control', 'Remote monitoring'], ['/site-images/project-industrial.jpg']],
+      ['Hospital Electrical Overhaul', 'hospital-electrical-overhaul', 'Industrial Wiring', 'Abuja, FCT', '2023', 'Complete electrical infrastructure upgrade for a 200-bed hospital.', 'Complete electrical infrastructure upgrade for a 200-bed hospital including UPS systems, distribution boards, transfer switches and emergency backup. Zero downtime since completion.', 'Zero downtime post-install', ['Electrical design', 'UPS systems', 'Emergency backup'], ['/site-images/project-power-unit.jpg']],
+      ['School Solar + IT Upgrade', 'school-solar-it-upgrade', 'Solar + IT', 'Port Harcourt, Rivers', '2022', 'Off-grid solar installation and complete IT infrastructure upgrade for a private school.', 'Off-grid solar installation and complete IT infrastructure upgrade for a private school. Powers 40 classrooms, computer labs and administrative block around the clock.', '40 classrooms powered', ['Off-grid solar', 'IT infrastructure', 'Power backup'], ['/site-images/project-residential-solar.jpg']],
+      ['Hotel Smart Security Suite', 'hotel-smart-security-suite', 'Security', 'Peter Odili Road, Port Harcourt', '2022', 'Luxury hotel security overhaul with smart locks, CCTV cameras and perimeter sensors.', 'Luxury hotel security overhaul with smart locks, 128 CCTV cameras, perimeter sensors and centralised monitoring. Complete visibility from a single dashboard, on any device.', 'Full remote access', ['CCTV installation', 'Smart locks', 'Perimeter security'], ['/site-images/project-site-team.jpg']],
+    ];
+
+    for (let index = 0; index < seed.length; index += 1) {
+      const [title, slug, category, location, year, shortDescription, fullDescription, metric, services, images] = seed[index];
+      await db.query(
+        `INSERT INTO projects
+          (title, slug, category, location, year, short_description, full_description,
+           result_metric, services, images, main_image_url, featured, sort_order, published)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+         ON CONFLICT (slug) DO NOTHING`,
+        [title, slug, category, location, year, shortDescription, fullDescription, metric, services, images, images[0], index === 0, index + 1, true]
+      );
+    }
+    console.log('Projects table seeded with existing portfolio entries');
+  }
+}
+
+function slugify(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120);
+}
+
+function cleanText(value, fallback = '') {
+  return typeof value === 'string' ? value.trim() : fallback;
+}
+
+function cleanTextArray(value) {
+  return Array.isArray(value)
+    ? value.filter(item => typeof item === 'string').map(item => item.trim()).filter(Boolean)
+    : [];
+}
+
+function projectPayload(body = {}) {
+  const title = cleanText(body.title);
+  const category = cleanText(body.category);
+  const images = cleanTextArray(body.images);
+  const sortOrder = Number.isFinite(Number(body.sort_order)) ? Math.trunc(Number(body.sort_order)) : 0;
+  return {
+    title,
+    slug: slugify(body.slug || title),
+    category,
+    location: cleanText(body.location),
+    year: cleanText(body.year),
+    short_description: cleanText(body.short_description),
+    full_description: cleanText(body.full_description),
+    result_metric: cleanText(body.result_metric),
+    services: cleanTextArray(body.services),
+    images,
+    main_image_url: cleanText(body.main_image_url) || images[0] || '',
+    featured: body.featured === true,
+    sort_order: sortOrder,
+    published: body.published === true,
+  };
+}
+
+function validateProject(project) {
+  if (!project.title) return 'Project title is required';
+  if (!project.category) return 'Project category is required';
+  if (!project.slug) return 'A valid project slug is required';
+  if (project.title.length > 200) return 'Project title must be 200 characters or fewer';
+  if (project.slug.length > 120) return 'Project slug must be 120 characters or fewer';
+  if (project.category.length > 100) return 'Project category must be 100 characters or fewer';
+  if (project.year.length > 20) return 'Project year must be 20 characters or fewer';
+  return null;
+}
+
+const PROJECT_FIELDS = `id, title, slug, category, location, year, short_description,
+  full_description, result_metric, services, images, main_image_url, featured,
+  sort_order, published, created_at, updated_at`;
+
+// ── Projects: public ──────────────────────────────────────────────────────────
+app.get('/api/projects', async (req, res) => {
+  const category = cleanText(req.query.category);
+  try {
+    const params = [];
+    let where = 'WHERE published = TRUE';
+    if (category && category.toLowerCase() !== 'all') {
+      params.push(category);
+      where += ` AND LOWER(category) = LOWER($${params.length})`;
+    }
+    const { rows } = await db.query(
+      `SELECT ${PROJECT_FIELDS} FROM projects ${where} ORDER BY featured DESC, sort_order ASC, id ASC`,
+      params
+    );
+    const categoryResult = await db.query(
+      'SELECT DISTINCT category FROM projects WHERE published = TRUE ORDER BY category ASC'
+    );
+    res.json({ data: rows, categories: categoryResult.rows.map(row => row.category) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/projects/:slug', async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT ${PROJECT_FIELDS} FROM projects WHERE slug = $1 AND published = TRUE LIMIT 1`,
+      [req.params.slug]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Project not found' });
+    res.json({ data: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Projects: admin and developer management ──────────────────────────────────
+app.get('/api/admin/projects', requireAuth, async (req, res) => {
+  const search = cleanText(req.query.search);
+  const category = cleanText(req.query.category);
+  const params = [];
+  const filters = [];
+  if (search) {
+    params.push(`%${search}%`);
+    filters.push(`(title ILIKE $${params.length} OR location ILIKE $${params.length})`);
+  }
+  if (category && category.toLowerCase() !== 'all') {
+    params.push(category);
+    filters.push(`LOWER(category) = LOWER($${params.length})`);
+  }
+  try {
+    const { rows } = await db.query(
+      `SELECT ${PROJECT_FIELDS} FROM projects
+       ${filters.length ? `WHERE ${filters.join(' AND ')}` : ''}
+       ORDER BY sort_order ASC, id ASC`,
+      params
+    );
+    const categoryResult = await db.query(
+      'SELECT DISTINCT category FROM projects ORDER BY category ASC'
+    );
+    res.json({ data: rows, categories: categoryResult.rows.map(row => row.category) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/projects', requireAuth, async (req, res) => {
+  const project = projectPayload(req.body);
+  const validationError = validateProject(project);
+  if (validationError) return res.status(400).json({ error: validationError });
+  try {
+    const { rows } = await db.query(
+      `INSERT INTO projects
+        (title, slug, category, location, year, short_description, full_description,
+         result_metric, services, images, main_image_url, featured, sort_order, published)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+       RETURNING ${PROJECT_FIELDS}`,
+      [
+        project.title, project.slug, project.category, project.location, project.year,
+        project.short_description, project.full_description, project.result_metric,
+        project.services, project.images, project.main_image_url, project.featured,
+        project.sort_order, project.published,
+      ]
+    );
+    res.status(201).json({ data: rows[0] });
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: 'That project slug is already in use' });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/projects/:id', requireAuth, async (req, res) => {
+  const project = projectPayload(req.body);
+  const validationError = validateProject(project);
+  if (validationError) return res.status(400).json({ error: validationError });
+  try {
+    const { rows } = await db.query(
+      `UPDATE projects SET
+        title=$1, slug=$2, category=$3, location=$4, year=$5, short_description=$6,
+        full_description=$7, result_metric=$8, services=$9, images=$10, main_image_url=$11,
+        featured=$12, sort_order=$13, published=$14, updated_at=NOW()
+       WHERE id=$15
+       RETURNING ${PROJECT_FIELDS}`,
+      [
+        project.title, project.slug, project.category, project.location, project.year,
+        project.short_description, project.full_description, project.result_metric,
+        project.services, project.images, project.main_image_url, project.featured,
+        project.sort_order, project.published, req.params.id,
+      ]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Project not found' });
+    res.json({ data: rows[0] });
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: 'That project slug is already in use' });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/projects/:id', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      'DELETE FROM projects WHERE id=$1 RETURNING id, title, featured',
+      [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Project not found' });
+    res.json({ success: true, deleted: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/projects/images/direct-upload', requireAuth, async (_req, res) => {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+  const imagesHash = process.env.CLOUDFLARE_IMAGES_HASH;
+  if (!accountId || !apiToken || !imagesHash) {
+    return res.status(500).json({ error: 'Cloudflare credentials not configured on server' });
+  }
+  try {
+    const cfRes = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v2/direct_upload`,
+      { method: 'POST', headers: { Authorization: `Bearer ${apiToken}` } }
+    );
+    const data = await cfRes.json();
+    if (!data.success) return res.status(502).json({ error: data.errors?.[0]?.message || 'Cloudflare upload failed' });
+    const imageId = data.result?.id;
+    const uploadURL = data.result?.uploadURL;
+    if (!imageId || !uploadURL) return res.status(502).json({ error: 'Cloudflare did not return an upload URL' });
+    res.json({ uploadURL, url: `https://imagedelivery.net/${imagesHash}/${imageId}/public` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ── Public: Milestones ────────────────────────────────────────────────────────
 app.get('/api/public/milestones', async (_req, res) => {

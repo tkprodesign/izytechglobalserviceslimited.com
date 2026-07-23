@@ -2,3 +2,4 @@
 - [Company Bio Decisions](company-bio-decisions.md) — Founding date (2018), tagline, install count, milestones/founder in DB, SEO still noindex
 - [Bio Update Plan](bio-update-plan.md) — Wrong email domain + "since 2012" fixes + full AboutPage.tsx rewrite — NOT YET DONE, for new agent
 - [Store image storage](cloudflare-image-uploads.md) — Product image bytes bypass Railway and upload directly to Cloudflare Images
+- [Schema rollout safety](schema-rollout-safety.md) — Additive Neon schema changes need idempotent startup initialization and conflict-safe seed inserts
