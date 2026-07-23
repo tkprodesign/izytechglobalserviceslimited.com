@@ -1,224 +1,301 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { ArrowRight, MapPin, Filter } from "lucide-react";
-import { PageLayout } from "../components/PageLayout";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { ArrowRight, Filter, MapPin, RefreshCw } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
-
-const projects = [
-  {
-    title: "150kW Commercial Solar Farm",
-    location: "Trans Amadi, Port Harcourt",
-    category: "Solar Energy",
-    tag: "Commercial",
-    description: "Full design and installation of a 150kW grid-tie solar system for a manufacturing facility, reducing their electricity bill by 78%. Project included 300 panels, 4 industrial inverters and a 200kWh battery bank.",
-    image: "/site-images/project-commercial-solar.jpg",
-    metric: "78% bill reduction",
-    year: "2024",
-  },
-  {
-    title: "Smart Villa Automation",
-    location: "GRA Phase 2, Port Harcourt",
-    category: "Smart Home",
-    tag: "Residential",
-    description: "Complete smart home integration for a 5-bedroom villa including lighting, HVAC control, entertainment and security. All systems integrated into a single app interface.",
-    image: "/site-images/project-smart-home.jpg",
-    metric: "Full home integration",
-    year: "2024",
-  },
-  {
-    title: "Factory CCTV & Access Control",
-    location: "Aba, Abia State",
-    category: "Security",
-    tag: "Industrial",
-    description: "96-camera CCTV network with biometric access control for a 20-acre industrial facility. Full remote monitoring capability with 30-day storage and licence plate recognition.",
-    image: "/site-images/project-industrial.jpg",
-    metric: "96 cameras deployed",
-    year: "2023",
-  },
-  {
-    title: "Hospital Electrical Overhaul",
-    location: "Abuja, FCT",
-    category: "Industrial Wiring",
-    tag: "Healthcare",
-    description: "Complete electrical infrastructure upgrade for a 200-bed hospital including UPS systems, distribution boards, transfer switches and emergency backup. Zero downtime since completion.",
-    image: "/site-images/project-power-unit.jpg",
-    metric: "Zero downtime post-install",
-    year: "2023",
-  },
-  {
-    title: "School Solar + IT Upgrade",
-    location: "Port Harcourt, Rivers",
-    category: "Solar Energy",
-    tag: "Education",
-    description: "Off-grid solar installation and complete IT infrastructure upgrade for a private school. Powers 40 classrooms, computer labs and administrative block around the clock.",
-    image: "/site-images/project-residential-solar.jpg",
-    metric: "40 classrooms powered",
-    year: "2022",
-  },
-  {
-    title: "Hotel Smart Security Suite",
-    location: "Peter Odili Road, Port Harcourt",
-    category: "Security",
-    tag: "Hospitality",
-    description: "Luxury hotel security overhaul with smart locks, 128 CCTV cameras, perimeter sensors and centralised monitoring. Complete visibility from a single dashboard, on any device.",
-    image: "/site-images/project-site-team.jpg",
-    metric: "Full remote access",
-    year: "2022",
-  },
-];
-
-const ALL_TAGS = ["All", "Solar", ...Array.from(new Set(projects.map(p => p.tag)))];
+import { PageLayout } from "../components/PageLayout";
+import { api, Project } from "../../lib/api";
 
 const TAG_COLORS: Record<string, string> = {
-  Commercial: "#F0A20E", Residential: "#8B5CF6", Industrial: "#3B82F6",
-  Healthcare: "#EF4444", Education: "#10B981", Hospitality: "#F59E0B",
+  "Solar Energy": "#F0A20E",
+  "Solar + IT": "#F59E0B",
+  "Smart Home": "#8B5CF6",
+  Security: "#3B82F6",
+  "Industrial Wiring": "#EF4444",
 };
 
-export function ProjectsPage() {
-  const [searchParams] = useSearchParams();
-  const requestedCategory = searchParams.get("category");
-  const [active, setActive] = useState(
-    requestedCategory && ALL_TAGS.includes(requestedCategory) ? requestedCategory : "All"
-  );
+function projectImage(project: Project) {
+  return project.main_image_url || project.images?.[0] || "";
+}
 
-  const visible = active === "All"
-    ? projects
-    : active === "Solar"
-      ? projects.filter(p => p.category.toLowerCase().includes("solar"))
-      : projects.filter(p => p.tag === active);
+function imageFallback(event: React.SyntheticEvent<HTMLImageElement>) {
+  event.currentTarget.style.display = "none";
+}
+
+function SkeletonCard() {
+  return (
+    <div className="overflow-hidden bg-white" data-testid="skeleton-project-card">
+      <div className="h-52 animate-pulse bg-[#dfe5ec]" />
+      <div className="space-y-3 p-6">
+        <div className="h-3 w-24 animate-pulse bg-[#e8edf3]" />
+        <div className="h-5 w-4/5 animate-pulse bg-[#e8edf3]" />
+        <div className="h-3 w-full animate-pulse bg-[#e8edf3]" />
+        <div className="h-3 w-3/4 animate-pulse bg-[#e8edf3]" />
+      </div>
+    </div>
+  );
+}
+
+export function ProjectsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedCategory = searchParams.get("category") || "";
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  async function loadProjects() {
+    setLoading(true);
+    setError("");
+    try {
+      const result = await api.projects(requestedCategory || undefined);
+      setProjects(result.data);
+      setCategories(result.categories);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load projects");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadProjects();
+  }, [requestedCategory]);
+
+  const activeCategory = requestedCategory || "All";
+  const filterOptions = ["All", ...categories];
+
+  function changeCategory(category: string) {
+    if (category === "All") {
+      setSearchParams({});
+    } else {
+      setSearchParams({ category });
+    }
+  }
 
   return (
     <PageLayout>
-      {/* Hero */}
-      <div className="pt-20 relative overflow-hidden" style={{ background: "#041627" }}>
+      <div className="relative overflow-hidden bg-[#041627] pt-20">
         <div
           className="absolute inset-0 opacity-10"
-          style={{ backgroundImage: `url(/site-images/project-site-team2.jpg)`, backgroundSize: "cover", backgroundPosition: "center" }}
+          style={{
+            backgroundImage: "url(/site-images/project-site-team2.jpg)",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
         />
-        <div className="relative max-w-7xl mx-auto px-6 py-20 lg:py-28">
-          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-6 h-px" style={{ background: "#F0A20E" }} />
-              <span className="text-xs font-semibold tracking-widest uppercase" style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}>
+        <div className="relative mx-auto max-w-7xl px-6 py-20 lg:py-28">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="mb-5 flex items-center gap-3">
+              <div className="h-px w-6 bg-[#F0A20E]" />
+              <span
+                className="text-xs font-semibold uppercase tracking-widest text-[#F0A20E]"
+                style={{ fontFamily: "var(--font-ui)" }}
+              >
                 Our Work
               </span>
             </div>
             <h1
-              className="text-white mb-5"
-              style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2.2rem,5vw,4rem)", fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.05 }}
+              className="mb-5 text-white"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "clamp(2.2rem,5vw,4rem)",
+                fontWeight: 800,
+                letterSpacing: "-0.03em",
+                lineHeight: 1.05,
+              }}
             >
               Projects
             </h1>
-            <p className="text-white/45 max-w-xl text-base leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-              Real work. Real results. A selection of projects delivered across Nigeria — from rooftop solar to full industrial electrical overhauls.
+            <p
+              className="max-w-xl text-base leading-relaxed text-white/45"
+              style={{ fontFamily: "var(--font-body)" }}
+            >
+              Real work. Real results. A selection of projects delivered across Nigeria — from
+              rooftop solar to full industrial electrical overhauls.
             </p>
           </motion.div>
         </div>
       </div>
 
-      {/* Filter + Grid */}
-      <div className="py-20" style={{ background: "#f5f6f8" }}>
-        <div className="max-w-7xl mx-auto px-6">
-          {/* Filter bar */}
-          <div className="flex flex-wrap items-center gap-2 mb-12">
-            <Filter size={14} className="text-gray-400 mr-1" />
-            {ALL_TAGS.map(tag => (
+      <div className="bg-[#f5f6f8] py-20">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mb-12 flex flex-wrap items-center gap-2" data-testid="project-filters">
+            <Filter size={14} className="mr-1 text-gray-400" aria-hidden="true" />
+            {filterOptions.map((category) => (
               <button
-                key={tag}
-                onClick={() => setActive(tag)}
-                className="px-4 py-1.5 text-xs font-semibold tracking-wide transition-all"
+                key={category}
+                type="button"
+                data-testid={`filter-projects-${category.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                aria-pressed={activeCategory.toLowerCase() === category.toLowerCase()}
+                onClick={() => changeCategory(category)}
+                className="border px-4 py-1.5 text-xs font-semibold tracking-wide transition-all"
                 style={{
                   fontFamily: "var(--font-ui)",
-                  background: active === tag ? "#041627" : "white",
-                  color: active === tag ? "#F0A20E" : "#041627",
-                  border: `1px solid ${active === tag ? "#041627" : "#e2e8f0"}`,
+                  background: activeCategory.toLowerCase() === category.toLowerCase() ? "#041627" : "white",
+                  color: activeCategory.toLowerCase() === category.toLowerCase() ? "#F0A20E" : "#041627",
+                  borderColor: activeCategory.toLowerCase() === category.toLowerCase() ? "#041627" : "#e2e8f0",
                 }}
               >
-                {tag}
+                {category}
               </button>
             ))}
           </div>
 
-          {/* Cards */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <AnimatePresence mode="popLayout">
-              {visible.map((p) => (
-                <motion.div
-                  key={p.title}
-                  layout
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
-                  transition={{ duration: 0.35 }}
-                  className="bg-white group overflow-hidden"
-                >
-                  {/* Image */}
-                  <div className="relative overflow-hidden h-52">
-                    <img
-                      src={p.image}
-                      alt={p.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-black/30" />
-                    {/* Tag */}
-                    <span
-                      className="absolute top-4 left-4 px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase text-white"
-                      style={{ background: TAG_COLORS[p.tag] ?? "#041627", fontFamily: "var(--font-ui)" }}
+          {loading ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, index) => <SkeletonCard key={index} />)}
+            </div>
+          ) : error ? (
+            <div className="border border-[#F0A20E]/30 bg-white px-6 py-14 text-center" data-testid="projects-error">
+              <p className="mb-5 text-sm text-[#041627]/65">{error}</p>
+              <button
+                type="button"
+                data-testid="button-retry-projects"
+                onClick={() => void loadProjects()}
+                className="inline-flex items-center gap-2 bg-[#041627] px-5 py-3 text-xs font-bold tracking-wider text-[#F0A20E]"
+                style={{ fontFamily: "var(--font-ui)" }}
+              >
+                <RefreshCw size={13} /> TRY AGAIN
+              </button>
+            </div>
+          ) : projects.length === 0 ? (
+            <div className="border border-[#e2e8f0] bg-white px-6 py-16 text-center" data-testid="projects-empty">
+              <p
+                className="mb-3 text-xl font-bold text-[#041627]"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                No projects found{requestedCategory ? ` for ${requestedCategory}` : ""}.
+              </p>
+              <p className="mb-6 text-sm text-[#041627]/50">
+                Try another category or return to the full portfolio.
+              </p>
+              <button
+                type="button"
+                data-testid="button-view-all-projects"
+                onClick={() => changeCategory("All")}
+                className="text-xs font-bold tracking-wider text-[#F0A20E] underline underline-offset-4"
+                style={{ fontFamily: "var(--font-ui)" }}
+              >
+                VIEW ALL PROJECTS
+              </button>
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3" data-testid="projects-grid">
+              <AnimatePresence mode="popLayout">
+                {projects.map((project) => (
+                  <motion.div
+                    key={project.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.96 }}
+                    transition={{ duration: 0.35 }}
+                  >
+                    <Link
+                      to={`/projects/${project.slug}`}
+                      data-testid={`link-project-${project.id}`}
+                      className="group block h-full overflow-hidden bg-white transition-shadow duration-300 hover:shadow-xl hover:shadow-[#041627]/10"
                     >
-                      {p.tag}
-                    </span>
-                    <span
-                      className="absolute top-4 right-4 text-white/60 text-xs"
-                      style={{ fontFamily: "var(--font-ui)" }}
-                    >
-                      {p.year}
-                    </span>
-                  </div>
-
-                  {/* Body */}
-                  <div className="p-6">
-                    <div className="flex items-start gap-2 mb-1">
-                      <MapPin size={12} className="mt-0.5 flex-shrink-0 text-[#F0A20E]" />
-                      <span className="text-[11px] text-gray-400 tracking-wide" style={{ fontFamily: "var(--font-ui)" }}>
-                        {p.location}
-                      </span>
-                    </div>
-                    <h3
-                      className="text-[#041627] font-bold mb-2 leading-snug"
-                      style={{ fontFamily: "var(--font-display)", fontSize: "1.05rem", letterSpacing: "-0.015em" }}
-                    >
-                      {p.title}
-                    </h3>
-                    <p className="text-[#041627]/50 text-sm leading-relaxed mb-4" style={{ fontFamily: "var(--font-body)" }}>
-                      {p.description}
-                    </p>
-                    <div
-                      className="text-xs font-bold tracking-wider pt-4 border-t border-gray-100"
-                      style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}
-                    >
-                      ↗ {p.metric}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+                      <div className="relative h-52 overflow-hidden bg-[#dfe5ec]">
+                        {projectImage(project) && (
+                          <img
+                            src={projectImage(project)}
+                            alt={project.title}
+                            onError={imageFallback}
+                            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                            data-testid={`img-project-${project.id}`}
+                          />
+                        )}
+                        <div className="absolute inset-0 bg-black/25 transition-opacity group-hover:bg-black/40" />
+                        <span
+                          className="absolute left-4 top-4 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white"
+                          style={{
+                            background: TAG_COLORS[project.category] ?? "#041627",
+                            fontFamily: "var(--font-ui)",
+                          }}
+                        >
+                          {project.category}
+                        </span>
+                        <span
+                          className="absolute right-4 top-4 text-xs text-white/75"
+                          style={{ fontFamily: "var(--font-ui)" }}
+                        >
+                          {project.year}
+                        </span>
+                        <span
+                          className="absolute bottom-4 right-4 flex translate-y-2 items-center gap-2 text-xs font-bold tracking-wider text-[#F0A20E] opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100"
+                          style={{ fontFamily: "var(--font-ui)" }}
+                        >
+                          VIEW DETAILS <ArrowRight size={13} />
+                        </span>
+                      </div>
+                      <div className="p-6">
+                        <div className="mb-1 flex items-start gap-2">
+                          <MapPin size={12} className="mt-0.5 flex-shrink-0 text-[#F0A20E]" aria-hidden="true" />
+                          <span
+                            className="text-[11px] tracking-wide text-gray-400"
+                            style={{ fontFamily: "var(--font-ui)" }}
+                          >
+                            {project.location || "Nigeria"}
+                          </span>
+                        </div>
+                        <h2
+                          className="mb-2 text-[1.05rem] font-bold leading-snug tracking-tight text-[#041627]"
+                          style={{ fontFamily: "var(--font-display)" }}
+                          data-testid={`text-project-title-${project.id}`}
+                        >
+                          {project.title}
+                        </h2>
+                        <p
+                          className="mb-4 text-sm leading-relaxed text-[#041627]/50"
+                          style={{ fontFamily: "var(--font-body)" }}
+                        >
+                          {project.short_description}
+                        </p>
+                        <div
+                          className="border-t border-gray-100 pt-4 text-xs font-bold tracking-wider text-[#F0A20E]"
+                          style={{ fontFamily: "var(--font-ui)" }}
+                        >
+                          ↗ {project.result_metric || "Delivered with care"}
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* CTA */}
-      <div className="py-20" style={{ background: "#041627" }}>
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-white mb-4" style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.8rem,3.5vw,2.8rem)", fontWeight: 800, letterSpacing: "-0.025em" }}>
+      <div className="bg-[#041627] py-20">
+        <div className="mx-auto max-w-3xl px-6 text-center">
+          <h2
+            className="mb-4 text-white"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "clamp(1.8rem,3.5vw,2.8rem)",
+              fontWeight: 800,
+              letterSpacing: "-0.025em",
+            }}
+          >
             Ready to start your project?
           </h2>
-          <p className="text-white/40 mb-8 text-sm" style={{ fontFamily: "var(--font-body)" }}>
+          <p className="mb-8 text-sm text-white/40" style={{ fontFamily: "var(--font-body)" }}>
             Get a free site assessment and detailed quote from our team — usually within 24 hours.
           </p>
           <Link
             to="/#contact"
-            className="inline-flex items-center gap-3 px-9 py-4 font-bold text-[#041627] text-sm tracking-wider hover:opacity-90 transition-opacity"
-            style={{ background: "linear-gradient(135deg,#F0A20E 0%,#FFB830 100%)", fontFamily: "var(--font-ui)", letterSpacing: "0.08em" }}
+            data-testid="link-projects-quote"
+            className="inline-flex items-center gap-3 px-9 py-4 text-sm font-bold tracking-wider text-[#041627] transition-opacity hover:opacity-90"
+            style={{
+              background: "linear-gradient(135deg,#F0A20E 0%,#FFB830 100%)",
+              fontFamily: "var(--font-ui)",
+            }}
           >
             GET A FREE QUOTE <ArrowRight size={15} />
           </Link>

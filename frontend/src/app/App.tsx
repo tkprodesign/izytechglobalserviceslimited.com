@@ -72,6 +72,7 @@ import { FounderPage } from "./admin/FounderPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ServicesPage } from "./pages/ServicesPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
+import { ProjectDetailPage } from "./pages/ProjectDetailPage";
 import { TestimonialsPage } from "./pages/TestimonialsPage";
 import { ContactPage } from "./pages/ContactPage";
 import { StorePage } from "./pages/StorePage";
@@ -112,6 +113,7 @@ export default function App() {
       <Route path="/about" element={<AboutPage />} />
       <Route path="/services" element={<ServicesPage />} />
       <Route path="/projects" element={<ProjectsPage />} />
+      <Route path="/projects/:slug" element={<ProjectDetailPage />} />
       <Route path="/testimonials" element={<TestimonialsPage />} />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/store" element={<StorePage />} />

@@ -81,6 +81,31 @@ export interface Testimonial {
   metric: string;
 }
 
+export interface Project {
+  id: number;
+  title: string;
+  slug: string;
+  category: string;
+  location: string;
+  year: string;
+  short_description: string;
+  full_description: string;
+  result_metric: string;
+  services: string[];
+  images: string[];
+  main_image_url: string;
+  featured: boolean;
+  sort_order: number;
+  published: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectsResponse {
+  data: Project[];
+  categories: string[];
+}
+
 export const api = {
   contact: (data: ContactPayload) =>
     post<{ success: boolean }>('/api/contact', data),
@@ -90,6 +115,12 @@ export const api = {
 
   testimonials: () =>
     get<{ data: Testimonial[] }>('/api/testimonials'),
+
+  projects: (category?: string) =>
+    get<ProjectsResponse>(`/api/projects${category ? `?category=${encodeURIComponent(category)}` : ''}`),
+
+  project: (slug: string) =>
+    get<{ data: Project }>(`/api/projects/${encodeURIComponent(slug)}`),
 
   socials: () =>
     get<SocialLinks>('/api/settings/socials'),

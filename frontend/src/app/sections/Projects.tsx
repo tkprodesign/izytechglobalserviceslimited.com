@@ -169,13 +169,14 @@ export function Projects() {
               <div className="flex items-center gap-2 text-white/30 text-xs mb-8" style={{ fontFamily: "var(--font-ui)" }}>
                 <MapPin size={11} /> {featured.location}
               </div>
-              <a
-                href="/projects?category=Solar"
+              <Link
+                to="/projects/150kw-commercial-solar-farm"
+                data-testid="link-featured-project"
                 className="inline-flex items-center gap-2 text-sm font-bold group-hover:gap-3 transition-all self-start"
                 style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}
               >
-                View Similar Projects <ArrowRight size={14} strokeWidth={2.5} />
-              </a>
+                View Project Details <ArrowRight size={14} strokeWidth={2.5} />
+              </Link>
             </div>
           </div>
         </motion.div>
