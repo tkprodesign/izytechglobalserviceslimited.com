@@ -119,7 +119,7 @@ export function Footer() {
             Nigeria's premier technology and energy services company. Powering homes, businesses and industries since 2012.
           </p>
           <div className="flex gap-2">
-            {socials.map(({ icon: Icon, href, label }) => (
+            {socials.map(({ Icon, href, label }) => (
               <a
                 key={label}
                 href={href}
