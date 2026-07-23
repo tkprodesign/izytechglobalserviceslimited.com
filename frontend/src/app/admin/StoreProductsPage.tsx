@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { DashboardLayout } from './DashboardLayout';
 import { getToken } from '../../lib/auth';
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Star, X, Save, ImagePlus, Link, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Star, X, Save, ImagePlus, Link, ChevronLeft, ChevronRight, Upload } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
 
@@ -85,6 +85,9 @@ export function StoreProductsPage() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [newImageUrl, setNewImageUrl] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const token = getToken();
 
   function load() {
@@ -127,6 +130,28 @@ export function StoreProductsPage() {
     if (!url) return;
     setForm(f => ({ ...f, images: [...f.images, url] }));
     setNewImageUrl('');
+  }
+
+  async function uploadFile(file: File) {
+    setUploadingImage(true);
+    setUploadError('');
+    try {
+      const data = new FormData();
+      data.append('image', file);
+      const res = await fetch(`${API}/api/admin/store/images/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: data,
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) throw new Error(json.error || 'Upload failed');
+      setForm(f => ({ ...f, images: [...f.images, json.url] }));
+    } catch (err: unknown) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   }
 
   function removeImage(idx: number) {
@@ -335,6 +360,36 @@ export function StoreProductsPage() {
                     ))}
                   </div>
                 )}
+                {/* Upload from device */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) uploadFile(f); }}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImage}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border-2 border-dashed text-sm font-semibold transition-colors disabled:opacity-50"
+                  style={{ borderColor: uploadingImage ? '#8fadc8' : '#c7d9ef', color: uploadingImage ? '#8fadc8' : 'var(--izy-blue)', background: '#f7faff' }}
+                >
+                  {uploadingImage
+                    ? <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg> Uploading to Cloudflare…</>
+                    : <><Upload size={14} /> Upload image from device</>}
+                </button>
+                {uploadError && (
+                  <p className="text-xs text-red-500 mt-1">{uploadError}</p>
+                )}
+
+                {/* Divider */}
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex-1 h-px" style={{ background: '#e2e8f0' }} />
+                  <span className="text-xs" style={{ color: '#94a3b8' }}>or paste URL</span>
+                  <div className="flex-1 h-px" style={{ background: '#e2e8f0' }} />
+                </div>
+
                 {/* Add image URL */}
                 <div className="flex gap-2">
                   <div className="flex-1 flex items-center gap-2 border rounded-lg px-3 py-2.5" style={{ borderColor: '#e2e8f0' }}>
@@ -344,7 +399,7 @@ export function StoreProductsPage() {
                       value={newImageUrl}
                       onChange={e => setNewImageUrl(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addImage())}
-                      placeholder="Paste image URL and press Enter…"
+                      placeholder="https://example.com/image.jpg"
                       className="flex-1 text-sm focus:outline-none bg-transparent"
                       style={{ color: 'var(--izy-navy)' }}
                     />
@@ -358,8 +413,8 @@ export function StoreProductsPage() {
                     Add
                   </button>
                 </div>
-                <p className="text-xs mt-1.5" style={{ color: '#94a3b8' }}>
-                  First image is the main product photo. Hover an image to reorder or remove.
+                <p className="text-xs mt-1" style={{ color: '#94a3b8' }}>
+                  First image is the main photo. Hover an image to reorder or remove.
                 </p>
               </Field>
 

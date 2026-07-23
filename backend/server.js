@@ -2,7 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
 const emailRoutes = require('./routes/email');
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -181,28 +184,14 @@ async function initStoreTable() {
 
   const { rows } = await db.query('SELECT COUNT(*)::int AS n FROM store_products');
   if (rows[0].n === 0) {
-    const seed = [
-      ['400W Monocrystalline Solar Panel',  'Solar',     'Solar',     'per panel', 'High-efficiency mono panel with 25-year performance warranty. Ideal for residential and commercial rooftop installations.',   'BESTSELLER', 5, 48, true,  true,  1],
-      ['550W Bifacial Solar Panel',          'Solar',     'Solar',     'per panel', 'Dual-sided bifacial cell technology captures reflected light for up to 30% more energy output.',                             null,         5, 21, true,  false, 2],
-      ['5kVA Hybrid Solar Inverter',         'Inverters', 'Inverters', 'per unit',  'All-in-one hybrid inverter with built-in MPPT charge controller. Supports grid-tie, off-grid and battery backup modes.',     'SALE',       5, 33, true,  true,  3],
-      ['10kVA Three-Phase Inverter',         'Inverters', 'Inverters', 'per unit',  'Industrial-grade three-phase inverter for factories, hospitals and commercial buildings with 24/7 critical loads.',           null,         4, 12, true,  false, 4],
-      ['200Ah Lithium LiFePO4 Battery',      'Batteries', 'Batteries', 'per unit',  'Lithium iron phosphate battery with 6,000+ cycle life. Lightweight, safe and virtually maintenance-free.',                   'NEW',        5, 19, true,  true,  5],
-      ['100Ah AGM Deep Cycle Battery',       'Batteries', 'Batteries', 'per unit',  'Sealed AGM deep cycle battery, ideal for solar backup systems. Spill-proof, vibration-resistant and reliable.',              null,         4, 37, true,  false, 6],
-      ['4-Channel 4K CCTV Kit',              'Security',  'Security',  'per kit',   'Complete kit with 4× 4K outdoor cameras, 4-channel NVR, 1TB HDD and all cables. Night vision up to 30m.',                   'POPULAR',    5, 55, true,  true,  7],
-      ['Smart Wi-Fi Video Doorbell',         'Security',  'Security',  'per unit',  '1080p HD doorbell with two-way audio, motion alerts and cloud recording. Works with any smartphone.',                        null,         4, 26, true,  false, 8],
-      ['Smart Home Starter Pack',            'Smart Home','Smart Home','per pack',  '4 smart switches + Zigbee hub + app control. Turn any home smart — works with Alexa, Google Home and Apple HomeKit.',        'NEW',        5, 14, true,  true,  9],
-      ['50W Smart LED Flood Light',          'Smart Home','Smart Home','per unit',  'App-controlled outdoor flood light with colour temperature adjustment, scheduling and motion trigger.',                        null,         4,  8, false, false, 10],
-      ['6-Outlet Surge Protector Strip',     'Electrical','Electrical','per unit',  'Heavy-duty surge protector with 6 outlets, 2 USB ports and 2500 joule protection rating. 3-metre cable.',                   null,         4, 62, true,  false, 11],
-      ['63A Automatic Transfer Switch',      'Electrical','Electrical','per unit',  'Automatic changeover switch that seamlessly transfers between mains and generator power. Suitable for homes and offices.',    null,         5, 29, true,  true,  12],
-    ];
-    for (const [name, category, tag, unit, description, badge, rating, reviews, in_stock, featured, sort_order] of seed) {
-      await db.query(
-        `INSERT INTO store_products (name,category,tag,unit,description,badge,rating,reviews,in_stock,featured,sort_order)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-        [name, category, tag, unit, description, badge, rating, reviews, in_stock, featured, sort_order]
-      );
-    }
-    console.log('Store products seeded with 12 initial products');
+    await db.query(
+      `INSERT INTO store_products (name,category,tag,unit,description,badge,rating,reviews,in_stock,featured,sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+      ['400W Monocrystalline Solar Panel', 'Solar', 'Solar', 'per panel',
+       'High-efficiency mono panel with 25-year performance warranty. Ideal for residential and commercial rooftop installations.',
+       'BESTSELLER', 5, 48, true, true, 1]
+    );
+    console.log('Store products seeded with 1 initial product');
   }
 }
 
@@ -309,6 +298,38 @@ app.delete('/api/admin/store/products/:id', requireAuth, async (req, res) => {
   try {
     await db.query('DELETE FROM store_products WHERE id=$1', [req.params.id]);
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Admin: Store image upload → Cloudflare Images ────────────────────────────
+app.post('/api/admin/store/images/upload', requireAuth, upload.single('image'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file provided' });
+
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const apiToken  = process.env.CLOUDFLARE_API_TOKEN;
+  if (!accountId || !apiToken)
+    return res.status(500).json({ error: 'Cloudflare credentials not configured on server' });
+
+  try {
+    const formData = new FormData();
+    formData.append(
+      'file',
+      new Blob([req.file.buffer], { type: req.file.mimetype }),
+      req.file.originalname
+    );
+
+    const cfRes = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v1`,
+      { method: 'POST', headers: { Authorization: `Bearer ${apiToken}` }, body: formData }
+    );
+
+    const data = await cfRes.json();
+    if (!data.success)
+      return res.status(500).json({ error: data.errors?.[0]?.message || 'Cloudflare upload failed' });
+
+    res.json({ url: data.result.variants[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
