@@ -175,7 +175,7 @@ export function Navbar() {
         <Link to="/" className="flex-shrink-0 flex items-center gap-2.5">
           <img src={logoIcon} alt="IZY" className="h-9 w-auto" />
           <div style={{ fontFamily: "var(--font-ui)" }}>
-            <div className={`font-bold text-sm leading-tight tracking-wide ${isTransparent ? "text-white" : "text-[#041627]"}`}>
+            <div className={`whitespace-nowrap font-bold text-sm leading-tight tracking-wide ${isTransparent ? "text-white" : "text-[#041627]"}`}>
               IZY TECHNOLOGIES
             </div>
             <div className={`text-[9px] tracking-[0.18em] uppercase leading-tight ${isTransparent ? "text-white/50" : "text-[#041627]/40"}`}>

@@ -129,7 +129,7 @@ export function About() {
             </h2>
             <div className="space-y-4 text-[#64748b] leading-relaxed text-[0.95rem]" style={{ fontFamily: "var(--font-body)" }}>
               <p>
-                Since our inception in 2018, IZY Technologies Global Services Limited has emerged as a leader in the solar energy sector, dedicated to providing innovative and sustainable energy solutions across Nigeria.
+                Since our inception in 2018, <span className="whitespace-nowrap">IZY Technologies</span> Global Services Limited has emerged as a leader in the solar energy sector, dedicated to providing innovative and sustainable energy solutions across Nigeria.
               </p>
               <p>
                 With a strong commitment to excellence and customer satisfaction, we have grown from a small team of solar enthusiasts into a comprehensive energy and technology company — transforming the way individuals and businesses harness solar power for a cleaner, more sustainable future.
@@ -346,7 +346,7 @@ export function About() {
                 letterSpacing: "-0.025em",
               }}
             >
-              The IZY Technologies Advantage
+              The <span className="whitespace-nowrap">IZY Technologies</span> Advantage
             </h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">

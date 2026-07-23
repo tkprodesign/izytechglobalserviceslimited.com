@@ -73,7 +73,7 @@ export function ServicesPage() {
               Our Services
             </h1>
             <p className="text-white/45 max-w-xl text-base leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-              From solar energy to smart automation, industrial wiring to IT infrastructure — IZY Technologies is your single partner for every energy and technology need.
+              From solar energy to smart automation, industrial wiring to IT infrastructure — <span className="whitespace-nowrap">IZY Technologies</span> is your single partner for every energy and technology need.
             </p>
           </motion.div>
         </div>

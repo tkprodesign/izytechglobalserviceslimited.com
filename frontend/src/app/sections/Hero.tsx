@@ -148,7 +148,7 @@ export function Hero() {
               className="text-white/55 text-lg leading-relaxed max-w-xl mb-10"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              From solar energy systems to smart homes and industrial wiring — Izy Technologies delivers cutting-edge solutions across Nigeria and beyond.
+              From solar energy systems to smart homes and industrial wiring — <span className="whitespace-nowrap">Izy Technologies</span> delivers cutting-edge solutions across Nigeria and beyond.
             </motion.p>
 
             {/* CTAs */}

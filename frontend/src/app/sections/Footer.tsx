@@ -111,7 +111,7 @@ export function Footer() {
           <div className="flex items-center gap-2.5 mb-5">
             <img src={logoIcon} alt="IZY" className="h-9 w-auto" />
             <div style={{ fontFamily: "var(--font-ui)" }}>
-              <div className="text-white font-bold text-sm leading-tight tracking-wide">IZY TECHNOLOGIES</div>
+              <div className="whitespace-nowrap text-white font-bold text-sm leading-tight tracking-wide">IZY TECHNOLOGIES</div>
               <div className="text-white/30 text-[9px] tracking-[0.18em] uppercase leading-tight">Global Services Limited</div>
             </div>
           </div>
@@ -204,7 +204,7 @@ export function Footer() {
       {/* Bottom bar */}
       <div className="border-t border-white/5 px-6 py-5 max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
         <p className="text-white/20 text-xs" style={{ fontFamily: "var(--font-ui)" }}>
-          © {new Date().getFullYear()} Izy Technologies Global Services Limited. All rights reserved.
+          © {new Date().getFullYear()} <span className="whitespace-nowrap">Izy Technologies</span> Global Services Limited. All rights reserved.
         </p>
         <p className="text-white/20 text-xs" style={{ fontFamily: "var(--font-ui)" }}>
           Powering Nigeria, One Project at a Time.
