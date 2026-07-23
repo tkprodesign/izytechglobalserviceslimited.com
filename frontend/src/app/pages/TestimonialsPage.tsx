@@ -118,7 +118,7 @@ export function TestimonialsPage() {
       <div style={{ background: "#F0A20E" }}>
         <div className="max-w-7xl mx-auto px-6 py-6 grid grid-cols-3 gap-6 text-center">
           {[
-            { value: "500+", label: "Projects Completed" },
+            { value: "1000+", label: "Projects Completed" },
             { value: "98%", label: "Client Satisfaction" },
             { value: "12+", label: "Years of Excellence" },
           ].map(({ value, label }) => (
@@ -366,7 +366,7 @@ export function TestimonialsPage() {
               Ready to become our next success story?
             </h2>
             <p className="text-white/40 mb-8 text-sm" style={{ fontFamily: "var(--font-body)" }}>
-              Join 500+ satisfied clients across Nigeria. Get your free consultation today.
+              Join 1000+ satisfied clients across Nigeria. Get your free consultation today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link

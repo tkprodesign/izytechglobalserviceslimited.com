@@ -413,7 +413,7 @@ export function ContactPage() {
               Prefer to see our work first?
             </h2>
             <p className="text-white/40 mb-7 text-sm" style={{ fontFamily: "var(--font-body)" }}>
-              Browse our portfolio of 500+ completed projects across Nigeria.
+              Browse our portfolio of 1000+ completed projects across Nigeria.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link

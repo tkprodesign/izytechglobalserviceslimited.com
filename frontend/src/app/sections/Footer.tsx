@@ -87,7 +87,7 @@ export function Footer() {
               Ready to Power Your Future?
             </h3>
             <p className="text-white/40 text-sm" style={{ fontFamily: "var(--font-body)" }}>
-              Join 500+ satisfied clients across Nigeria. Get your free consultation today.
+              Join 1000+ satisfied clients across Nigeria. Get your free consultation today.
             </p>
           </div>
           <a

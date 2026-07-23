@@ -89,7 +89,7 @@ export function Statement() {
 
             {/* Divider stats */}
             <div className="grid grid-cols-2 gap-6 pt-4 border-t border-white/10">
-              {[{ v: "500+", l: "Projects Delivered" }, { v: "36", l: "States Covered" }].map(({ v, l }) => (
+              {[{ v: "1000+", l: "Projects Delivered" }, { v: "36", l: "States Covered" }].map(({ v, l }) => (
                 <div key={l}>
                   <div
                     className="text-white mb-0.5"
