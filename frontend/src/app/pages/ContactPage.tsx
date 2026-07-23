@@ -15,9 +15,9 @@ const contactInfo = [
   {
     icon: Mail,
     label: "Email Us",
-    value: "info@izytechnologies.com",
+    value: "info@izytechglobalservices.com",
     sub: "We reply within 24 hours",
-    href: "mailto:info@izytechnologies.com",
+    href: "mailto:info@izytechglobalservices.com",
   },
   {
     icon: MapPin,

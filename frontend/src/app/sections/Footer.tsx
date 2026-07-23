@@ -116,7 +116,7 @@ export function Footer() {
             </div>
           </div>
           <p className="text-white/35 text-sm leading-relaxed mb-6" style={{ fontFamily: "var(--font-body)" }}>
-            Nigeria's premier technology and energy services company. Powering homes, businesses and industries since 2012.
+            Nigeria's premier technology and energy services company. Powering homes, businesses and industries since 2018.
           </p>
           <div className="flex gap-2">
             {socials.map(({ Icon, href, label }) => (
@@ -180,7 +180,7 @@ export function Footer() {
           <ul className="space-y-4">
             {[
               { href: "tel:+2348101262814", Icon: Phone, text: "+234 810 126 2814" },
-              { href: "mailto:info@izytechnologies.com", Icon: Mail, text: "info@izytechnologies.com" },
+              { href: "mailto:info@izytechglobalservices.com", Icon: Mail, text: "info@izytechglobalservices.com" },
             ].map(({ href, Icon, text }) => (
               <li key={text}>
                 <a href={href} className="flex items-start gap-3 text-white/35 hover:text-[#F0A20E] transition-colors group">

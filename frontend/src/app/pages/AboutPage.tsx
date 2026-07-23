@@ -1,39 +1,70 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "motion/react";
-import { Award, CheckCircle, Users, Globe, ArrowRight, MapPin, Calendar, Zap, Shield } from "lucide-react";
+import { Award, Users, Globe, ArrowRight, MapPin, Calendar, Zap, Shield, Target, Leaf, Heart } from "lucide-react";
 import { Link } from "react-router";
 import { PageLayout } from "../components/PageLayout";
-import iconLogo from "../../imports/izy-technologies_icon_v1.png";
 
 const stats = [
-  { value: 500, suffix: "+", label: "Projects Completed" },
-  { value: 12,  suffix: "+", label: "Years of Excellence" },
-  { value: 36,  suffix: "",  label: "States Covered" },
-  { value: 98,  suffix: "%", label: "Client Satisfaction" },
+  { value: 1000, suffix: "+", label: "Installations Completed" },
+  { value: 8,    suffix: "+", label: "Years of Excellence" },
+  { value: 4,    suffix: "",  label: "Service Divisions" },
+  { value: 98,   suffix: "%", label: "Client Satisfaction" },
 ];
 
 const milestones = [
-  { year: "2012", title: "Company Founded", detail: "IZY Technologies established in Port Harcourt with a team of 4 licensed engineers." },
-  { year: "2015", title: "Industrial Expansion", detail: "Secured first major industrial contracts — wiring and power distribution for factories across Rivers State." },
-  { year: "2018", title: "Solar Division Launched", detail: "Dedicated solar engineering team established as demand for renewable energy surged across Nigeria." },
-  { year: "2020", title: "Smart Home & CCTV", detail: "Launched smart home automation and CCTV divisions. First multi-system integrated project delivered in Abuja." },
-  { year: "2023", title: "500+ Projects Milestone", detail: "Celebrated 500 completed projects across 20 states, with a team that had grown to 60+ engineers and technicians." },
-  { year: "2024", title: "Nationwide Coverage", detail: "Expanded operations to all 36 states and FCT, establishing IZY as Nigeria's premier energy solutions company." },
+  {
+    year: "2018",
+    title: "Company Founded",
+    detail: "IZY Tech Global Services Limited was established on March 8, 2018 in Port Harcourt by Israel Ideozu — a small, driven team of solar enthusiasts committed to clean, reliable energy.",
+  },
+  {
+    year: "2019",
+    title: "First Major Contracts",
+    detail: "Secured key residential and commercial solar contracts across Rivers State, building a reputation for high-quality installations and exceptional customer service.",
+  },
+  {
+    year: "2020",
+    title: "Multi-Division Expansion",
+    detail: "Expanded offerings to include CCTV surveillance, smart home automation, and industrial wiring alongside our core solar and energy storage services.",
+  },
+  {
+    year: "2022",
+    title: "Sustainability Leadership",
+    detail: "Joined local and global sustainability initiatives, advocating for the benefits of solar energy and contributing to environmental conservation across Nigeria.",
+  },
+  {
+    year: "2023",
+    title: "Industry Recognition",
+    detail: "Our commitment to quality and innovation earned several awards and accolades within the renewable energy sector, affirming our status as a leader in solar technology.",
+  },
+  {
+    year: "2024",
+    title: "Nationwide Coverage",
+    detail: "Now serving a diverse range of clients — from homeowners to large enterprises — with rapid deployment capacity across Nigeria and growing international reach.",
+  },
 ];
 
-const whyUs = [
-  { icon: Award,        title: "Certified & Licensed",  detail: "Fully certified electrical engineers and COREN-registered professionals handling every project to the highest standard." },
-  { icon: CheckCircle,  title: "End-to-End Service",    detail: "We design, supply, install and maintain — one partner for the entire lifecycle of every project we undertake." },
-  { icon: Users,        title: "Expert Team",            detail: "60+ engineers, technicians and project managers with deep industry expertise across energy, tech and automation." },
-  { icon: Globe,        title: "Nationwide Reach",       detail: "Operating across all 36 states and FCT with rapid deployment capacity, regardless of project scale or location." },
-  { icon: Zap,          title: "Fast Turnaround",        detail: "Site assessment within 48 hours, detailed proposal within 72 hours, and project kickoff on your schedule." },
-  { icon: Shield,       title: "2-Year Warranty",        detail: "Every installation comes with a 2-year workmanship warranty and 24/7 emergency support from our service team." },
-];
-
-const teamPhotos = [
-  { src: "/site-images/project-site-team.jpg",  caption: "Site inspection team" },
-  { src: "/site-images/about-team.jpg",          caption: "Rooftop solar installation" },
-  { src: "/site-images/project-site-team2.jpg", caption: "Project assessment crew" },
+const achievements = [
+  {
+    icon: Users,
+    title: "Extensive Client Base",
+    detail: "Izy-Tech has successfully completed thousands of solar installations, serving a diverse range of clients from homeowners to large enterprises across Nigeria.",
+  },
+  {
+    icon: Leaf,
+    title: "Sustainability Leadership",
+    detail: "We are actively involved in local and global sustainability initiatives, advocating for solar energy and contributing to environmental conservation efforts.",
+  },
+  {
+    icon: Award,
+    title: "Industry Recognition",
+    detail: "Our commitment to quality and innovation has garnered several awards and accolades within the renewable energy sector, affirming our status as a leader in solar technology.",
+  },
+  {
+    icon: Heart,
+    title: "Community Engagement",
+    detail: "We engage in educational programmes and outreach initiatives that promote awareness of solar energy — fostering a culture of sustainability and inspiring others to join the movement.",
+  },
 ];
 
 function Counter({ to, suffix }: { to: number; suffix: string }) {
@@ -86,10 +117,10 @@ export function AboutPage() {
               className="text-white mb-6"
               style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2.4rem, 5.5vw, 4.5rem)", fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.05 }}
             >
-              About IZY Technologies
+              About IZY Tech<br />Global Services
             </h1>
             <p className="text-white/50 max-w-lg text-base leading-relaxed mb-8" style={{ fontFamily: "var(--font-body)" }}>
-              Nigeria's premier technology and energy services company. Powering homes, businesses and industries since 2012.
+              Illuminating the future of solar energy. Established March 8, 2018 — powering homes, businesses and industries across Nigeria.
             </p>
             <div className="flex items-center gap-2 text-white/30 text-sm" style={{ fontFamily: "var(--font-ui)" }}>
               <MapPin size={13} style={{ color: "#F0A20E" }} />
@@ -118,7 +149,69 @@ export function AboutPage() {
         </div>
       </div>
 
-      {/* ── Mission & Vision ──────────────────────────────── */}
+      {/* ── Overview ──────────────────────────────────────── */}
+      <div className="py-24" style={{ background: "#051d30" }}>
+        <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-2 lg:gap-16 items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -24 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-6 h-px" style={{ background: "#F0A20E" }} />
+              <span className="text-xs font-semibold tracking-widest uppercase" style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}>
+                Overview
+              </span>
+            </div>
+            <h2
+              className="text-white mb-6"
+              style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.8rem,3.5vw,2.8rem)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.1 }}
+            >
+              A Leader in Sustainable Energy Solutions
+            </h2>
+            <p className="text-white/55 leading-relaxed mb-6" style={{ fontFamily: "var(--font-body)", fontSize: "1rem" }}>
+              Since its inception in 2018, Izy-Tech Global Services Limited has emerged as a leader in the solar energy sector, dedicated to providing innovative and sustainable energy solutions. With a strong commitment to excellence and customer satisfaction, Izy-Tech has been transforming the way individuals and businesses harness solar power for a cleaner and more sustainable future.
+            </p>
+            <p className="text-white/40 leading-relaxed" style={{ fontFamily: "var(--font-body)", fontSize: "0.95rem" }}>
+              Founded by Israel Ideozu in Port Harcourt, Rivers State, we have grown from a small team of enthusiasts into Nigeria's trusted partner for solar energy, CCTV, smart home automation, and industrial electrical solutions.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 24 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="mt-12 lg:mt-0 grid grid-cols-2 gap-4"
+          >
+            {[
+              { icon: Zap,    label: "Solar Energy",         sub: "Residential & commercial" },
+              { icon: Shield, label: "CCTV & Security",      sub: "Smart surveillance systems" },
+              { icon: Target, label: "Smart Home",           sub: "Automation & integration" },
+              { icon: Globe,  label: "Industrial Wiring",    sub: "Power distribution" },
+            ].map(({ icon: Icon, label, sub }, i) => (
+              <motion.div
+                key={label}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: 0.05 * i }}
+                className="p-5 border"
+                style={{ borderColor: "rgba(240,162,14,0.18)", background: "rgba(240,162,14,0.04)" }}
+              >
+                <div className="w-9 h-9 flex items-center justify-center rounded mb-3" style={{ background: "rgba(240,162,14,0.12)" }}>
+                  <Icon size={17} style={{ color: "#F0A20E" }} />
+                </div>
+                <div className="text-white font-bold text-sm mb-0.5" style={{ fontFamily: "var(--font-display)" }}>{label}</div>
+                <div className="text-white/35 text-xs" style={{ fontFamily: "var(--font-ui)" }}>{sub}</div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </div>
+
+      {/* ── Mission ───────────────────────────────────────── */}
       <div className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
@@ -147,7 +240,7 @@ export function AboutPage() {
             {[
               {
                 label: "Our Mission",
-                text: "To deliver world-class electrical, energy and technology solutions that transform the way Nigerians live and work — through innovation, integrity and relentless commitment to quality.",
+                text: "Our mission at Izy-Tech Global Services Limited is to empower communities through accessible and reliable solar energy solutions. We aim to reduce dependence on fossil fuels, promote environmental stewardship, and enhance energy independence for our clients.",
                 accent: "#F0A20E",
               },
               {
@@ -166,7 +259,6 @@ export function AboutPage() {
                 style={{ borderTopColor: accent, borderTopWidth: 3 }}
               >
                 <div className="flex items-center gap-2 mb-4">
-                  <img src={iconLogo} alt="IZY" className="h-6 w-auto opacity-50" />
                   <span className="text-xs font-semibold uppercase tracking-widest text-gray-400" style={{ fontFamily: "var(--font-ui)" }}>
                     {label}
                   </span>
@@ -180,7 +272,7 @@ export function AboutPage() {
         </div>
       </div>
 
-      {/* ── Our Story ─────────────────────────────────────── */}
+      {/* ── Our Journey ───────────────────────────────────── */}
       <div className="py-24" style={{ background: "#f5f6f8" }}>
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
@@ -200,8 +292,11 @@ export function AboutPage() {
               className="text-[#041627]"
               style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.8rem,3.5vw,2.8rem)", fontWeight: 800, letterSpacing: "-0.025em" }}
             >
-              12 Years Building Nigeria's Energy Future
+              Starting Small, Growing Strong
             </h2>
+            <p className="text-[#041627]/50 mt-3 max-w-xl text-sm leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+              Starting as a small team of solar enthusiasts, Izy-Tech quickly established itself in the industry by focusing on high-quality installations and exceptional customer service.
+            </p>
           </motion.div>
 
           <div className="relative">
@@ -250,7 +345,7 @@ export function AboutPage() {
         </div>
       </div>
 
-      {/* ── Why Choose Us ─────────────────────────────────── */}
+      {/* ── Achievements ──────────────────────────────────── */}
       <div className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
@@ -258,39 +353,41 @@ export function AboutPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.55 }}
-            className="mb-14"
+            className="mb-14 text-center"
           >
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center justify-center gap-3 mb-4">
               <div className="w-6 h-px" style={{ background: "#F0A20E" }} />
               <span className="text-xs font-semibold tracking-widest uppercase" style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}>
-                Why IZY
+                Achievements
               </span>
+              <div className="w-6 h-px" style={{ background: "#F0A20E" }} />
             </div>
             <h2
               className="text-[#041627]"
               style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.8rem,3.5vw,2.8rem)", fontWeight: 800, letterSpacing: "-0.025em" }}
             >
-              What Sets Us Apart
+              What We've Built Together
             </h2>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {whyUs.map(({ icon: Icon, title, detail }, i) => (
+          <div className="grid md:grid-cols-2 gap-6">
+            {achievements.map(({ icon: Icon, title, detail }, i) => (
               <motion.div
                 key={title}
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.45, delay: i * 0.06 }}
-                className="p-7 border border-gray-100 hover:border-[#F0A20E]/30 hover:shadow-sm transition-all"
+                transition={{ duration: 0.45, delay: i * 0.08 }}
+                className="p-8 border border-gray-100 hover:border-[#F0A20E]/30 hover:shadow-sm transition-all"
+                style={{ borderTopColor: "#F0A20E", borderTopWidth: 3 }}
               >
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-5" style={{ background: "rgba(240,162,14,0.08)" }}>
-                  <Icon size={18} style={{ color: "#F0A20E" }} />
+                <div className="w-11 h-11 rounded-lg flex items-center justify-center mb-5" style={{ background: "rgba(240,162,14,0.08)" }}>
+                  <Icon size={20} style={{ color: "#F0A20E" }} />
                 </div>
-                <h3 className="font-bold text-[#041627] mb-2" style={{ fontFamily: "var(--font-display)", fontSize: "1rem", letterSpacing: "-0.015em" }}>
+                <h3 className="font-bold text-[#041627] mb-3" style={{ fontFamily: "var(--font-display)", fontSize: "1.05rem", letterSpacing: "-0.015em" }}>
                   {title}
                 </h3>
-                <p className="text-[#041627]/50 text-sm leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                <p className="text-[#041627]/55 text-sm leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
                   {detail}
                 </p>
               </motion.div>
@@ -299,69 +396,34 @@ export function AboutPage() {
         </div>
       </div>
 
-      {/* ── Team in action ────────────────────────────────── */}
-      <div className="py-24" style={{ background: "#f5f6f8" }}>
-        <div className="max-w-7xl mx-auto px-6">
+      {/* ── Looking Ahead ─────────────────────────────────── */}
+      <div className="py-24" style={{ background: "#041627" }}>
+        <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-2 lg:gap-16 items-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-12"
+            transition={{ duration: 0.6 }}
           >
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-5">
               <div className="w-6 h-px" style={{ background: "#F0A20E" }} />
               <span className="text-xs font-semibold tracking-widest uppercase" style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}>
-                Our People
+                Looking Ahead
               </span>
             </div>
             <h2
-              className="text-[#041627]"
-              style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.8rem,3.5vw,2.8rem)", fontWeight: 800, letterSpacing: "-0.025em" }}
+              className="text-white mb-6"
+              style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.8rem,3.5vw,2.8rem)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.1 }}
             >
-              The Team Behind Every Project
+              A Greener, Brighter Future for All
             </h2>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-4">
-            {teamPhotos.map(({ src, caption }, i) => (
-              <motion.div
-                key={src}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.08 }}
-                className="relative overflow-hidden group"
-                style={{ height: i === 1 ? 380 : 280 }}
-              >
-                <img
-                  src={src}
-                  alt={caption}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(4,22,39,0.65) 0%, transparent 55%)" }} />
-                <div className="absolute bottom-4 left-4 text-white text-xs font-semibold tracking-widest uppercase" style={{ fontFamily: "var(--font-ui)" }}>
-                  {caption}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── CTA ───────────────────────────────────────────── */}
-      <div className="py-24" style={{ background: "#041627" }}>
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <h2
-              className="text-white mb-4"
-              style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.8rem,3.5vw,2.8rem)", fontWeight: 800, letterSpacing: "-0.025em" }}
-            >
-              Ready to work with us?
-            </h2>
-            <p className="text-white/40 mb-8 text-sm" style={{ fontFamily: "var(--font-body)" }}>
-              Join 500+ satisfied clients across Nigeria. Get your free consultation and quote today.
+            <p className="text-white/55 leading-relaxed mb-6" style={{ fontFamily: "var(--font-body)", fontSize: "1rem" }}>
+              As we look to the future, Izy-Tech Global Services Limited remains committed to innovation and excellence. We are dedicated to researching and developing new technologies that will make solar energy even more efficient and accessible.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <p className="text-white/40 leading-relaxed mb-10" style={{ fontFamily: "var(--font-body)", fontSize: "0.95rem" }}>
+              Our focus on sustainability and customer satisfaction will continue to drive our efforts as we work toward a greener, brighter future for all. Join us in making a positive impact on our planet.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
               <Link
                 to="/#contact"
                 className="inline-flex items-center justify-center gap-3 px-9 py-4 font-bold text-[#041627] text-sm tracking-wider hover:opacity-90 transition-opacity"
@@ -376,6 +438,49 @@ export function AboutPage() {
               >
                 VIEW OUR SERVICES
               </Link>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 24 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="mt-14 lg:mt-0"
+          >
+            <div
+              className="p-8 border"
+              style={{ borderColor: "rgba(240,162,14,0.2)", background: "rgba(240,162,14,0.04)" }}
+            >
+              <div className="text-xs font-semibold tracking-widest uppercase mb-6" style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}>
+                Contact Us
+              </div>
+              {[
+                { label: "Email",     value: "info@izytechglobalservices.com", href: "mailto:info@izytechglobalservices.com" },
+                { label: "Phone",     value: "0810 126 2814",                  href: "tel:08101262814" },
+                { label: "Facebook",  value: "Izy Technologies Global Services Limited", href: "https://facebook.com" },
+                { label: "Instagram", value: "@izytechservices",               href: "https://instagram.com/izytechservices" },
+                { label: "Location",  value: "Port Harcourt, Rivers State, Nigeria", href: null },
+              ].map(({ label, value, href }) => (
+                <div key={label} className="flex gap-4 mb-5 last:mb-0">
+                  <div className="text-xs font-semibold w-24 shrink-0 pt-0.5" style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}>
+                    {label}
+                  </div>
+                  {href ? (
+                    <a
+                      href={href}
+                      className="text-white/60 text-sm hover:text-white/90 transition-colors"
+                      style={{ fontFamily: "var(--font-body)" }}
+                      target={href.startsWith("http") ? "_blank" : undefined}
+                      rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+                    >
+                      {value}
+                    </a>
+                  ) : (
+                    <span className="text-white/60 text-sm" style={{ fontFamily: "var(--font-body)" }}>{value}</span>
+                  )}
+                </div>
+              ))}
             </div>
           </motion.div>
         </div>
