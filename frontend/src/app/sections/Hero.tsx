@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { ArrowRight } from "lucide-react";
 import { motion, useScroll, useTransform } from "motion/react";
+import { useSearchParams } from "react-router";
 
 const stats = [
   { value: 1000, suffix: "+", label: "Installations" },
@@ -44,6 +45,16 @@ const line2 = ["Future-Ready", "Solutions,"];
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
+  const [searchParams] = useSearchParams();
+
+  const handleFreeQuote = (e: React.MouseEvent) => {
+    e.preventDefault();
+    // If a service is pre-selected via ?service=, clear it so the form resets to the default option
+    if (searchParams.get("service")) {
+      window.history.replaceState({}, "", window.location.pathname + "#contact");
+    }
+    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+  };
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "28%"]);
   const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
@@ -160,6 +171,7 @@ export function Hero() {
             >
               <a
                 href="#contact"
+                onClick={handleFreeQuote}
                 className="btn-shimmer inline-flex items-center gap-3 px-9 py-4 font-bold text-[#041627] transition-all hover:scale-[1.03] hover:shadow-[0_8px_30px_rgba(240,162,14,0.45)] text-sm tracking-wider"
                 style={{
                   fontFamily: "var(--font-ui)",
