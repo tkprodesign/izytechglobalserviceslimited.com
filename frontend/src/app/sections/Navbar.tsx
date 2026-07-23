@@ -53,9 +53,8 @@ function NavItem({
       : location.pathname.startsWith(link.to)
     : false;
 
-  const activeClass = isActive
-    ? isTransparent ? "text-white font-semibold" : "text-[#0d1b2e] font-semibold"
-    : "";
+  const activeText = isTransparent ? "text-white font-semibold" : "text-[#0d1b2e] font-semibold";
+  const activeClass = isActive ? activeText : "";
 
   if (link.children) {
     return (
@@ -66,13 +65,19 @@ function NavItem({
       >
         <Link
           to={link.to ?? "/services"}
-          className={`flex items-center gap-1 px-4 py-2 text-sm font-medium transition-colors ${baseText} ${activeClass}`}
+          className={`relative flex items-center gap-1 px-4 py-2 text-sm font-medium transition-colors ${baseText} ${activeClass}`}
         >
           {link.label}
           <ChevronDown
             size={13}
             className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
           />
+          {isActive && (
+            <span
+              className="absolute bottom-0 left-4 right-4 h-[2px]"
+              style={{ background: "#F0A20E", borderRadius: 1 }}
+            />
+          )}
         </Link>
         <div
           className={`absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-[#e8edf3] py-1.5 transition-all duration-200 ${
@@ -109,10 +114,16 @@ function NavItem({
     return (
       <Link
         to={link.to}
-        className={`px-4 py-2 text-sm font-medium transition-colors ${baseText} ${activeClass}`}
+        className={`relative px-4 py-2 text-sm font-medium transition-colors ${baseText} ${activeClass}`}
         onClick={onClick}
       >
         {link.label}
+        {isActive && (
+          <span
+            className="absolute bottom-0 left-4 right-4 h-[2px]"
+            style={{ background: "#F0A20E", borderRadius: 1 }}
+          />
+        )}
       </Link>
     );
   }
@@ -256,20 +267,31 @@ export function Navbar() {
                 )}
               </div>
             ) : link.to ? (
-              <Link
-                key={link.label}
-                to={link.to}
-                onClick={() => setMobileOpen(false)}
-                className="block px-3 py-2.5 text-sm font-medium text-[#0d1b2e]/70 hover:text-[#0d1b2e]"
-              >
-                {link.label}
-              </Link>
+              (() => {
+                const active = link.to === "/"
+                  ? location.pathname === "/"
+                  : location.pathname.startsWith(link.to);
+                return (
+                  <Link
+                    key={link.label}
+                    to={link.to}
+                    onClick={() => setMobileOpen(false)}
+                    className={`block px-3 py-2.5 text-sm font-medium transition-colors border-l-2 ${
+                      active
+                        ? "border-[#F0A20E] text-[#0d1b2e] font-semibold bg-[#F0A20E]/6"
+                        : "border-transparent text-[#0d1b2e]/70 hover:text-[#0d1b2e]"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })()
             ) : (
               <a
                 key={link.label}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="block px-3 py-2.5 text-sm font-medium text-[#0d1b2e]/70 hover:text-[#0d1b2e]"
+                className="block px-3 py-2.5 text-sm font-medium border-l-2 border-transparent text-[#0d1b2e]/70 hover:text-[#0d1b2e]"
               >
                 {link.label}
               </a>
