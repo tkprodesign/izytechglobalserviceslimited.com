@@ -1,14 +1,43 @@
 import { Routes, Route, Navigate, useLocation } from "react-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import "../styles/fonts.css";
 import "../styles/micro.css";
 
-/** Scrolls to the top of the page whenever the route pathname changes. */
-function ScrollToTop() {
-  const { pathname } = useLocation();
+const NAVBAR_H = 80; // matches h-20 in Navbar
+
+/**
+ * Handles all scroll behaviour for route changes:
+ * - Hash present  → smooth-scroll to the target element (offset for fixed navbar)
+ * - Hash absent, pathname changed → smooth-scroll to top
+ * - Only search params changed (same path, no hash) → do nothing (form handles it)
+ */
+function NavigationScroll() {
+  const location = useLocation();
+  const prevPathname = useRef(location.pathname);
+
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-  }, [pathname]);
+    const { pathname, hash } = location;
+    const pathnameChanged = pathname !== prevPathname.current;
+    prevPathname.current = pathname;
+
+    if (hash) {
+      // Give React one frame to finish rendering the destination page
+      const id = hash.slice(1);
+      const attempt = (retries: number) => {
+        const el = document.getElementById(id);
+        if (el) {
+          const top = el.getBoundingClientRect().top + window.scrollY - NAVBAR_H;
+          window.scrollTo({ top, behavior: "smooth" });
+        } else if (retries > 0) {
+          setTimeout(() => attempt(retries - 1), 60);
+        }
+      };
+      setTimeout(() => attempt(5), 60);
+    } else if (pathnameChanged) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [location]);
+
   return null;
 }
 
@@ -76,7 +105,7 @@ function PublicSite() {
 export default function App() {
   return (
     <CartProvider>
-    <ScrollToTop />
+    <NavigationScroll />
     <Routes>
       {/* Public site */}
       <Route path="/" element={<PublicSite />} />
