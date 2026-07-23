@@ -40,8 +40,15 @@ Set these in your Railway service → Variables tab:
 | `DATABASE_URL` | Your Neon connection string (Neon → Connect → copy the pooled URL) |
 | `ALLOWED_ORIGINS` | Comma-separated Cloudflare Pages URLs, e.g. `https://izytech.pages.dev,https://izytechgsl.com` |
 | `NODE_ENV` | `production` |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID |
+| `CLOUDFLARE_API_TOKEN` | API token allowed to create Cloudflare Images direct uploads |
+| `CLOUDFLARE_IMAGES_HASH` | Cloudflare Images delivery hash |
 
 Railway automatically sets `PORT` — do not override it.
+
+Store product images are uploaded directly from the admin browser to Cloudflare
+Images using a short-lived URL issued by the API. Railway only handles the
+small URL-creation request and never stores the image bytes.
 
 ## Cloudflare Pages environment variable
 

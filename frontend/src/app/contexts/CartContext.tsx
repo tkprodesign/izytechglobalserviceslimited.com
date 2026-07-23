@@ -7,6 +7,7 @@ export type CartItem = {
   tag: string;
   description: string;
   unit: string;
+  image?: string;
   quantity: number;
 };
 

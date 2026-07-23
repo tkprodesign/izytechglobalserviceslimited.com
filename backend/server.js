@@ -2,10 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
-const multer = require('multer');
 const emailRoutes = require('./routes/email');
-
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -193,6 +190,7 @@ async function initStoreTable() {
     );
     console.log('Store products seeded with 1 initial product');
   }
+
 }
 
 // ── Store: Products (public) ───────────────────────────────────────────────────
@@ -304,32 +302,36 @@ app.delete('/api/admin/store/products/:id', requireAuth, async (req, res) => {
 });
 
 // ── Admin: Store image upload → Cloudflare Images ────────────────────────────
-app.post('/api/admin/store/images/upload', requireAuth, upload.single('image'), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file provided' });
-
+// The backend only creates a short-lived upload URL. Image bytes go directly
+// from the admin browser to Cloudflare, so Railway never stores the file.
+app.post('/api/admin/store/images/direct-upload', requireAuth, async (_req, res) => {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken  = process.env.CLOUDFLARE_API_TOKEN;
-  if (!accountId || !apiToken)
+  const imagesHash = process.env.CLOUDFLARE_IMAGES_HASH;
+  if (!accountId || !apiToken || !imagesHash)
     return res.status(500).json({ error: 'Cloudflare credentials not configured on server' });
 
   try {
-    const formData = new FormData();
-    formData.append(
-      'file',
-      new Blob([req.file.buffer], { type: req.file.mimetype }),
-      req.file.originalname
-    );
-
     const cfRes = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v1`,
-      { method: 'POST', headers: { Authorization: `Bearer ${apiToken}` }, body: formData }
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v2/direct_upload`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiToken}` },
+      }
     );
-
     const data = await cfRes.json();
     if (!data.success)
-      return res.status(500).json({ error: data.errors?.[0]?.message || 'Cloudflare upload failed' });
+      return res.status(502).json({ error: data.errors?.[0]?.message || 'Cloudflare upload failed' });
 
-    res.json({ url: data.result.variants[0] });
+    const imageId = data.result?.id;
+    const uploadURL = data.result?.uploadURL;
+    if (!imageId || !uploadURL) {
+      return res.status(502).json({ error: 'Cloudflare did not return an upload URL' });
+    }
+    res.json({
+      uploadURL,
+      url: `https://imagedelivery.net/${imagesHash}/${imageId}/public`,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -1,175 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ShoppingCart, ArrowRight, Tag, Zap, Sun, Shield, Home, Cpu, Filter, Star, CheckCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { PageLayout } from "../components/PageLayout";
 import { useCart } from "../contexts/CartContext";
+import { fetchStoreProducts, type StoreProduct } from "../../lib/store";
 
-type Product = {
-  id: number;
-  name: string;
-  category: string;
-  tag: string;
-  unit: string;
-  description: string;
-  badge?: string;
-  rating: number;
-  reviews: number;
-  inStock: boolean;
-  featured?: boolean;
-};
-
-const products: Product[] = [
-  // Solar
-  {
-    id: 1,
-    name: "400W Monocrystalline Solar Panel",
-    category: "Solar",
-    tag: "Solar",
-    unit: "per panel",
-    description: "High-efficiency mono panel with 25-year performance warranty. Ideal for residential and commercial rooftop installations.",
-    badge: "BESTSELLER",
-    rating: 5,
-    reviews: 48,
-    inStock: true,
-    featured: true,
-  },
-  {
-    id: 2,
-    name: "550W Bifacial Solar Panel",
-    category: "Solar",
-    tag: "Solar",
-    unit: "per panel",
-    description: "Dual-sided bifacial cell technology captures reflected light for up to 30% more energy output. Perfect for large commercial arrays.",
-    rating: 5,
-    reviews: 21,
-    inStock: true,
-  },
-  // Inverters
-  {
-    id: 3,
-    name: "5kVA Hybrid Solar Inverter",
-    category: "Inverters",
-    tag: "Inverters",
-    unit: "per unit",
-    description: "All-in-one hybrid inverter with built-in MPPT charge controller. Supports grid-tie, off-grid and battery backup modes.",
-    badge: "SALE",
-    rating: 5,
-    reviews: 33,
-    inStock: true,
-    featured: true,
-  },
-  {
-    id: 4,
-    name: "10kVA Three-Phase Inverter",
-    category: "Inverters",
-    tag: "Inverters",
-    unit: "per unit",
-    description: "Industrial-grade three-phase inverter for factories, hospitals and commercial buildings with 24/7 critical loads.",
-    rating: 4,
-    reviews: 12,
-    inStock: true,
-  },
-  // Batteries
-  {
-    id: 5,
-    name: "200Ah Lithium LiFePO4 Battery",
-    category: "Batteries",
-    tag: "Batteries",
-    unit: "per unit",
-    description: "Lithium iron phosphate battery with 6,000+ cycle life. Lightweight, safe and virtually maintenance-free.",
-    badge: "NEW",
-    rating: 5,
-    reviews: 19,
-    inStock: true,
-    featured: true,
-  },
-  {
-    id: 6,
-    name: "100Ah AGM Deep Cycle Battery",
-    category: "Batteries",
-    tag: "Batteries",
-    unit: "per unit",
-    description: "Sealed AGM deep cycle battery, ideal for solar backup systems. Spill-proof, vibration-resistant and reliable.",
-    rating: 4,
-    reviews: 37,
-    inStock: true,
-  },
-  // Security
-  {
-    id: 7,
-    name: "4-Channel 4K CCTV Kit",
-    category: "Security",
-    tag: "Security",
-    unit: "per kit",
-    description: "Complete kit with 4× 4K outdoor cameras, 4-channel NVR, 1TB HDD and all cables. Night vision up to 30m.",
-    badge: "POPULAR",
-    rating: 5,
-    reviews: 55,
-    inStock: true,
-    featured: true,
-  },
-  {
-    id: 8,
-    name: "Smart Wi-Fi Video Doorbell",
-    category: "Security",
-    tag: "Security",
-    unit: "per unit",
-    description: "1080p HD doorbell with two-way audio, motion alerts and cloud recording. Works with any smartphone.",
-    rating: 4,
-    reviews: 26,
-    inStock: true,
-  },
-  // Smart Home
-  {
-    id: 9,
-    name: "Smart Home Starter Pack",
-    category: "Smart Home",
-    tag: "Smart Home",
-    unit: "per pack",
-    description: "4 smart switches + Zigbee hub + app control. Turn any home smart — works with Alexa, Google Home and Apple HomeKit.",
-    badge: "NEW",
-    rating: 5,
-    reviews: 14,
-    inStock: true,
-    featured: true,
-  },
-  {
-    id: 10,
-    name: "50W Smart LED Flood Light",
-    category: "Smart Home",
-    tag: "Smart Home",
-    unit: "per unit",
-    description: "App-controlled outdoor flood light with colour temperature adjustment, scheduling and motion trigger.",
-    rating: 4,
-    reviews: 8,
-    inStock: false,
-  },
-  // Electrical
-  {
-    id: 11,
-    name: "6-Outlet Surge Protector Strip",
-    category: "Electrical",
-    tag: "Electrical",
-    unit: "per unit",
-    description: "Heavy-duty surge protector with 6 outlets, 2 USB ports and 2500 joule protection rating. 3-metre cable.",
-    rating: 4,
-    reviews: 62,
-    inStock: true,
-  },
-  {
-    id: 12,
-    name: "63A Automatic Transfer Switch",
-    category: "Electrical",
-    tag: "Electrical",
-    unit: "per unit",
-    description: "Automatic changeover switch that seamlessly transfers between mains and generator power. Suitable for homes and offices.",
-    rating: 5,
-    reviews: 29,
-    inStock: true,
-    featured: true,
-  },
-];
+type Product = StoreProduct;
 
 const ALL_CATS = ["All", "Solar", "Inverters", "Batteries", "Security", "Smart Home", "Electrical"];
 
@@ -221,6 +58,7 @@ function ProductCard({ product }: { product: Product }) {
       tag: product.tag,
       description: product.description,
       unit: product.unit,
+      image: product.images?.[0],
     });
   }
 
@@ -233,7 +71,7 @@ function ProductCard({ product }: { product: Product }) {
       transition={{ duration: 0.35 }}
       className="bg-white border border-gray-100 group flex flex-col overflow-hidden hover:shadow-md hover:border-gray-200 transition-all duration-300"
     >
-      {/* Image placeholder */}
+        {/* Product image */}
       <div
         className="relative flex items-center justify-center"
         style={{ height: 200, background: `${color}0d` }}
@@ -246,7 +84,7 @@ function ProductCard({ product }: { product: Product }) {
             {product.badge}
           </span>
         )}
-        {!product.inStock && (
+        {!product.in_stock && (
           <span
             className="absolute top-3 right-3 px-2.5 py-1 text-[10px] font-bold tracking-widest text-white"
             style={{ background: "#94a3b8", fontFamily: "var(--font-ui)" }}
@@ -254,7 +92,11 @@ function ProductCard({ product }: { product: Product }) {
             OUT OF STOCK
           </span>
         )}
-        <Icon size={56} style={{ color: `${color}55` }} strokeWidth={1} />
+        {product.images?.[0] ? (
+          <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+        ) : (
+          <Icon size={56} style={{ color: `${color}55` }} strokeWidth={1} />
+        )}
         <span
           className="absolute bottom-3 right-3 text-[10px] font-bold tracking-wide px-2.5 py-1"
           style={{ background: `${color}18`, color, fontFamily: "var(--font-ui)" }}
@@ -286,7 +128,7 @@ function ProductCard({ product }: { product: Product }) {
         </div>
 
         {/* CTA */}
-        {product.inStock ? (
+        {product.in_stock ? (
           <button
             onClick={handleAdd}
             className="flex items-center justify-center gap-2 py-3 text-xs font-bold tracking-wider transition-all"
@@ -321,8 +163,18 @@ function ProductCard({ product }: { product: Product }) {
 
 export function StorePage() {
   const [active, setActive] = useState("All");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const { count } = useCart();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchStoreProducts()
+      .then(setProducts)
+      .catch((error: unknown) => setLoadError(error instanceof Error ? error.message : "Unable to load products"))
+      .finally(() => setLoading(false));
+  }, []);
 
   const visible = active === "All" ? products : products.filter(p => p.tag === active);
 
@@ -396,13 +248,21 @@ export function StorePage() {
       {/* ── Product grid ── */}
       <div className="py-16" style={{ background: "#f5f6f8" }}>
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            <AnimatePresence mode="sync">
-              {visible.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </AnimatePresence>
-          </div>
+          {loading ? (
+            <p className="py-16 text-center text-sm text-[#041627]/45">Loading products…</p>
+          ) : loadError ? (
+            <p className="py-16 text-center text-sm text-red-500">{loadError}</p>
+          ) : visible.length === 0 ? (
+            <p className="py-16 text-center text-sm text-[#041627]/45">No products in this category yet.</p>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              <AnimatePresence mode="sync">
+                {visible.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       </div>
 

@@ -133,19 +133,38 @@ export function StoreProductsPage() {
   }
 
   async function uploadFile(file: File) {
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please choose an image file.');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('Images must be 10 MB or smaller.');
+      return;
+    }
     setUploadingImage(true);
     setUploadError('');
     try {
-      const data = new FormData();
-      data.append('image', file);
-      const res = await fetch(`${API}/api/admin/store/images/upload`, {
+      const token = getToken();
+      const directUploadResponse = await fetch(`${API}/api/admin/store/images/direct-upload`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
+      });
+      const directUpload = await directUploadResponse.json();
+      if (!directUploadResponse.ok || directUpload.error) {
+        throw new Error(directUpload.error || 'Unable to start Cloudflare upload');
+      }
+
+      const data = new FormData();
+      data.append('file', file);
+      const uploadResponse = await fetch(directUpload.uploadURL, {
+        method: 'POST',
         body: data,
       });
-      const json = await res.json();
-      if (!res.ok || json.error) throw new Error(json.error || 'Upload failed');
-      setForm(f => ({ ...f, images: [...f.images, json.url] }));
+      const uploadResult = await uploadResponse.json().catch(() => ({}));
+      if (!uploadResponse.ok || uploadResult.success === false) {
+        throw new Error(uploadResult.errors?.[0]?.message || 'Cloudflare upload failed');
+      }
+      setForm(f => ({ ...f, images: [...f.images, directUpload.url] }));
     } catch (err: unknown) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed');
     } finally {

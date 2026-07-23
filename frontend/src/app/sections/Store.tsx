@@ -1,87 +1,26 @@
 import { motion } from "motion/react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
+import { useEffect, useState } from "react";
 import { Sun, Zap, Shield, Home, ArrowRight, ShoppingCart, Star, CheckCircle } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
+import { fetchStoreProducts, type StoreProduct } from "../../lib/store";
 
-const featured = [
-  {
-    id: 1,
-    name: "400W Monocrystalline Solar Panel",
-    tag: "Solar",
-    icon: Sun,
-    color: "#F0A20E",
-    badge: "BESTSELLER",
-    rating: 5,
-    reviews: 48,
-    unit: "per panel",
-    category: "Solar",
-    description: "High-efficiency mono panel with 25-year performance warranty.",
-  },
-  {
-    id: 3,
-    name: "5kVA Hybrid Solar Inverter",
-    tag: "Inverters",
-    icon: Zap,
-    color: "#3B82F6",
-    badge: "SALE",
-    rating: 5,
-    reviews: 33,
-    unit: "per unit",
-    category: "Inverters",
-    description: "All-in-one hybrid inverter with built-in MPPT charge controller.",
-  },
-  {
-    id: 5,
-    name: "200Ah Lithium LiFePO4 Battery",
-    tag: "Batteries",
-    icon: Zap,
-    color: "#10B981",
-    badge: "NEW",
-    rating: 5,
-    reviews: 19,
-    unit: "per unit",
-    category: "Batteries",
-    description: "Lithium iron phosphate battery with 6,000+ cycle life.",
-  },
-  {
-    id: 7,
-    name: "4-Channel 4K CCTV Kit",
-    tag: "Security",
-    icon: Shield,
-    color: "#EF4444",
-    badge: "POPULAR",
-    rating: 5,
-    reviews: 55,
-    unit: "per kit",
-    category: "Security",
-    description: "Complete kit with 4× 4K outdoor cameras, NVR and 1TB HDD.",
-  },
-  {
-    id: 9,
-    name: "Smart Home Starter Pack",
-    tag: "Smart Home",
-    icon: Home,
-    color: "#8B5CF6",
-    badge: "NEW",
-    rating: 5,
-    reviews: 14,
-    unit: "per pack",
-    category: "Smart Home",
-    description: "4 smart switches + Zigbee hub + app control.",
-  },
-  {
-    id: 12,
-    name: "63A Automatic Transfer Switch",
-    tag: "Electrical",
-    icon: Zap,
-    color: "#F59E0B",
-    rating: 5,
-    reviews: 29,
-    unit: "per unit",
-    category: "Electrical",
-    description: "Automatic changeover switch for mains and generator power.",
-  },
-];
+const CAT_COLORS: Record<string, string> = {
+  Solar: "#F0A20E",
+  Inverters: "#3B82F6",
+  Batteries: "#10B981",
+  Security: "#EF4444",
+  "Smart Home": "#8B5CF6",
+  Electrical: "#F59E0B",
+};
+const CAT_ICONS: Record<string, typeof Sun> = {
+  Solar: Sun,
+  Inverters: Zap,
+  Batteries: Zap,
+  Security: Shield,
+  "Smart Home": Home,
+  Electrical: Zap,
+};
 
 function Stars({ n }: { n: number }) {
   return (
@@ -95,7 +34,13 @@ function Stars({ n }: { n: number }) {
 
 export function Store() {
   const { add, items } = useCart();
-  const navigate = useNavigate();
+  const [products, setProducts] = useState<StoreProduct[]>([]);
+
+  useEffect(() => {
+    fetchStoreProducts().then(setProducts).catch(() => setProducts([]));
+  }, []);
+
+  const featured = products.filter(product => product.featured).slice(0, 6);
 
   return (
     <section id="store" className="py-28" style={{ background: "#f5f6f8" }}>
@@ -151,7 +96,8 @@ export function Store() {
         {/* Product grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {featured.map((product, i) => {
-            const Icon = product.icon;
+            const Icon = CAT_ICONS[product.category] ?? Zap;
+            const color = CAT_COLORS[product.category] ?? "#F0A20E";
             const inBasket = items.some((it) => it.id === product.id);
 
             return (
@@ -166,11 +112,16 @@ export function Store() {
                 {/* Visual */}
                 <div
                   className="relative flex items-center justify-center"
-                  style={{ height: 160, background: `${product.color}0d` }}
+                  style={{ height: 160, background: `${color}0d` }}
                 >
+                  {product.images?.[0] ? (
+                    <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <Icon size={48} style={{ color: `${color}55` }} strokeWidth={1} />
+                  )}
                   {product.badge && (
                     <span
-                      className="absolute top-3 left-3 px-2.5 py-1 text-[10px] font-bold tracking-widest text-white"
+                      className="absolute top-3 left-3 z-10 px-2.5 py-1 text-[10px] font-bold tracking-widest text-white"
                       style={{
                         background:
                           product.badge === "SALE"
@@ -184,10 +135,9 @@ export function Store() {
                       {product.badge}
                     </span>
                   )}
-                  <Icon size={48} style={{ color: `${product.color}55` }} strokeWidth={1} />
                   <span
-                    className="absolute bottom-3 right-3 text-[10px] font-bold tracking-wide px-2.5 py-1"
-                    style={{ background: `${product.color}18`, color: product.color, fontFamily: "var(--font-ui)" }}
+                    className="absolute bottom-3 right-3 z-10 text-[10px] font-bold tracking-wide px-2.5 py-1"
+                    style={{ background: `${color}18`, color, fontFamily: "var(--font-ui)" }}
                   >
                     {product.tag}
                   </span>
@@ -222,6 +172,7 @@ export function Store() {
                         tag: product.tag,
                         description: product.description,
                         unit: product.unit,
+                        image: product.images?.[0],
                       })
                     }
                     className="flex items-center justify-center gap-2 py-2.5 text-xs font-bold tracking-wider transition-all"
