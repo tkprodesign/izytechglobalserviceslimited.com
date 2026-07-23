@@ -7,4 +7,4 @@ Store product image bytes are sent from the admin browser directly to Cloudflare
 
 **Why:** The owner wants product media off Railway to reduce Railway resource usage and credits.
 
-**How to apply:** Keep Cloudflare account ID, API token, and Images delivery hash in deployment secrets/environment variables; never add image bytes or local upload storage to the backend.
+**How to apply:** Keep Cloudflare account ID, API token, and Images delivery hash in deployment secrets/environment variables; never add image bytes or local upload storage to the backend. The app accepts `CLOUDFLARE_IMAGE_HASH` as the current delivery-hash name and the older plural `CLOUDFLARE_IMAGES_HASH` as a fallback.

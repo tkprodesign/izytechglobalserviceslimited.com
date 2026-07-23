@@ -46,7 +46,7 @@ Set these in your Railway service → Variables tab:
 | `NODE_ENV` | `production` |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID |
 | `CLOUDFLARE_API_TOKEN` | API token allowed to create Cloudflare Images direct uploads |
-| `CLOUDFLARE_IMAGES_HASH` | Cloudflare Images delivery hash |
+| `CLOUDFLARE_IMAGE_HASH` | Cloudflare Images delivery hash |
 
 Railway automatically sets `PORT` — do not override it.
 

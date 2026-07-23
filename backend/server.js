@@ -308,7 +308,7 @@ app.delete('/api/admin/store/products/:id', requireAuth, async (req, res) => {
 app.post('/api/admin/store/images/direct-upload', requireAuth, async (_req, res) => {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken  = process.env.CLOUDFLARE_API_TOKEN;
-  const imagesHash = process.env.CLOUDFLARE_IMAGES_HASH;
+  const imagesHash = process.env.CLOUDFLARE_IMAGE_HASH || process.env.CLOUDFLARE_IMAGES_HASH;
   if (!accountId || !apiToken || !imagesHash)
     return res.status(500).json({ error: 'Cloudflare credentials not configured on server' });
 
@@ -805,7 +805,7 @@ app.delete('/api/admin/projects/:id', requireAuth, async (req, res) => {
 app.post('/api/admin/projects/images/direct-upload', requireAuth, async (_req, res) => {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
-  const imagesHash = process.env.CLOUDFLARE_IMAGES_HASH;
+  const imagesHash = process.env.CLOUDFLARE_IMAGE_HASH || process.env.CLOUDFLARE_IMAGES_HASH;
   if (!accountId || !apiToken || !imagesHash) {
     return res.status(500).json({ error: 'Cloudflare credentials not configured on server' });
   }
