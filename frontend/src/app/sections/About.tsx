@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import {
   CheckCircle, Award, Users, Globe, Lightbulb, Building2, Zap,
   Home, TrendingUp, Star, Rocket, Shield, Calendar, Target, Compass,
-  Sun, Wrench, Package, Flag, Heart, Layers, Map, Settings, User,
+  Sun, Wrench, Package, Flag, Heart, Layers, Map, Settings, User, ArrowRight,
 } from "lucide-react";
 import { motion, useInView } from "motion/react";
+import { Link } from "react-router";
 
 const API = import.meta.env.VITE_API_URL ?? '';
 
@@ -157,6 +158,13 @@ export function About() {
               >
                 View Projects
               </a>
+              <Link
+                to="/about"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0d1b2e]/50 hover:text-[#F0A20E] transition-all self-center"
+                style={{ fontFamily: "var(--font-ui)" }}
+              >
+                Learn More About Us <ArrowRight size={13} strokeWidth={2} />
+              </Link>
             </div>
           </motion.div>
 

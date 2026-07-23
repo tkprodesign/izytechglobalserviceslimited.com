@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { ArrowRight, MapPin } from "lucide-react";
+import { Link } from "react-router";
 
 const projects = [
   {
@@ -84,13 +85,22 @@ export function Projects() {
               Projects That Speak<br />for Themselves
             </h2>
           </div>
-          <a
-            href="#contact"
-            className="flex-shrink-0 inline-flex items-center gap-2 text-sm font-semibold text-[#041627] border-b border-[#041627]/20 pb-0.5 hover:border-[#F0A20E] hover:text-[#F0A20E] transition-all self-start lg:self-end"
-            style={{ fontFamily: "var(--font-ui)" }}
-          >
-            Discuss Your Project <ArrowRight size={14} />
-          </a>
+          <div className="flex flex-wrap items-center gap-5 self-start lg:self-end">
+            <Link
+              to="/projects"
+              className="flex-shrink-0 inline-flex items-center gap-2 text-sm font-bold text-[#041627] border-b-2 border-[#F0A20E] pb-0.5 hover:text-[#F0A20E] transition-all"
+              style={{ fontFamily: "var(--font-ui)" }}
+            >
+              View All Projects <ArrowRight size={14} />
+            </Link>
+            <a
+              href="#contact"
+              className="flex-shrink-0 inline-flex items-center gap-2 text-sm font-semibold text-[#041627]/50 border-b border-[#041627]/20 pb-0.5 hover:border-[#F0A20E] hover:text-[#F0A20E] transition-all"
+              style={{ fontFamily: "var(--font-ui)" }}
+            >
+              Discuss Your Project <ArrowRight size={14} />
+            </a>
+          </div>
         </div>
 
         {/* Featured — full width split */}

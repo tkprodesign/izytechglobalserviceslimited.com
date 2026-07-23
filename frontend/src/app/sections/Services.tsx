@@ -2,6 +2,7 @@ import { Sun, Zap, Home, Camera, Cpu, Cable, ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
 import { Link } from "react-router";
 
+
 const services = [
   {
     num: "01",
@@ -83,12 +84,21 @@ export function Services() {
               Comprehensive Tech &<br />Energy Solutions
             </h2>
           </div>
-          <p
-            className="text-[#64748b] max-w-sm text-sm leading-relaxed lg:text-right"
-            style={{ fontFamily: "var(--font-body)" }}
-          >
-            From solar panels to smart homes — we bring the future of technology to your doorstep, backed by a decade of excellence.
-          </p>
+          <div className="flex flex-col items-start lg:items-end gap-4">
+            <p
+              className="text-[#64748b] max-w-sm text-sm leading-relaxed lg:text-right"
+              style={{ fontFamily: "var(--font-body)" }}
+            >
+              From solar panels to smart homes — we bring the future of technology to your doorstep, backed by a decade of excellence.
+            </p>
+            <Link
+              to="/services"
+              className="inline-flex items-center gap-1.5 text-sm font-bold border-b border-[#041627]/20 pb-0.5 hover:border-[#F0A20E] hover:text-[#F0A20E] transition-all text-[#041627]"
+              style={{ fontFamily: "var(--font-ui)" }}
+            >
+              View All Services <ArrowRight size={13} strokeWidth={2.5} />
+            </Link>
+          </div>
         </div>
 
         {/* Service rows */}

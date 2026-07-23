@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { api, type Testimonial } from "@/lib/api";
+import { Link } from "react-router";
 
 export function Testimonials() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -60,23 +61,32 @@ export function Testimonials() {
             </h2>
           </div>
 
-          {/* Navigation buttons */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={prev}
-              className="w-11 h-11 border border-white/15 flex items-center justify-center text-white/50 hover:text-white hover:border-white/40 transition-all"
+          {/* Navigation buttons + page link */}
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={prev}
+                className="w-11 h-11 border border-white/15 flex items-center justify-center text-white/50 hover:text-white hover:border-white/40 transition-all"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <span className="text-white/25 text-sm font-mono" style={{ fontFamily: "var(--font-ui)" }}>
+                {String(idx + 1).padStart(2, "0")} / {String(testimonials.length).padStart(2, "0")}
+              </span>
+              <button
+                onClick={next}
+                className="w-11 h-11 border border-white/15 flex items-center justify-center text-white/50 hover:text-white hover:border-white/40 transition-all"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+            <Link
+              to="/testimonials"
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-white/50 hover:text-[#F0A20E] border-b border-white/20 pb-0.5 hover:border-[#F0A20E] transition-all"
+              style={{ fontFamily: "var(--font-ui)" }}
             >
-              <ChevronLeft size={18} />
-            </button>
-            <span className="text-white/25 text-sm font-mono" style={{ fontFamily: "var(--font-ui)" }}>
-              {String(idx + 1).padStart(2, "0")} / {String(testimonials.length).padStart(2, "0")}
-            </span>
-            <button
-              onClick={next}
-              className="w-11 h-11 border border-white/15 flex items-center justify-center text-white/50 hover:text-white hover:border-white/40 transition-all"
-            >
-              <ChevronRight size={18} />
-            </button>
+              View All Reviews <ArrowRight size={13} strokeWidth={2.5} />
+            </Link>
           </div>
         </div>
 
