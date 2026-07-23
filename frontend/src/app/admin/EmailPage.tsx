@@ -245,6 +245,7 @@ export function EmailPage() {
   const [inboxError, setInboxError] = useState('');
   const [compose, setCompose] = useState(false);
   const [composeDefaults, setComposeDefaults] = useState({ to: '', subject: '' });
+  const [mobileEmailView, setMobileEmailView] = useState<'mailboxes' | 'messages' | 'detail'>('mailboxes');
 
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -295,12 +296,14 @@ export function EmailPage() {
   function switchAccount(acct: Account) {
     setActiveAccount(acct);
     setActiveFolder(FOLDERS[0]);
+    setMobileEmailView('messages');
   }
 
   async function openMessage(msg: EmailMeta) {
     if (!activeAccount) return;
     setSelectedMeta(msg);
     setSelected(null);
+    setMobileEmailView('detail');
     setLoadingMsg(true);
     try {
       const res = await fetch(
@@ -335,14 +338,20 @@ export function EmailPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex h-screen overflow-hidden" style={{ background: '#f0f3f8' }}>
+      <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden md:h-screen" style={{ background: '#f0f3f8' }}>
 
         {/* Left sidebar: Mailboxes + Folders */}
-        <div className="w-52 flex-shrink-0 border-r overflow-y-auto flex flex-col" style={{ background: '#fff', borderColor: '#eef1f6' }}>
+        <div
+          className={`w-full flex-shrink-0 overflow-y-auto border-r md:flex md:w-52 ${
+            mobileEmailView === 'mailboxes' ? 'flex' : 'hidden'
+          } flex-col`}
+          style={{ background: '#fff', borderColor: '#eef1f6' }}
+        >
 
           {/* Mailboxes section */}
-          <div className="px-4 py-4 border-b" style={{ borderColor: '#eef1f6' }}>
+          <div className="flex items-center justify-between border-b px-4 py-4" style={{ borderColor: '#eef1f6' }}>
             <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#5a6a82' }}>Mailboxes</p>
+            <span className="text-[11px] font-medium md:hidden" style={{ color: '#8fadc8' }}>Choose an account</span>
           </div>
           <div className="py-2">
             {accounts.map(acct => (
@@ -381,7 +390,10 @@ export function EmailPage() {
                   return (
                     <button
                       key={folder.imap}
-                      onClick={() => setActiveFolder(folder)}
+                      onClick={() => {
+                        setActiveFolder(folder);
+                        setMobileEmailView('messages');
+                      }}
                       className="w-full flex items-center gap-3 px-4 py-2 transition-colors text-left"
                       style={{
                         background: isActive ? '#f0f6ff' : 'transparent',
@@ -414,9 +426,21 @@ export function EmailPage() {
         </div>
 
         {/* Message list */}
-        <div className="w-72 flex-shrink-0 border-r flex flex-col overflow-hidden" style={{ background: '#fff', borderColor: '#eef1f6' }}>
+        <div
+          className={`w-full flex-shrink-0 overflow-hidden border-r md:flex md:w-72 ${
+            mobileEmailView === 'messages' ? 'flex' : 'hidden'
+          } flex-col`}
+          style={{ background: '#fff', borderColor: '#eef1f6' }}
+        >
           <div className="px-4 py-4 border-b flex items-center justify-between" style={{ borderColor: '#eef1f6' }}>
             <div>
+              <button
+                type="button"
+                className="mb-2 flex items-center gap-1 text-xs font-medium text-[#1a56db] md:hidden"
+                onClick={() => setMobileEmailView('mailboxes')}
+              >
+                <ChevronRight size={13} className="rotate-180" /> Mailboxes
+              </button>
               <p className="font-semibold text-sm" style={{ color: '#041627' }}>
                 {activeAccount?.label || 'Inbox'}
                 {' · '}
@@ -511,7 +535,11 @@ export function EmailPage() {
         </div>
 
         {/* Message detail */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div
+          className={`min-w-0 flex-1 flex-col overflow-hidden ${
+            mobileEmailView === 'detail' ? 'flex' : 'hidden md:flex'
+          }`}
+        >
           {!selectedMeta ? (
             <div className="flex-1 flex flex-col items-center justify-center" style={{ color: '#8fadc8' }}>
               <Mail size={48} style={{ color: '#dce8ff' }} />
@@ -526,9 +554,16 @@ export function EmailPage() {
               </button>
             </div>
           ) : (
-            <div className="flex flex-col h-full overflow-hidden">
+              <div className="flex h-full flex-col overflow-hidden">
               {/* Message header */}
               <div className="px-8 py-5 border-b" style={{ borderColor: '#eef1f6', background: '#fff' }}>
+                  <button
+                    type="button"
+                    className="mb-3 flex items-center gap-1 text-xs font-medium text-[#1a56db] md:hidden"
+                    onClick={() => setMobileEmailView('messages')}
+                  >
+                    <ChevronRight size={13} className="rotate-180" /> Messages
+                  </button>
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <h2 className="text-lg font-bold leading-tight" style={{ color: '#041627' }}>

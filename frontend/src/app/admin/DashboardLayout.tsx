@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router';
 import { getUser, removeToken, isDeveloper } from '../../lib/auth';
 import {
@@ -13,212 +14,196 @@ import {
   ClipboardList,
   Milestone,
   UserCircle,
+  Menu,
+  X,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 
 interface Props {
   children: React.ReactNode;
 }
 
+interface NavigationItem {
+  to: string;
+  label: string;
+  icon: React.ElementType;
+  end?: boolean;
+  developer?: boolean;
+}
+
 export function DashboardLayout({ children }: Props) {
   const user = getUser();
   const navigate = useNavigate();
   const dev = isDeveloper();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('admin-sidebar-collapsed') === 'true';
+  });
 
   function logout() {
     removeToken();
     navigate('/admin/login');
   }
 
-  const navBase =
-    'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all';
+  const managementItems: NavigationItem[] = [
+    { to: dev ? '/dev/dashboard' : '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/admin/contacts', label: 'Contacts', icon: Mail },
+    { to: '/admin/quotes', label: 'Quote Requests', icon: FileText },
+    { to: '/admin/socials', label: 'Social Media', icon: Share2 },
+    { to: '/admin/products', label: 'Store Products', icon: ShoppingBag },
+    { to: '/admin/enquiries', label: 'Store Enquiries', icon: ClipboardList },
+    { to: '/admin/milestones', label: 'Milestones', icon: Milestone },
+    { to: '/admin/founder', label: 'Founder Profile', icon: UserCircle },
+    { to: '/dev/email', label: 'Email Manager', icon: Inbox },
+  ];
+
+  const developerItems: NavigationItem[] = [
+    { to: '/dev/dashboard', label: 'System Status', icon: Activity },
+    { to: '/dev/logs', label: 'System Info', icon: Terminal },
+  ];
+
+  const navBase = 'flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all';
+
+  function renderNavItem(item: NavigationItem, developer = false) {
+    const Icon = item.icon;
+    return (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        end={item.end}
+        title={item.label}
+        onClick={() => setSidebarOpen(false)}
+        className={({ isActive }) =>
+          `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:bg-white/5 hover:text-white'}`
+        }
+        style={({ isActive }) =>
+          isActive ? { background: developer ? 'rgba(242,101,34,0.8)' : 'var(--izy-blue)' } : {}
+        }
+      >
+        <Icon size={17} className="flex-shrink-0" />
+        <span className="admin-sidebar-label">{item.label}</span>
+      </NavLink>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#f0f3f8' }}>
-      {/* Sidebar */}
+    <div
+      className="admin-shell flex min-h-screen"
+      data-sidebar-collapsed={sidebarCollapsed}
+      style={{ background: '#f0f3f8' }}
+    >
+      {sidebarOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          className="fixed inset-0 z-40 bg-[#041627]/55 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       <aside
-        className="w-64 flex-shrink-0 flex flex-col"
+        className={`admin-sidebar fixed inset-y-0 left-0 z-50 flex w-64 flex-shrink-0 flex-col transition-[width,transform] duration-200 ease-out md:relative md:z-auto md:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } ${
+          sidebarCollapsed ? 'md:w-[72px]' : 'md:w-64'
+        }`}
         style={{ background: 'var(--izy-navy)', minHeight: '100vh' }}
       >
-        {/* Brand */}
-        <div className="px-6 py-6 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-          <div className="flex items-center gap-2.5">
+        <div className="flex items-center justify-between border-b px-4 py-5 md:px-5 md:py-6" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+          <div className="flex min-w-0 items-center gap-2.5">
             <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white"
               style={{ background: 'var(--izy-blue)' }}
             >
               IZY
             </div>
-            <div>
-              <p className="text-white text-sm font-semibold leading-none">Control Panel</p>
-              <p className="text-xs mt-0.5" style={{ color: '#8fadc8' }}>
+            <div className="admin-sidebar-label min-w-0">
+              <p className="truncate text-sm font-semibold leading-none text-white">Control Panel</p>
+              <p className="mt-0.5 truncate text-xs" style={{ color: '#8fadc8' }}>
                 {dev ? 'Developer Access' : 'Admin Access'}
               </p>
             </div>
           </div>
+          <button
+            type="button"
+            aria-label={sidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}
+            title={sidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}
+            className="admin-sidebar-toggle hidden rounded-lg p-2 text-[#8fadc8] transition-colors hover:bg-white/10 hover:text-white md:block"
+            onClick={() => {
+              const next = !sidebarCollapsed;
+              setSidebarCollapsed(next);
+              window.localStorage.setItem('admin-sidebar-collapsed', String(next));
+            }}
+          >
+            {sidebarCollapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+          </button>
+          <button
+            type="button"
+            aria-label="Close navigation"
+            className="rounded-lg p-2 text-[#8fadc8] hover:bg-white/10 hover:text-white md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          <p className="px-4 text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#4a6a85' }}>
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+          <p className="admin-sidebar-label mb-2 px-4 text-xs font-semibold uppercase tracking-wider" style={{ color: '#4a6a85' }}>
             Management
           </p>
-
-          <NavLink
-            to={dev ? '/dev/dashboard' : '/admin/dashboard'}
-            className={({ isActive }) =>
-              `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
-            }
-            style={({ isActive }) => isActive ? { background: 'var(--izy-blue)' } : {}}
-          >
-            <LayoutDashboard size={16} />
-            Dashboard
-          </NavLink>
-
-          <NavLink
-            to="/admin/contacts"
-            className={({ isActive }) =>
-              `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
-            }
-            style={({ isActive }) => isActive ? { background: 'var(--izy-blue)' } : {}}
-          >
-            <Mail size={16} />
-            Contacts
-          </NavLink>
-
-          <NavLink
-            to="/admin/quotes"
-            className={({ isActive }) =>
-              `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
-            }
-            style={({ isActive }) => isActive ? { background: 'var(--izy-blue)' } : {}}
-          >
-            <FileText size={16} />
-            Quote Requests
-          </NavLink>
-
-          <NavLink
-            to="/admin/socials"
-            className={({ isActive }) =>
-              `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
-            }
-            style={({ isActive }) => isActive ? { background: 'var(--izy-blue)' } : {}}
-          >
-            <Share2 size={16} />
-            Social Media
-          </NavLink>
-
-          <NavLink
-            to="/admin/products"
-            className={({ isActive }) =>
-              `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
-            }
-            style={({ isActive }) => isActive ? { background: 'var(--izy-blue)' } : {}}
-          >
-            <ShoppingBag size={16} />
-            Store Products
-          </NavLink>
-
-          <NavLink
-            to="/admin/enquiries"
-            className={({ isActive }) =>
-              `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
-            }
-            style={({ isActive }) => isActive ? { background: 'var(--izy-blue)' } : {}}
-          >
-            <ClipboardList size={16} />
-            Store Enquiries
-          </NavLink>
-
-          <NavLink
-            to="/admin/milestones"
-            className={({ isActive }) =>
-              `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
-            }
-            style={({ isActive }) => isActive ? { background: 'var(--izy-blue)' } : {}}
-          >
-            <Milestone size={16} />
-            Milestones
-          </NavLink>
-
-          <NavLink
-            to="/admin/founder"
-            className={({ isActive }) =>
-              `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
-            }
-            style={({ isActive }) => isActive ? { background: 'var(--izy-blue)' } : {}}
-          >
-            <UserCircle size={16} />
-            Founder Profile
-          </NavLink>
-
-          <NavLink
-            to="/dev/email"
-            className={({ isActive }) =>
-              `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
-            }
-            style={({ isActive }) => isActive ? { background: 'var(--izy-blue)' } : {}}
-          >
-            <Inbox size={16} />
-            Email Manager
-          </NavLink>
+          {managementItems.map(item => renderNavItem(item))}
 
           {dev && (
             <>
-              <p className="px-4 text-xs font-semibold uppercase tracking-wider mb-2 mt-5" style={{ color: '#4a6a85' }}>
+              <p className="admin-sidebar-label mb-2 mt-5 px-4 text-xs font-semibold uppercase tracking-wider" style={{ color: '#4a6a85' }}>
                 Developer
               </p>
-              <NavLink
-                to="/dev/dashboard"
-                end={false}
-                className={({ isActive }) =>
-                  `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
-                }
-                style={({ isActive }) => isActive ? { background: 'rgba(242,101,34,0.8)' } : {}}
-              >
-                <Activity size={16} />
-                System Status
-              </NavLink>
-
-              <NavLink
-                to="/dev/logs"
-                className={({ isActive }) =>
-                  `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:text-white hover:bg-white/5'}`
-                }
-                style={({ isActive }) => isActive ? { background: 'rgba(242,101,34,0.8)' } : {}}
-              >
-                <Terminal size={16} />
-                System Info
-              </NavLink>
+              {developerItems.map(item => renderNavItem(item, true))}
             </>
           )}
         </nav>
 
-        {/* User */}
-        <div className="px-3 py-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-          <div className="flex items-center gap-3 px-4 py-2 mb-1">
+        <div className="border-t px-3 py-4" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+          <div className="mb-1 flex items-center gap-3 px-4 py-2">
             <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
               style={{ background: dev ? 'var(--izy-orange)' : 'var(--izy-blue)' }}
             >
               {user?.email?.[0]?.toUpperCase()}
             </div>
-            <div className="min-w-0">
-              <p className="text-white text-xs font-medium truncate">{user?.email}</p>
+            <div className="admin-sidebar-label min-w-0">
+              <p className="truncate text-xs font-medium text-white">{user?.email}</p>
               <p className="text-xs capitalize" style={{ color: '#8fadc8' }}>{user?.role}</p>
             </div>
           </div>
           <button
             onClick={logout}
-            className={`${navBase} w-full text-[#8fadc8] hover:text-white hover:bg-white/5`}
+            title="Sign out"
+            className={`${navBase} w-full text-[#8fadc8] hover:bg-white/5 hover:text-white`}
           >
-            <LogOut size={16} />
-            Sign out
+            <LogOut size={17} className="flex-shrink-0" />
+            <span className="admin-sidebar-label">Sign out</span>
           </button>
         </div>
       </aside>
 
-      {/* Main */}
-      <main className="flex-1 overflow-auto">
+      <main className="min-w-0 flex-1 overflow-auto">
+        <header className="admin-mobile-header sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-white px-4 md:hidden" style={{ borderColor: '#eef1f6' }}>
+          <button
+            type="button"
+            aria-label="Open navigation"
+            className="rounded-lg p-2 text-[#0d1b2e] hover:bg-[#f0f3f8]"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu size={21} />
+          </button>
+          <div>
+            <p className="text-sm font-semibold" style={{ color: 'var(--izy-navy)' }}>Control Panel</p>
+            <p className="text-[11px]" style={{ color: '#8fadc8' }}>{dev ? 'Developer Access' : 'Admin Access'}</p>
+          </div>
+        </header>
         {children}
       </main>
     </div>
