@@ -45,13 +45,13 @@ const line2 = ["Future-Ready", "Solutions,"];
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const handleFreeQuote = (e: React.MouseEvent) => {
     e.preventDefault();
-    // If a service is pre-selected via ?service=, clear it so the form resets to the default option
+    // Clear ?service= via React Router so the Contact form re-renders with the default option
     if (searchParams.get("service")) {
-      window.history.replaceState({}, "", window.location.pathname + "#contact");
+      setSearchParams({}, { replace: true });
     }
     document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
   };
