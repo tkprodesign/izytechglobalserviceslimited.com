@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Phone, Mail, MapPin, Send, CheckCircle, ArrowRight, Clock } from "lucide-react";
 import { motion } from "motion/react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { PageLayout } from "../components/PageLayout";
 
 const contactInfo = [
@@ -54,6 +54,13 @@ export function ContactPage() {
     service: "",
     message: "",
   });
+  const [searchParams] = useSearchParams();
+
+  // Pre-select the service if the link that brought the user here passed ?service=
+  useEffect(() => {
+    const svc = searchParams.get("service") ?? "";
+    if (svc) setForm(f => ({ ...f, service: svc }));
+  }, [searchParams]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

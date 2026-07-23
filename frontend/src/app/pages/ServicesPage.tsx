@@ -140,7 +140,7 @@ export function ServicesPage() {
                   </ul>
 
                   <Link
-                    to="/#contact"
+                    to={`/?service=${encodeURIComponent(s.title)}#contact`}
                     className="self-start flex items-center gap-2 text-xs font-bold tracking-widest uppercase transition-opacity hover:opacity-70"
                     style={{ fontFamily: "var(--font-ui)", color: s.color }}
                   >

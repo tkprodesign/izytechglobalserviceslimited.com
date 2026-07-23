@@ -1,5 +1,6 @@
 import { Sun, Zap, Home, Camera, Cpu, Cable, ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
+import { Link } from "react-router";
 
 const services = [
   {
@@ -177,13 +178,13 @@ export function Services() {
                       </li>
                     ))}
                     <li className="pt-2">
-                      <a
-                        href="#contact"
+                      <Link
+                        to={`/?service=${encodeURIComponent(service.title)}#contact`}
                         className="inline-flex items-center gap-1.5 text-xs font-bold tracking-wide transition-all group-hover:gap-2.5"
                         style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}
                       >
                         Get a Quote <ArrowRight size={11} strokeWidth={2.5} />
-                      </a>
+                      </Link>
                     </li>
                   </ul>
                 </div>

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Phone, Mail, MapPin, Send, CheckCircle, ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
+import { useSearchParams } from "react-router";
 
 const contactInfo = [
   {
@@ -29,6 +30,13 @@ const contactInfo = [
 export function Contact() {
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", service: "", message: "" });
+  const [searchParams] = useSearchParams();
+
+  // Pre-select the service if the link that brought the user here passed ?service=
+  useEffect(() => {
+    const svc = searchParams.get("service") ?? "";
+    if (svc) setForm(f => ({ ...f, service: svc }));
+  }, [searchParams]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
