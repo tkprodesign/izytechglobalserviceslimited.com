@@ -124,6 +124,8 @@ export function Footer() {
                 key={label}
                 href={href}
                 aria-label={label}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-8 h-8 border border-white/10 flex items-center justify-center text-white/30 hover:text-[#F0A20E] hover:border-[#F0A20E]/30 transition-all"
               >
                 <Icon size={14} />
