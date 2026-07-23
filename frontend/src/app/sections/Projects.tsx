@@ -170,7 +170,7 @@ export function Projects() {
                 <MapPin size={11} /> {featured.location}
               </div>
               <a
-                href="#contact"
+                href="/projects?category=Solar"
                 className="inline-flex items-center gap-2 text-sm font-bold group-hover:gap-3 transition-all self-start"
                 style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}
               >

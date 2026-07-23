@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowRight, MapPin, Filter } from "lucide-react";
 import { PageLayout } from "../components/PageLayout";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 
 const projects = [
   {
@@ -67,7 +67,7 @@ const projects = [
   },
 ];
 
-const ALL_TAGS = ["All", ...Array.from(new Set(projects.map(p => p.tag)))];
+const ALL_TAGS = ["All", "Solar", ...Array.from(new Set(projects.map(p => p.tag)))];
 
 const TAG_COLORS: Record<string, string> = {
   Commercial: "#F0A20E", Residential: "#8B5CF6", Industrial: "#3B82F6",
@@ -75,9 +75,17 @@ const TAG_COLORS: Record<string, string> = {
 };
 
 export function ProjectsPage() {
-  const [active, setActive] = useState("All");
+  const [searchParams] = useSearchParams();
+  const requestedCategory = searchParams.get("category");
+  const [active, setActive] = useState(
+    requestedCategory && ALL_TAGS.includes(requestedCategory) ? requestedCategory : "All"
+  );
 
-  const visible = active === "All" ? projects : projects.filter(p => p.tag === active);
+  const visible = active === "All"
+    ? projects
+    : active === "Solar"
+      ? projects.filter(p => p.category.toLowerCase().includes("solar"))
+      : projects.filter(p => p.tag === active);
 
   return (
     <PageLayout>
