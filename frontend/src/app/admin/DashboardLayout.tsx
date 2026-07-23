@@ -18,6 +18,7 @@ import {
   X,
   PanelLeftClose,
   PanelLeftOpen,
+  FolderOpen,
 } from 'lucide-react';
 
 interface Props {
@@ -71,6 +72,7 @@ export function DashboardLayout({ children }: Props) {
     { to: '/admin/socials', label: 'Social Media', icon: Share2 },
     { to: '/admin/products', label: 'Store Products', icon: ShoppingBag },
     { to: '/admin/enquiries', label: 'Store Enquiries', icon: ClipboardList },
+    { to: '/admin/projects', label: 'Projects', icon: FolderOpen },
     { to: '/admin/milestones', label: 'Milestones', icon: Milestone },
     { to: '/admin/founder', label: 'Founder Profile', icon: UserCircle },
     { to: '/dev/email', label: 'Email Manager', icon: Inbox },
