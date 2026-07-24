@@ -589,6 +589,9 @@ async function initProjectsTable() {
     ALTER TABLE projects ADD COLUMN IF NOT EXISTS show_year BOOLEAN NOT NULL DEFAULT FALSE
   `);
 
+  // Rename legacy combined category to the proper service name
+  await db.query(`UPDATE projects SET category = 'IT & Tech' WHERE category = 'Solar + IT'`);
+
   await db.query('CREATE INDEX IF NOT EXISTS projects_category_idx ON projects (category)');
   await db.query('CREATE INDEX IF NOT EXISTS projects_published_order_idx ON projects (published, sort_order, id)');
 

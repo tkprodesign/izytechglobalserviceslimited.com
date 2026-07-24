@@ -11,18 +11,20 @@ const API = import.meta.env.VITE_API_URL ?? '';
 
 const CATEGORIES = [
   'Solar Energy',
-  'Solar + IT',
   'Industrial Wiring',
-  'Security',
   'Smart Home',
+  'Security',
+  'IT & Tech',
+  'General Electrical',
 ];
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
   'Solar Energy':      { bg: '#fff8e6', text: '#b45309' },
-  'Solar + IT':        { bg: '#f0fdf4', text: '#166534' },
   'Industrial Wiring': { bg: '#eff6ff', text: '#1d4ed8' },
-  'Security':          { bg: '#fef2f2', text: '#991b1b' },
   'Smart Home':        { bg: '#f5f3ff', text: '#6d28d9' },
+  'Security':          { bg: '#fef2f2', text: '#991b1b' },
+  'IT & Tech':         { bg: '#f0fdf4', text: '#166534' },
+  'General Electrical':{ bg: '#eef2ff', text: '#4338ca' },
 };
 
 interface Project {

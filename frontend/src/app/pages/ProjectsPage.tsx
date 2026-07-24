@@ -6,11 +6,12 @@ import { PageLayout } from "../components/PageLayout";
 import { api, Project } from "../../lib/api";
 
 const TAG_COLORS: Record<string, string> = {
-  "Solar Energy": "#F0A20E",
-  "Solar + IT": "#F59E0B",
-  "Smart Home": "#8B5CF6",
-  Security: "#3B82F6",
+  "Solar Energy":      "#F0A20E",
   "Industrial Wiring": "#EF4444",
+  "Smart Home":        "#8B5CF6",
+  "Security":          "#3B82F6",
+  "IT & Tech":         "#10B981",
+  "General Electrical":"#6366F1",
 };
 
 function projectImage(project: Project) {
@@ -69,7 +70,6 @@ export function ProjectsPage() {
     "Industrial Wiring",
     "Smart Home",
     "Security",
-    "Solar + IT",
     "IT & Tech",
     "General Electrical",
   ];
