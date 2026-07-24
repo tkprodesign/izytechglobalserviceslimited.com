@@ -3,7 +3,7 @@ import { DashboardLayout } from './DashboardLayout';
 import { getToken } from '../../lib/auth';
 import {
   Plus, Pencil, Trash2, ToggleLeft, ToggleRight, X, Save,
-  ImagePlus, Link as LinkIcon, ChevronLeft, ChevronRight, Upload,
+  ImagePlus, Link as LinkIcon, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Upload,
   Star, Loader2, AlertCircle, CheckCircle, ExternalLink, Search,
 } from 'lucide-react';
 
@@ -159,13 +159,17 @@ export function ProjectsManagerPage() {
 
   useEffect(() => { load(); }, [token]);
 
-  /* Filtered view */
-  const visible = projects.filter(p => {
-    const q = search.toLowerCase();
-    const matchSearch = !q || p.title.toLowerCase().includes(q) || (p.location ?? '').toLowerCase().includes(q);
-    const matchCat = !filterCat || p.category === filterCat;
-    return matchSearch && matchCat;
-  });
+  /* Filtered view — always sorted by sort_order so optimistic updates display correctly */
+  const visible = projects
+    .filter(p => {
+      const q = search.toLowerCase();
+      const matchSearch = !q || p.title.toLowerCase().includes(q) || (p.location ?? '').toLowerCase().includes(q);
+      const matchCat = !filterCat || p.category === filterCat;
+      return matchSearch && matchCat;
+    })
+    .sort((a, b) => a.sort_order - b.sort_order);
+
+  const isFiltering = !!(search || filterCat);
 
   /* ── Form helpers ── */
   function openNew() {
@@ -316,6 +320,31 @@ export function ProjectsManagerPage() {
     });
   }
 
+  /* ── Ordering — swap sort_order with adjacent row ── */
+  async function reorder(p: Project, direction: 'up' | 'down') {
+    const sorted = [...projects].sort((a, b) => a.sort_order - b.sort_order);
+    const idx = sorted.findIndex(x => x.id === p.id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const a = sorted[idx];
+    const b = sorted[swapIdx];
+    const newA = { ...a, sort_order: b.sort_order };
+    const newB = { ...b, sort_order: a.sort_order };
+    // Optimistic update
+    setProjects(prev => prev.map(x => x.id === a.id ? newA : x.id === b.id ? newB : x));
+    // Persist both rows
+    await Promise.all([
+      fetch(`${API}/api/admin/projects/${a.id}`, {
+        method: 'PUT', headers,
+        body: JSON.stringify({ ...newA, main_image_url: (newA.images ?? [])[0] ?? newA.main_image_url }),
+      }),
+      fetch(`${API}/api/admin/projects/${b.id}`, {
+        method: 'PUT', headers,
+        body: JSON.stringify({ ...newB, main_image_url: (newB.images ?? [])[0] ?? newB.main_image_url }),
+      }),
+    ]);
+  }
+
   /* ── Delete — with featured warning and unpublish-first option ── */
   async function remove(p: Project) {
     if (p.featured) {
@@ -455,6 +484,26 @@ export function ProjectsManagerPage() {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-1.5">
+                              {!isFiltering && (
+                                <div className="flex flex-col mr-0.5">
+                                  <button
+                                    onClick={() => reorder(p, 'up')}
+                                    disabled={visible.indexOf(p) === 0}
+                                    className="p-0.5 rounded transition-colors hover:bg-gray-100 disabled:opacity-20"
+                                    aria-label="Move up"
+                                  >
+                                    <ChevronUp size={13} style={{ color: '#5a6a82' }} />
+                                  </button>
+                                  <button
+                                    onClick={() => reorder(p, 'down')}
+                                    disabled={visible.indexOf(p) === visible.length - 1}
+                                    className="p-0.5 rounded transition-colors hover:bg-gray-100 disabled:opacity-20"
+                                    aria-label="Move down"
+                                  >
+                                    <ChevronDown size={13} style={{ color: '#5a6a82' }} />
+                                  </button>
+                                </div>
+                              )}
                               {p.published && (
                                 <a
                                   href={`/projects/${p.slug}`}
@@ -502,6 +551,26 @@ export function ProjectsManagerPage() {
                             <p className="text-xs mt-0.5" style={{ color: '#8fadc8' }}>{p.location} · {p.year}</p>
                           </div>
                           <div className="flex shrink-0 items-center gap-1">
+                            {!isFiltering && (
+                              <div className="flex flex-col">
+                                <button
+                                  onClick={() => reorder(p, 'up')}
+                                  disabled={visible.indexOf(p) === 0}
+                                  className="p-0.5 rounded hover:bg-gray-100 disabled:opacity-20"
+                                  aria-label="Move up"
+                                >
+                                  <ChevronUp size={13} style={{ color: '#5a6a82' }} />
+                                </button>
+                                <button
+                                  onClick={() => reorder(p, 'down')}
+                                  disabled={visible.indexOf(p) === visible.length - 1}
+                                  className="p-0.5 rounded hover:bg-gray-100 disabled:opacity-20"
+                                  aria-label="Move down"
+                                >
+                                  <ChevronDown size={13} style={{ color: '#5a6a82' }} />
+                                </button>
+                              </div>
+                            )}
                             {p.published && (
                               <a href={`/projects/${p.slug}`} target="_blank" rel="noopener noreferrer" className="rounded-lg p-1.5 hover:bg-green-50" aria-label="Preview">
                                 <ExternalLink size={14} style={{ color: '#10B981' }} />
