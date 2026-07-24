@@ -28,6 +28,7 @@ const navLinks: NavLink[] = [
   { label: "Projects",     to: "/projects" },
   { label: "Store",        to: "/store" },
   { label: "Testimonials", to: "/testimonials" },
+  { label: "Careers",      to: "/careers" },
   { label: "Contact",      to: "/contact" },
 ];
 

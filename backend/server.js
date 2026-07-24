@@ -338,6 +338,50 @@ app.post('/api/admin/store/images/direct-upload', requireAuth, async (_req, res)
   }
 });
 
+// ── Careers: application submission ───────────────────────────────────────────
+app.post('/api/careers/apply', async (req, res) => {
+  const { name, email, phone, position, message } = req.body || {};
+  if (!name || !email || !position)
+    return res.status(400).json({ error: 'name, email and position are required' });
+
+  const careersEmail = process.env.CAREERS_EMAIL;
+  const resendKey    = process.env.RESEND_API_KEY;
+  if (!careersEmail || !resendKey)
+    return res.status(500).json({ error: 'Careers email not configured on server' });
+
+  const html = `
+    <h2 style="color:#0d1b2e;font-family:sans-serif">New Job Application — IZY Technologies</h2>
+    <table style="font-family:sans-serif;font-size:14px;border-collapse:collapse;width:100%">
+      <tr><td style="padding:8px 12px;font-weight:600;color:#5a6a82;width:160px">Name</td><td style="padding:8px 12px;color:#0d1b2e">${name}</td></tr>
+      <tr style="background:#f8fafc"><td style="padding:8px 12px;font-weight:600;color:#5a6a82">Email</td><td style="padding:8px 12px"><a href="mailto:${email}" style="color:#1a5fab">${email}</a></td></tr>
+      <tr><td style="padding:8px 12px;font-weight:600;color:#5a6a82">Phone</td><td style="padding:8px 12px;color:#0d1b2e">${phone || '—'}</td></tr>
+      <tr style="background:#f8fafc"><td style="padding:8px 12px;font-weight:600;color:#5a6a82">Position</td><td style="padding:8px 12px;color:#0d1b2e"><strong>${position}</strong></td></tr>
+      <tr><td style="padding:8px 12px;font-weight:600;color:#5a6a82;vertical-align:top">Cover note</td><td style="padding:8px 12px;color:#0d1b2e;white-space:pre-wrap">${message || '—'}</td></tr>
+    </table>
+    <p style="font-family:sans-serif;font-size:12px;color:#94a3b8;margin-top:24px">Submitted via izytechglobalservices.com/careers</p>
+  `;
+
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: `IZY Careers <${careersEmail}>`,
+        to: [careersEmail],
+        reply_to: email,
+        subject: `Job Application: ${position} — ${name}`,
+        html,
+        text: `New application\nName: ${name}\nEmail: ${email}\nPhone: ${phone || '—'}\nPosition: ${position}\n\n${message || ''}`,
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok) return res.status(r.status).json({ error: data?.message || 'Email send failed' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Testimonials (public) ─────────────────────────────────────────────────────
 app.get('/api/testimonials', async (_req, res) => {
   try {

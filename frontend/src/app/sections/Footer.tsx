@@ -18,6 +18,7 @@ const quickLinks = [
   { label: "Our Projects", href: "/projects" },
   { label: "Store", href: "/store" },
   { label: "Testimonials", href: "/testimonials" },
+  { label: "Careers", href: "/careers" },
   { label: "Get a Quote", href: "/contact" },
   { label: "Emergency Service", href: "tel:+2348101262814" },
 ];
