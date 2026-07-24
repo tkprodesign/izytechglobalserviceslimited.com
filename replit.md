@@ -46,18 +46,43 @@ cd backend && npm install
 
 ## Environment secrets
 
-All secrets are stored in Replit's secret manager. Key ones:
+All secrets are stored in Replit's secret manager and are automatically available to every agent session — no re-entry needed. Plain env vars (non-sensitive) live in the `[userenv]` block of `.replit`.
 
-- `DATABASE_URL` — Neon PostgreSQL connection string
-- `SESSION_SECRET` — JWT signing secret
-- `VITE_API_URL` — Backend URL used by the frontend at build time
-- `RESEND_API_KEY` — Email delivery (via Resend API)
-- `INFO_EMAIL` / `INFO_EMAIL_PASSWORD` — Info mailbox
-- `ADMIN_EMAIL` / `ADMIN_EMAIL_PASSWORD` — Admin mailbox
-- `CAREERS_EMAIL` / `CAREERS_EMAIL_PASSWORD` — Careers mailbox
-- `SALES_EMAIL` / `SALES_EMAIL_PASSWORD` — Sales mailbox
-- `SUPPORT_EMAIL` / `SUPPORT_EMAIL_PASSWORD` — Support mailbox
-- `NOREPLY_EMAIL` — No-reply send-only account
+### Database & auth
+| Secret | Purpose |
+|---|---|
+| `DATABASE_URL` | Neon PostgreSQL connection string |
+| `SESSION_SECRET` | JWT signing secret for admin auth |
+
+### Frontend config (also set as plain env var in `.replit`)
+| Secret | Purpose |
+|---|---|
+| `VITE_API_URL` | Backend base URL used by the React frontend (`https://izytech-api.onrender.com`) |
+
+### Email accounts (IMAP + SMTP via Spacemail)
+| Secret | Purpose |
+|---|---|
+| `INFO_EMAIL` / `INFO_EMAIL_PASSWORD` | Info mailbox (`info@izytechglobalservices.com`) |
+| `ADMIN_EMAIL` / `ADMIN_EMAIL_PASSWORD` | Admin mailbox |
+| `CAREERS_EMAIL` / `CAREERS_EMAIL_PASSWORD` | Careers mailbox |
+| `SALES_EMAIL` / `SALES_EMAIL_PASSWORD` | Sales mailbox |
+| `SUPPORT_EMAIL` / `SUPPORT_EMAIL_PASSWORD` | Support mailbox |
+| `NOREPLY_EMAIL` | No-reply send-only address |
+| `RESEND_API_KEY` | Resend API for transactional email delivery |
+
+### Cloudflare (product image uploads)
+| Secret | Purpose |
+|---|---|
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account for Images |
+| `CLOUDFLARE_API_TOKEN` | API token scoped to Cloudflare Images |
+| `CLOUDFLARE_IMAGE_HASH` | Delivery hash for the Cloudflare Images domain |
+
+### Infrastructure
+| Secret | Purpose |
+|---|---|
+| `RENDER_API_KEY` | Render account API key (manage the production backend) |
+| `RENDER_SERVICE_ID` | Render service ID: `srv-d9hd617avr4c73ebtj9g` |
+| `GITHUB_TOKEN` | GitHub PAT with `repo` + `workflow` scopes — used to push to the repo from Replit |
 
 ## Database
 
