@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowRight, Filter, MapPin, RefreshCw } from "lucide-react";
+import { ArrowRight, Cpu, Filter, Home, MapPin, RefreshCw, ShieldCheck, Wrench, Zap } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 import { PageLayout } from "../components/PageLayout";
 import { api, Project } from "../../lib/api";
