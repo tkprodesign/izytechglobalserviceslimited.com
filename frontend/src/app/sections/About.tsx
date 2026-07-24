@@ -199,39 +199,81 @@ export function About() {
               </motion.div>
             </div>
 
-            {/* Timeline — DB-driven */}
-            <div className="space-y-0">
-              {milestones.map((m, i) => {
-                const IconComp = ICON_MAP[m.icon_name] || Star;
-                return (
-                  <motion.div
-                    key={m.id}
-                    initial={{ opacity: 0, x: 16 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.07, ease: [0.16, 1, 0.3, 1] }}
-                    className="flex items-start gap-5 py-4 border-b border-[#f0f1f3] last:border-0 group"
-                  >
-                    <div
-                      className="flex-shrink-0 w-16 text-right text-xs font-bold text-[#0d1b2e]/35 pt-0.5 group-hover:text-[#F0A20E] transition-colors leading-tight"
-                      style={{ fontFamily: "var(--font-display)" }}
-                    >
-                      {m.year}
-                    </div>
-                    <div className="flex-shrink-0 mt-1 p-1 rounded transition-colors" style={{ color: "#F0A20E" }}>
-                      <IconComp size={13} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[#0d1b2e] text-sm font-semibold mb-0.5 leading-tight" style={{ fontFamily: "var(--font-display)" }}>
-                        {m.title}
-                      </p>
-                      <p className="text-[#0d1b2e]/55 text-xs leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-                        {m.description}
-                      </p>
-                    </div>
-                  </motion.div>
-                );
-              })}
+            {/* Timeline — journey from 2018 → 2026 */}
+            <div className="relative">
+
+              {/* 2018 start badge */}
+              <div className="flex items-center gap-3 mb-2">
+                <div
+                  className="flex-shrink-0 w-14 h-7 flex items-center justify-center text-xs font-black tracking-wider"
+                  style={{ background: "#F0A20E", color: "#041627", fontFamily: "var(--font-display)", letterSpacing: "0.05em" }}
+                >
+                  2018
+                </div>
+                <div className="h-px flex-1" style={{ background: "linear-gradient(to right, #F0A20E40, transparent)" }} />
+                <span className="text-[10px] font-semibold tracking-widest uppercase text-[#0d1b2e]/30" style={{ fontFamily: "var(--font-ui)" }}>
+                  Founded
+                </span>
+              </div>
+
+              {/* Journey line + milestones */}
+              <div className="relative pl-7">
+                {/* Vertical journey line */}
+                <div
+                  className="absolute left-[13px] top-0 bottom-0 w-px"
+                  style={{ background: "linear-gradient(to bottom, #F0A20E, #F0A20E55 60%, #F0A20E22)" }}
+                />
+
+                <div className="space-y-0">
+                  {milestones.map((m, i) => {
+                    const IconComp = ICON_MAP[m.icon_name] || Star;
+                    return (
+                      <motion.div
+                        key={m.id}
+                        initial={{ opacity: 0, x: 16 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.07, ease: [0.16, 1, 0.3, 1] }}
+                        className="relative flex items-start gap-4 py-3.5 border-b border-[#f0f1f3] last:border-0 group"
+                      >
+                        {/* Dot on the line */}
+                        <div
+                          className="absolute -left-7 top-4 w-[13px] h-[13px] rounded-full border-2 flex items-center justify-center transition-colors group-hover:border-[#F0A20E]"
+                          style={{ background: "white", borderColor: "#F0A20E55" }}
+                        >
+                          <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#F0A20E" }} />
+                        </div>
+
+                        <div className="flex-shrink-0 mt-0.5 p-1 rounded transition-colors" style={{ color: "#F0A20E" }}>
+                          <IconComp size={13} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[#0d1b2e] text-sm font-semibold mb-0.5 leading-tight" style={{ fontFamily: "var(--font-display)" }}>
+                            {m.title}
+                          </p>
+                          <p className="text-[#0d1b2e]/55 text-xs leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                            {m.description}
+                          </p>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 2026 end badge */}
+              <div className="flex items-center gap-3 mt-2">
+                <div
+                  className="flex-shrink-0 w-14 h-7 flex items-center justify-center text-xs font-black tracking-wider"
+                  style={{ background: "#041627", color: "#F0A20E", fontFamily: "var(--font-display)", letterSpacing: "0.05em" }}
+                >
+                  2026
+                </div>
+                <div className="h-px flex-1" style={{ background: "linear-gradient(to right, #04162740, transparent)" }} />
+                <span className="text-[10px] font-semibold tracking-widest uppercase text-[#0d1b2e]/30" style={{ fontFamily: "var(--font-ui)" }}>
+                  Today
+                </span>
+              </div>
             </div>
           </motion.div>
         </div>
