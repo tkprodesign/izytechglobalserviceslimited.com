@@ -184,7 +184,8 @@ export function About() {
                 <img
                   src="/site-images/about-team.jpg"
                   alt="IZY Technologies team on site"
-                  className="w-full h-full object-cover object-top"
+                  className="w-full h-full object-cover"
+                  style={{ objectPosition: "center 35%" }}
                 />
                 <div
                   className="absolute inset-0"
@@ -200,76 +201,77 @@ export function About() {
             </div>
 
             {/* Timeline — journey from 2018 → 2026 */}
-            <div className="relative">
+            <div>
 
               {/* 2018 start badge */}
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-3 mb-1">
                 <div
-                  className="flex-shrink-0 w-14 h-7 flex items-center justify-center text-xs font-black tracking-wider"
+                  className="flex-shrink-0 w-14 h-7 flex items-center justify-center text-xs font-black"
                   style={{ background: "#F0A20E", color: "#041627", fontFamily: "var(--font-display)", letterSpacing: "0.05em" }}
                 >
                   2018
                 </div>
-                <div className="h-px flex-1" style={{ background: "linear-gradient(to right, #F0A20E40, transparent)" }} />
+                <div className="h-px flex-1" style={{ background: "linear-gradient(to right, #F0A20E60, transparent)" }} />
                 <span className="text-[10px] font-semibold tracking-widest uppercase text-[#0d1b2e]/30" style={{ fontFamily: "var(--font-ui)" }}>
                   Founded
                 </span>
               </div>
 
-              {/* Journey line + milestones */}
-              <div className="relative pl-7">
-                {/* Vertical journey line */}
-                <div
-                  className="absolute left-[13px] top-0 bottom-0 w-px"
-                  style={{ background: "linear-gradient(to bottom, #F0A20E, #F0A20E55 60%, #F0A20E22)" }}
-                />
-
-                <div className="space-y-0">
-                  {milestones.map((m, i) => {
-                    const IconComp = ICON_MAP[m.icon_name] || Star;
-                    return (
-                      <motion.div
-                        key={m.id}
-                        initial={{ opacity: 0, x: 16 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: i * 0.07, ease: [0.16, 1, 0.3, 1] }}
-                        className="relative flex items-start gap-4 py-3.5 border-b border-[#f0f1f3] last:border-0 group"
+              {/* Milestones — each row: [rail] [content] */}
+              {milestones.map((m, i) => {
+                const IconComp = ICON_MAP[m.icon_name] || Star;
+                const isLast = i === milestones.length - 1;
+                return (
+                  <motion.div
+                    key={m.id}
+                    initial={{ opacity: 0, x: 16 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.07, ease: [0.16, 1, 0.3, 1] }}
+                    className="flex items-stretch group"
+                  >
+                    {/* Left rail: line + dot + line */}
+                    <div className="flex flex-col items-center flex-shrink-0 w-14">
+                      {/* Line above dot */}
+                      <div className="w-px flex-1" style={{ background: "linear-gradient(to bottom, #F0A20E80, #F0A20E40)" }} />
+                      {/* Dot */}
+                      <div
+                        className="w-3 h-3 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors group-hover:border-[#F0A20E]"
+                        style={{ background: "white", borderColor: "#F0A20E70" }}
                       >
-                        {/* Dot on the line */}
-                        <div
-                          className="absolute -left-7 top-4 w-[13px] h-[13px] rounded-full border-2 flex items-center justify-center transition-colors group-hover:border-[#F0A20E]"
-                          style={{ background: "white", borderColor: "#F0A20E55" }}
-                        >
-                          <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#F0A20E" }} />
-                        </div>
+                        <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#F0A20E" }} />
+                      </div>
+                      {/* Line below dot */}
+                      {!isLast && (
+                        <div className="w-px flex-1" style={{ background: "linear-gradient(to bottom, #F0A20E40, #F0A20E20)" }} />
+                      )}
+                    </div>
 
-                        <div className="flex-shrink-0 mt-0.5 p-1 rounded transition-colors" style={{ color: "#F0A20E" }}>
-                          <IconComp size={13} />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[#0d1b2e] text-sm font-semibold mb-0.5 leading-tight" style={{ fontFamily: "var(--font-display)" }}>
-                            {m.title}
-                          </p>
-                          <p className="text-[#0d1b2e]/55 text-xs leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-                            {m.description}
-                          </p>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </div>
+                    {/* Content */}
+                    <div className={`flex-1 min-w-0 py-3 pl-3 ${!isLast ? "border-b border-[#f0f1f3]" : ""}`}>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span style={{ color: "#F0A20E" }}><IconComp size={12} /></span>
+                        <p className="text-[#0d1b2e] text-sm font-semibold leading-tight" style={{ fontFamily: "var(--font-display)" }}>
+                          {m.title}
+                        </p>
+                      </div>
+                      <p className="text-[#0d1b2e]/55 text-xs leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                        {m.description}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
 
               {/* 2026 end badge */}
-              <div className="flex items-center gap-3 mt-2">
+              <div className="flex items-center gap-3 mt-1">
                 <div
-                  className="flex-shrink-0 w-14 h-7 flex items-center justify-center text-xs font-black tracking-wider"
+                  className="flex-shrink-0 w-14 h-7 flex items-center justify-center text-xs font-black"
                   style={{ background: "#041627", color: "#F0A20E", fontFamily: "var(--font-display)", letterSpacing: "0.05em" }}
                 >
                   2026
                 </div>
-                <div className="h-px flex-1" style={{ background: "linear-gradient(to right, #04162740, transparent)" }} />
+                <div className="h-px flex-1" style={{ background: "linear-gradient(to right, #04162750, transparent)" }} />
                 <span className="text-[10px] font-semibold tracking-widest uppercase text-[#0d1b2e]/30" style={{ fontFamily: "var(--font-ui)" }}>
                   Today
                 </span>
