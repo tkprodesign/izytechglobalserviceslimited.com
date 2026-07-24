@@ -88,6 +88,7 @@ export function ServicesPage() {
             return (
               <motion.div
                 key={s.num}
+                id={`service-${s.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, '')}`}
                 initial={{ opacity: 0, y: 32 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}

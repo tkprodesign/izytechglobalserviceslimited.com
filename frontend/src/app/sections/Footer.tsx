@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import { Phone, Mail, MapPin, Facebook, Twitter, Instagram, MessageCircle, ArrowRight } from "lucide-react";
+import { Link } from "react-router";
 import logoIcon from "../../imports/izy-technologies_icon_v1.png";
 import logoHorizontal from "../../imports/izy-technologies_logo-variation-horizontal_v1.png";
 import { api, type SocialLinks } from "../../lib/api";
 
 const services = [
-  "Solar Energy Systems",
-  "Industrial Wiring",
-  "Smart Home Automation",
-  "CCTV & Security",
-  "IT & Tech Services",
-  "General Electrical",
+  { label: "Solar Energy Systems",  slug: "service-solar-energy-systems" },
+  { label: "Industrial Wiring",     slug: "service-industrial-wiring" },
+  { label: "Smart Home Automation", slug: "service-smart-home-automation" },
+  { label: "CCTV & Security",       slug: "service-cctv-security" },
+  { label: "IT & Tech Services",    slug: "service-it-tech-services" },
+  { label: "General Electrical",    slug: "service-general-electrical" },
 ];
 
 const quickLinks = [
@@ -142,14 +143,14 @@ export function Footer() {
           </h4>
           <ul className="space-y-3">
             {services.map((s) => (
-              <li key={s}>
-                <a
-                  href="#services"
+              <li key={s.label}>
+                <Link
+                  to={`/services#${s.slug}`}
                   className="text-white/35 hover:text-white/65 text-sm transition-colors hover:translate-x-1 inline-block"
                   style={{ fontFamily: "var(--font-body)" }}
                 >
-                  {s}
-                </a>
+                  {s.label}
+                </Link>
               </li>
             ))}
           </ul>
