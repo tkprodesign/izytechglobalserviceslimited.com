@@ -1,0 +1,53 @@
+name: Notify — Cloudflare Pages Deploy
+
+# Cloudflare Pages posts deployment_status events to GitHub automatically
+# when the Pages project is connected to this repo.
+on:
+  deployment_status:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    # Only fire when the deployment environment is Cloudflare Pages
+    if: |
+      contains(github.event.deployment.environment, 'Production') ||
+      contains(github.event.deployment_status.environment_url, 'pages.dev') ||
+      contains(github.event.deployment_status.environment_url, 'izytechglobalservices.com')
+    steps:
+      - name: Send ntfy notification
+        env:
+          STATE:        ${{ github.event.deployment_status.state }}
+          ENV_URL:      ${{ github.event.deployment_status.environment_url }}
+          ENVIRONMENT:  ${{ github.event.deployment.environment }}
+          COMMIT_MSG:   ${{ github.event.deployment.payload.commit_message || github.event.deployment.description }}
+        run: |
+          if [ "$STATE" = "success" ]; then
+            TITLE="✅ Cloudflare deployed"
+            PRIORITY="default"
+            TAGS="white_check_mark,rocket"
+          elif [ "$STATE" = "failure" ]; then
+            TITLE="❌ Cloudflare deploy FAILED"
+            PRIORITY="high"
+            TAGS="x,warning"
+          elif [ "$STATE" = "in_progress" ]; then
+            TITLE="🔄 Cloudflare deploying…"
+            PRIORITY="low"
+            TAGS="arrows_counterclockwise"
+          else
+            TITLE="ℹ️ Cloudflare deploy: $STATE"
+            PRIORITY="low"
+            TAGS="information_source"
+          fi
+
+          MSG="${ENVIRONMENT:-Production}"
+          if [ -n "$ENV_URL" ]; then
+            MSG="$MSG — $ENV_URL"
+          fi
+
+          curl -s -o /dev/null \
+            -H "Title: $TITLE" \
+            -H "Priority: $PRIORITY" \
+            -H "Tags: $TAGS" \
+            -H "Click: ${ENV_URL:-https://izytechglobalservices.com}" \
+            -d "$MSG" \
+            https://ntfy.sh/TKProRocketGuild
