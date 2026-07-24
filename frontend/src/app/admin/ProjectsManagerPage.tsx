@@ -3,8 +3,8 @@ import { DashboardLayout } from './DashboardLayout';
 import { getToken } from '../../lib/auth';
 import {
   Plus, Pencil, Trash2, ToggleLeft, ToggleRight, X, Save,
-  ImagePlus, Link, ChevronLeft, ChevronRight, Upload, Star, Loader2,
-  AlertCircle,
+  ImagePlus, Link as LinkIcon, ChevronLeft, ChevronRight, Upload,
+  Star, Loader2, AlertCircle, CheckCircle, ExternalLink, Search,
 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
@@ -102,6 +102,21 @@ function ProjectThumb({ images }: { images: string[] }) {
   );
 }
 
+/* ── Success toast ── */
+function Toast({ message, onDone }: { message: string; onDone: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 3500);
+    return () => clearTimeout(t);
+  }, [onDone]);
+  return (
+    <div className="fixed bottom-6 right-6 z-[60] flex items-center gap-3 rounded-xl px-5 py-3.5 shadow-xl text-sm font-semibold text-white animate-in slide-in-from-bottom-4"
+      style={{ background: '#059669' }}>
+      <CheckCircle size={16} />
+      {message}
+    </div>
+  );
+}
+
 /* ── Main component ── */
 export function ProjectsManagerPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -112,6 +127,11 @@ export function ProjectsManagerPage() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState('');
+
+  /* Search + filter */
+  const [search, setSearch] = useState('');
+  const [filterCat, setFilterCat] = useState('');
 
   /* Image upload state */
   const [newImageUrl, setNewImageUrl] = useState('');
@@ -139,6 +159,14 @@ export function ProjectsManagerPage() {
 
   useEffect(() => { load(); }, [token]);
 
+  /* Filtered view */
+  const visible = projects.filter(p => {
+    const q = search.toLowerCase();
+    const matchSearch = !q || p.title.toLowerCase().includes(q) || (p.location ?? '').toLowerCase().includes(q);
+    const matchCat = !filterCat || p.category === filterCat;
+    return matchSearch && matchCat;
+  });
+
   /* ── Form helpers ── */
   function openNew() {
     slugManual.current = false;
@@ -152,7 +180,7 @@ export function ProjectsManagerPage() {
   }
 
   function openEdit(p: Project) {
-    slugManual.current = true; // treat existing slug as manually set
+    slugManual.current = true;
     setEditing(p);
     setForm({
       title: p.title,
@@ -264,15 +292,12 @@ export function ProjectsManagerPage() {
         ...form,
         main_image_url: form.images[0] ?? '',
       };
-      const res = await fetch(url, {
-        method,
-        headers,
-        body: JSON.stringify(body),
-      });
+      const res = await fetch(url, { method, headers, body: JSON.stringify(body) });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'Failed to save');
       closeForm();
       load();
+      setToast(editing ? 'Project updated.' : 'Project added.');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to save');
     } finally {
@@ -291,9 +316,22 @@ export function ProjectsManagerPage() {
     });
   }
 
-  /* ── Delete ── */
+  /* ── Delete — with featured warning and unpublish-first option ── */
   async function remove(p: Project) {
-    if (!confirm(`Delete "${p.title}"? This cannot be undone.`)) return;
+    if (p.featured) {
+      const go = confirm(
+        `"${p.title}" is currently featured on the homepage.\n\nConsider unpublishing it first instead of deleting.\n\nClick OK to permanently delete anyway, or Cancel to go back.`
+      );
+      if (!go) return;
+    } else if (p.published) {
+      const go = confirm(
+        `"${p.title}" is currently live on the public site.\n\nConsider unpublishing it first instead of deleting.\n\nClick OK to permanently delete anyway, or Cancel to go back.`
+      );
+      if (!go) return;
+    } else {
+      if (!confirm(`Permanently delete "${p.title}"? This cannot be undone.`)) return;
+    }
+
     setDeleting(p.id);
     await fetch(`${API}/api/admin/projects/${p.id}`, {
       method: 'DELETE',
@@ -301,10 +339,14 @@ export function ProjectsManagerPage() {
     });
     setDeleting(null);
     setProjects(prev => prev.filter(x => x.id !== p.id));
+    setToast('Project deleted.');
   }
 
   const inputCls = 'w-full border rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all';
   const inputStyle = { borderColor: '#e2e8f0', color: 'var(--izy-navy)' };
+
+  /* Unique categories from loaded projects for the filter dropdown */
+  const loadedCategories = Array.from(new Set(projects.map(p => p.category))).sort();
 
   return (
     <DashboardLayout>
@@ -327,19 +369,50 @@ export function ProjectsManagerPage() {
           </button>
         </div>
 
+        {/* Search + category filter */}
+        <div className="mb-4 flex flex-wrap gap-3">
+          <div className="flex items-center gap-2 flex-1 min-w-[200px] border rounded-xl px-3.5 py-2.5 bg-white" style={{ borderColor: '#e2e8f0' }}>
+            <Search size={14} style={{ color: '#94a3b8', flexShrink: 0 }} />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by title or location…"
+              className="flex-1 text-sm focus:outline-none bg-transparent"
+              style={{ color: 'var(--izy-navy)' }}
+            />
+            {search && (
+              <button onClick={() => setSearch('')} className="hover:opacity-70">
+                <X size={13} style={{ color: '#94a3b8' }} />
+              </button>
+            )}
+          </div>
+          <select
+            value={filterCat}
+            onChange={e => setFilterCat(e.target.value)}
+            className="border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none bg-white"
+            style={{ borderColor: '#e2e8f0', color: filterCat ? 'var(--izy-navy)' : '#94a3b8' }}
+          >
+            <option value="">All categories</option>
+            {loadedCategories.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+
         {/* Table */}
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
           {loading ? (
             <div className="flex items-center justify-center h-40">
               <Loader2 className="animate-spin" size={28} style={{ color: 'var(--izy-blue)' }} />
             </div>
-          ) : projects.length === 0 ? (
-            <p className="p-8 text-sm text-center" style={{ color: '#8fadc8' }}>No projects yet. Add your first one.</p>
+          ) : visible.length === 0 ? (
+            <p className="p-8 text-sm text-center" style={{ color: '#8fadc8' }}>
+              {projects.length === 0 ? 'No projects yet. Add your first one.' : 'No projects match your search.'}
+            </p>
           ) : (
             <>
               {/* Desktop table */}
               <div className="hidden overflow-x-auto sm:block">
-                <table className="w-full min-w-[820px] text-sm">
+                <table className="w-full min-w-[860px] text-sm">
                   <thead>
                     <tr style={{ borderBottom: '1px solid #eef1f6' }}>
                       {['', 'Project', 'Category', 'Year', 'Featured', 'Published', 'Actions'].map(h => (
@@ -348,7 +421,7 @@ export function ProjectsManagerPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {projects.map(p => {
+                    {visible.map(p => {
                       const cc = CATEGORY_COLORS[p.category] ?? { bg: '#f0f3f8', text: '#5a6a82' };
                       return (
                         <tr key={p.id} className="transition-colors hover:bg-[#f8fafc]" style={{ borderBottom: '1px solid #eef1f6' }}>
@@ -367,21 +440,32 @@ export function ProjectsManagerPage() {
                           </td>
                           <td className="px-4 py-3 text-sm" style={{ color: '#5a6a82' }}>{p.year}</td>
                           <td className="px-4 py-3">
-                            <button onClick={() => toggleField(p, 'featured')} className="flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-70">
+                            <button onClick={() => toggleField(p, 'featured')} className="flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-70" title={p.featured ? 'Remove featured' : 'Mark as featured'}>
                               {p.featured
                                 ? <><Star size={15} fill="#F0A20E" style={{ color: '#F0A20E' }} /><span style={{ color: '#b45309' }}>Yes</span></>
                                 : <><Star size={15} style={{ color: '#cbd5e1' }} /><span style={{ color: '#94a3b8' }}>No</span></>}
                             </button>
                           </td>
                           <td className="px-4 py-3">
-                            <button onClick={() => toggleField(p, 'published')} className="flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-70">
+                            <button onClick={() => toggleField(p, 'published')} className="flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-70" title={p.published ? 'Unpublish' : 'Publish'}>
                               {p.published
                                 ? <><ToggleRight size={18} style={{ color: '#10B981' }} /><span style={{ color: '#10B981' }}>Live</span></>
                                 : <><ToggleLeft size={18} style={{ color: '#94a3b8' }} /><span style={{ color: '#94a3b8' }}>Draft</span></>}
                             </button>
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
+                              {p.published && (
+                                <a
+                                  href={`/projects/${p.slug}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1.5 rounded-lg transition-colors hover:bg-green-50"
+                                  title="Preview live page"
+                                >
+                                  <ExternalLink size={14} style={{ color: '#10B981' }} />
+                                </a>
+                              )}
                               <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg transition-colors hover:bg-blue-50" title="Edit">
                                 <Pencil size={14} style={{ color: 'var(--izy-blue)' }} />
                               </button>
@@ -406,7 +490,7 @@ export function ProjectsManagerPage() {
 
               {/* Mobile cards */}
               <div className="divide-y sm:hidden" style={{ borderColor: '#eef1f6' }}>
-                {projects.map(p => {
+                {visible.map(p => {
                   const cc = CATEGORY_COLORS[p.category] ?? { bg: '#f0f3f8', text: '#5a6a82' };
                   return (
                     <article key={p.id} className="flex min-w-0 gap-3 px-4 py-4">
@@ -418,6 +502,11 @@ export function ProjectsManagerPage() {
                             <p className="text-xs mt-0.5" style={{ color: '#8fadc8' }}>{p.location} · {p.year}</p>
                           </div>
                           <div className="flex shrink-0 items-center gap-1">
+                            {p.published && (
+                              <a href={`/projects/${p.slug}`} target="_blank" rel="noopener noreferrer" className="rounded-lg p-1.5 hover:bg-green-50" aria-label="Preview">
+                                <ExternalLink size={14} style={{ color: '#10B981' }} />
+                              </a>
+                            )}
                             <button onClick={() => openEdit(p)} className="rounded-lg p-1.5 hover:bg-blue-50" aria-label={`Edit ${p.title}`}>
                               <Pencil size={14} style={{ color: 'var(--izy-blue)' }} />
                             </button>
@@ -445,6 +534,13 @@ export function ProjectsManagerPage() {
             </>
           )}
         </div>
+
+        {/* Result count when filtering */}
+        {(search || filterCat) && !loading && (
+          <p className="mt-3 text-xs text-center" style={{ color: '#94a3b8' }}>
+            Showing {visible.length} of {projects.length} projects
+          </p>
+        )}
       </div>
 
       {/* ── Slide-over form ── */}
@@ -465,7 +561,7 @@ export function ProjectsManagerPage() {
             {/* Body */}
             <div className="flex-1 space-y-5 px-5 py-6 sm:px-7">
 
-              {/* ── Images ── */}
+              {/* Images */}
               <Field label="Images">
                 {form.images.length > 0 && (
                   <div className="grid grid-cols-3 gap-2 mb-3">
@@ -500,7 +596,6 @@ export function ProjectsManagerPage() {
                     : <><Upload size={14} /> Upload from device</>}
                 </button>
                 {uploadError && <p className="text-xs text-red-500 mt-1">{uploadError}</p>}
-
                 <div className="flex items-center gap-2 mt-2">
                   <div className="flex-1 h-px" style={{ background: '#e2e8f0' }} />
                   <span className="text-xs" style={{ color: '#94a3b8' }}>or paste URL</span>
@@ -508,7 +603,7 @@ export function ProjectsManagerPage() {
                 </div>
                 <div className="flex gap-2 mt-2">
                   <div className="flex-1 flex items-center gap-2 border rounded-lg px-3 py-2.5" style={{ borderColor: '#e2e8f0' }}>
-                    <Link size={13} style={{ color: '#8fadc8', flexShrink: 0 }} />
+                    <LinkIcon size={13} style={{ color: '#8fadc8', flexShrink: 0 }} />
                     <input
                       type="url"
                       value={newImageUrl}
@@ -519,29 +614,18 @@ export function ProjectsManagerPage() {
                       style={{ color: 'var(--izy-navy)' }}
                     />
                   </div>
-                  <button
-                    onClick={addImageUrl}
-                    disabled={!newImageUrl.trim()}
-                    className="px-3 rounded-lg text-sm font-semibold text-white disabled:opacity-40 transition-opacity hover:opacity-90"
-                    style={{ background: 'var(--izy-blue)' }}
-                  >Add</button>
+                  <button onClick={addImageUrl} disabled={!newImageUrl.trim()} className="px-3 rounded-lg text-sm font-semibold text-white disabled:opacity-40 transition-opacity hover:opacity-90" style={{ background: 'var(--izy-blue)' }}>Add</button>
                 </div>
                 <p className="text-xs mt-1" style={{ color: '#94a3b8' }}>First image is the cover. Hover to reorder or remove.</p>
               </Field>
 
-              {/* ── Title ── */}
+              {/* Title */}
               <Field label="Title *">
-                <input
-                  type="text"
-                  value={form.title}
-                  onChange={e => handleTitleChange(e.target.value)}
-                  placeholder="e.g. 150kW Commercial Solar Farm"
-                  className={inputCls}
-                  style={inputStyle}
-                />
+                <input type="text" value={form.title} onChange={e => handleTitleChange(e.target.value)}
+                  placeholder="e.g. 150kW Commercial Solar Farm" className={inputCls} style={inputStyle} />
               </Field>
 
-              {/* ── Slug ── */}
+              {/* Slug */}
               <Field label="Slug *">
                 <div className="flex items-center gap-2 border rounded-lg px-3.5 py-2.5" style={{ borderColor: '#e2e8f0' }}>
                   <span className="text-xs select-none shrink-0" style={{ color: '#94a3b8' }}>/projects/</span>
@@ -556,79 +640,43 @@ export function ProjectsManagerPage() {
                 </div>
               </Field>
 
-              {/* ── Category + Year ── */}
+              {/* Category + Year */}
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Category *">
-                  <select
-                    value={form.category}
-                    onChange={e => setf('category', e.target.value)}
-                    className={inputCls}
-                    style={inputStyle}
-                  >
+                  <select value={form.category} onChange={e => setf('category', e.target.value)} className={inputCls} style={inputStyle}>
                     {CATEGORIES.map(c => <option key={c}>{c}</option>)}
                   </select>
                 </Field>
                 <Field label="Year">
-                  <input
-                    type="text"
-                    value={form.year}
-                    onChange={e => setf('year', e.target.value)}
-                    placeholder="2024"
-                    className={inputCls}
-                    style={inputStyle}
-                  />
+                  <input type="text" value={form.year} onChange={e => setf('year', e.target.value)} placeholder="2024" className={inputCls} style={inputStyle} />
                 </Field>
               </div>
 
-              {/* ── Location ── */}
+              {/* Location */}
               <Field label="Location">
-                <input
-                  type="text"
-                  value={form.location}
-                  onChange={e => setf('location', e.target.value)}
-                  placeholder="e.g. Trans Amadi, Port Harcourt"
-                  className={inputCls}
-                  style={inputStyle}
-                />
+                <input type="text" value={form.location} onChange={e => setf('location', e.target.value)}
+                  placeholder="e.g. Trans Amadi, Port Harcourt" className={inputCls} style={inputStyle} />
               </Field>
 
-              {/* ── Short description ── */}
+              {/* Short description */}
               <Field label="Short Description">
-                <textarea
-                  rows={2}
-                  value={form.short_description}
-                  onChange={e => setf('short_description', e.target.value)}
-                  placeholder="One or two sentences shown on the project card…"
-                  className={inputCls + ' resize-none'}
-                  style={inputStyle}
-                />
+                <textarea rows={2} value={form.short_description} onChange={e => setf('short_description', e.target.value)}
+                  placeholder="One or two sentences shown on the project card…" className={inputCls + ' resize-none'} style={inputStyle} />
               </Field>
 
-              {/* ── Full description ── */}
+              {/* Full description */}
               <Field label="Full Description">
-                <textarea
-                  rows={5}
-                  value={form.full_description}
-                  onChange={e => setf('full_description', e.target.value)}
-                  placeholder="Full project write-up shown on the detail page…"
-                  className={inputCls + ' resize-none'}
-                  style={inputStyle}
-                />
+                <textarea rows={5} value={form.full_description} onChange={e => setf('full_description', e.target.value)}
+                  placeholder="Full project write-up shown on the detail page…" className={inputCls + ' resize-none'} style={inputStyle} />
               </Field>
 
-              {/* ── Result metric ── */}
+              {/* Result metric */}
               <Field label="Project Result">
-                <input
-                  type="text"
-                  value={form.result_metric}
-                  onChange={e => setf('result_metric', e.target.value)}
-                  placeholder="e.g. 78% bill reduction"
-                  className={inputCls}
-                  style={inputStyle}
-                />
+                <input type="text" value={form.result_metric} onChange={e => setf('result_metric', e.target.value)}
+                  placeholder="e.g. 78% bill reduction" className={inputCls} style={inputStyle} />
               </Field>
 
-              {/* ── Services ── */}
+              {/* Services */}
               <Field label="Services Involved">
                 {form.services.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-2">
@@ -641,37 +689,23 @@ export function ProjectsManagerPage() {
                   </div>
                 )}
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newService}
-                    onChange={e => setNewService(e.target.value)}
+                  <input type="text" value={newService} onChange={e => setNewService(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addService())}
-                    placeholder="e.g. Solar Installation"
-                    className={inputCls}
-                    style={inputStyle}
-                  />
-                  <button
-                    onClick={addService}
-                    disabled={!newService.trim()}
+                    placeholder="e.g. Solar Installation" className={inputCls} style={inputStyle} />
+                  <button onClick={addService} disabled={!newService.trim()}
                     className="px-3 rounded-lg text-sm font-semibold text-white disabled:opacity-40 hover:opacity-90 transition-opacity"
-                    style={{ background: 'var(--izy-blue)' }}
-                  >Add</button>
+                    style={{ background: 'var(--izy-blue)' }}>Add</button>
                 </div>
               </Field>
 
-              {/* ── Sort order ── */}
+              {/* Sort order */}
               <Field label="Sort Order">
-                <input
-                  type="number"
-                  value={form.sort_order}
-                  onChange={e => setf('sort_order', parseInt(e.target.value) || 0)}
-                  className={inputCls}
-                  style={inputStyle}
-                />
+                <input type="number" value={form.sort_order} onChange={e => setf('sort_order', parseInt(e.target.value) || 0)}
+                  className={inputCls} style={inputStyle} />
                 <p className="text-xs mt-1" style={{ color: '#94a3b8' }}>Lower number appears first on the public page.</p>
               </Field>
 
-              {/* ── Toggles ── */}
+              {/* Toggles */}
               <div className="flex gap-6 pt-1">
                 <Toggle label="Published" value={form.published} onChange={v => setf('published', v)} />
                 <Toggle label="Featured on homepage" value={form.featured} onChange={v => setf('featured', v)} />
@@ -686,24 +720,24 @@ export function ProjectsManagerPage() {
 
             {/* Footer */}
             <div className="flex gap-3 border-t px-5 py-5 sm:px-7" style={{ borderColor: '#eef1f6' }}>
-              <button
-                onClick={closeForm}
+              <button onClick={closeForm}
                 className="flex-1 py-2.5 rounded-xl text-sm font-medium border transition-colors hover:bg-gray-50"
-                style={{ borderColor: '#e2e8f0', color: '#5a6a82' }}
-              >Cancel</button>
-              <button
-                onClick={save}
-                disabled={saving || !form.title.trim()}
+                style={{ borderColor: '#e2e8f0', color: '#5a6a82' }}>Cancel</button>
+              <button onClick={save} disabled={saving || !form.title.trim()}
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-                style={{ background: 'var(--izy-blue)' }}
-              >
-                {saving ? <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" /></svg> : <Save size={15} />}
+                style={{ background: 'var(--izy-blue)' }}>
+                {saving
+                  ? <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" /></svg>
+                  : <Save size={15} />}
                 {saving ? 'Saving…' : editing ? 'Save Changes' : 'Add Project'}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Success toast */}
+      {toast && <Toast message={toast} onDone={() => setToast('')} />}
     </DashboardLayout>
   );
 }
@@ -720,12 +754,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function Toggle({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
   return (
-    <button
-      type="button"
-      onClick={() => onChange(!value)}
+    <button type="button" onClick={() => onChange(!value)}
       className="flex items-center gap-2.5 text-sm font-medium transition-colors"
-      style={{ color: value ? 'var(--izy-navy)' : '#94a3b8' }}
-    >
+      style={{ color: value ? 'var(--izy-navy)' : '#94a3b8' }}>
       {value
         ? <ToggleRight size={22} style={{ color: '#10B981' }} />
         : <ToggleLeft size={22} style={{ color: '#cbd5e1' }} />}
