@@ -802,7 +802,30 @@ app.delete('/api/admin/projects/:id', requireAuth, async (req, res) => {
   }
 });
 
-app.post('/api/admin/projects/images/direct-upload', requireAuth, async (_req, res) => {
+app.post('/api/admin/projects/images/direct-upload', requireAuth, async (req, res) => {
+  // ── Server-side pre-flight validation ────────────────────────────────────────
+  // The file never passes through this server (direct upload to Cloudflare), so
+  // we validate the declared metadata the client must send before we issue a URL.
+  const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+
+  const { contentType, fileSize } = req.body || {};
+
+  if (!contentType || typeof contentType !== 'string') {
+    return res.status(400).json({ error: 'contentType is required.' });
+  }
+  if (!ALLOWED_TYPES.includes(contentType.toLowerCase().split(';')[0].trim())) {
+    return res.status(400).json({ error: `File type "${contentType}" is not allowed. Please upload a JPEG, PNG, WebP, GIF, or SVG.` });
+  }
+  const size = Number(fileSize);
+  if (!fileSize || isNaN(size) || size <= 0) {
+    return res.status(400).json({ error: 'fileSize is required.' });
+  }
+  if (size > MAX_BYTES) {
+    return res.status(400).json({ error: `File is too large (${(size / 1024 / 1024).toFixed(1)} MB). Maximum allowed size is 10 MB.` });
+  }
+  // ─────────────────────────────────────────────────────────────────────────────
+
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
   const imagesHash = process.env.CLOUDFLARE_IMAGE_HASH || process.env.CLOUDFLARE_IMAGES_HASH;

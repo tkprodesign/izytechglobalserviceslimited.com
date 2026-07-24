@@ -238,7 +238,8 @@ export function ProjectsManagerPage() {
     try {
       const res = await fetch(`${API}/api/admin/projects/images/direct-upload`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contentType: file.type, fileSize: file.size }),
       });
       const du = await res.json();
       if (!res.ok || du.error) throw new Error(du.error || 'Could not start upload');
