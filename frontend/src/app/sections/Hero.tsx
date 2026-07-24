@@ -83,7 +83,7 @@ export function Hero() {
       {/* Content */}
       <motion.div className="relative flex-1 flex flex-col" style={{ opacity }}>
         <div className="flex-1 max-w-7xl mx-auto w-full px-6 flex items-center">
-          <div className="max-w-3xl pt-36 pb-20 lg:pt-0 lg:pb-0">
+          <div className="max-w-3xl pt-44 pb-20 lg:pt-24 lg:pb-8">
 
             {/* Eyebrow */}
             <motion.div
