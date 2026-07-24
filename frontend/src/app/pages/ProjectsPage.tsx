@@ -62,7 +62,18 @@ export function ProjectsPage() {
   }, [requestedCategory]);
 
   const activeCategory = requestedCategory || "All";
-  const filterOptions = ["All", ...categories];
+
+  // Fixed service order — only show chips for categories that have projects
+  const SERVICES_ORDER = [
+    "Solar Energy",
+    "Industrial Wiring",
+    "Smart Home",
+    "Security",
+    "Solar + IT",
+    "IT & Tech",
+    "General Electrical",
+  ];
+  const filterOptions = ["All", ...SERVICES_ORDER.filter(s => categories.includes(s))];
 
   function changeCategory(category: string) {
     if (category === "All") {
