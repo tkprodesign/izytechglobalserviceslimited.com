@@ -231,12 +231,14 @@ export function ProjectsPage() {
                         >
                           {project.category}
                         </span>
-                        <span
-                          className="absolute right-4 top-4 text-xs text-white/75"
-                          style={{ fontFamily: "var(--font-ui)" }}
-                        >
-                          {project.year}
-                        </span>
+                        {project.show_year && project.year && (
+                          <span
+                            className="absolute right-4 top-4 text-xs text-white/75"
+                            style={{ fontFamily: "var(--font-ui)" }}
+                          >
+                            {project.year}
+                          </span>
+                        )}
                         <span
                           className="absolute bottom-4 right-4 flex translate-y-2 items-center gap-2 text-xs font-bold tracking-wider text-[#F0A20E] opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100"
                           style={{ fontFamily: "var(--font-ui)" }}
