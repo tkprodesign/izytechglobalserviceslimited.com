@@ -1,0 +1,132 @@
+FINAL PROJECTS FEATURE REQUIREMENTS
+PUBLIC PROJECTS PAGE
+Replace the current static project list with a database-backed Projects page.
+Make the page feel like a polished portfolio or simple blog page, not just a basic template.
+Keep the design professional, visual, and slightly editorial without adding unnecessary complexity.
+Display projects in a responsive card layout.
+Each project card should include:
+Project image
+Project title
+Project category
+Location
+Year
+Short description
+Key result or project metric
+Each project card should link to its own individual project detail page.
+The featured project on the homepage should also link to its individual project page.
+INDIVIDUAL PROJECT PAGES
+Each project should have its own URL and detail page.
+Each page should include:
+Project title
+Main project image
+Optional additional project images
+Category
+Location
+Year completed
+Full project description
+Project results or key metric
+Services involved
+Related or similar projects
+Call-to-action button such as “Start Your Project” or “Request a Quote”
+Recommended URL format:
+/projects/project-name
+Use a clean URL slug generated from the project title.
+PROJECT CATEGORIES AND FILTERING
+Projects should support categories such as:
+Solar Energy
+Smart Home
+Security
+Industrial Wiring
+Solar + IT
+Other categories added later
+The Projects page should include category filters.
+Filters should work through the URL so filtered pages can be linked directly.
+Example:
+/projects?category=Solar
+/projects?category=Security
+The page should also support an “All Projects” option.
+Similar project recommendations should use the same category.
+ADMIN AND DEVELOPER PROJECT MANAGEMENT
+Admin and developer users should both be able to manage projects.
+They should be able to:
+Add a project
+Edit a project
+Delete a project
+Upload project images from a device
+Add project images by URL if needed
+Reorder project images
+Set the main project image
+Set the project title
+Set the project category
+Set the location
+Set the year
+Add a short description
+Add a full project description
+Add the project result or metric
+Add the services involved
+Mark a project as featured
+Set the project display order
+Publish or unpublish a project
+PROJECT MANAGEMENT PANEL
+Add a Projects section to the shared admin/developer panel.
+The panel should feel similar to a simple WordPress Posts or Projects manager, but remain lightweight and easy to use.
+Recommended panel features:
+List all projects
+Search projects by title or location
+Filter projects by category
+Show project status
+Show featured status
+Add Project button
+Edit button
+Delete button
+Drag-and-drop or simple ordering controls
+Project preview link
+Confirmation before deleting a project
+Warning when deleting a project that is currently featured
+PROJECT EDITOR
+The project editor should be a clean form with:
+Project title
+Automatically generated editable slug
+Category selector
+Location
+Year
+Short description
+Full description
+Project result or metric
+Services involved
+Main image upload
+Additional image uploads
+Featured toggle
+Published/unpublished toggle
+Display order field
+Save and cancel buttons
+IMAGE STORAGE
+Uploaded project images should be stored on Cloudflare Images, not Railway.
+Use the existing direct-upload approach already used for store product images.
+Store only the Cloudflare image delivery URLs in the database.
+Do not store image files on the backend server.
+RECOMMENDED SAFETY FEATURES
+Require a confirmation before permanently deleting a project.
+Prefer unpublishing or archiving a project before deletion.
+Prevent blank project titles and categories.
+Validate uploaded image file type and size.
+Keep project slugs unique.
+Show clear success and error messages after saving.
+Keep existing projects available during the migration.
+Avoid automatic destructive database cleanup.
+RESPONSIVE DESIGN
+The public Projects page must work well on mobile, tablet, and desktop.
+The project management panel must work well on mobile and tablet.
+The admin/developer navigation should continue using the shared responsive drawer.
+Project cards should stack cleanly on mobile without horizontal overflow.
+The project editor should fit within the mobile viewport.
+Images, buttons, filters, and text should remain readable at small screen sizes.
+DESIGN DIRECTION
+Professional and visually rich.
+Strong use of project imagery.
+Editorial or portfolio-inspired layout.
+Smooth but subtle animations.
+Clear category labels and project metadata.
+Navy, blue, white, and amber brand styling.
+Fancy enough to feel premium, but simple enough for fast loading and easy management.
+Do not add comments, likes, public accounts, complex permissions, or unnecessary social features.
