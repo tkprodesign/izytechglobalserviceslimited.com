@@ -80,10 +80,11 @@ function NavItem({
           )}
         </Link>
         <div
-          className={`absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-[#e8edf3] py-1.5 transition-all duration-200 ${
+          className={`absolute top-full left-0 w-56 pt-2 transition-all duration-200 ${
             open ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-1 pointer-events-none"
           }`}
         >
+          <div className="bg-white rounded-lg shadow-xl border border-[#e8edf3] py-1.5">
           {link.children.map((child) =>
             child.to ? (
               <Link
@@ -105,6 +106,7 @@ function NavItem({
               </a>
             )
           )}
+          </div>
         </div>
       </div>
     );
