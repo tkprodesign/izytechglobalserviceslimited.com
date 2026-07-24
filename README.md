@@ -43,3 +43,5 @@ pnpm run build     # output → frontend/dist/
 - [Site Guide](docs/SITE_GUIDE.md) — every section, editable content tables, glossary
 - [Design Guidelines](docs/DESIGN_GUIDELINES.md) — typography, colour system, component notes
 - [Attributions](docs/ATTRIBUTIONS.md) — open-source licences and asset credits
+- [Projects Feature](docs/PROJECTS_FEATURE.md) — full implementation record for the DB-backed Projects feature
+- [Changelog](CHANGELOG.md) — history of significant changes
