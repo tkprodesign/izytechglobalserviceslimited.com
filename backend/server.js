@@ -678,8 +678,8 @@ app.get('/api/projects', async (req, res) => {
     const params = [];
     let where = 'WHERE published = TRUE';
     if (category && category.toLowerCase() !== 'all') {
-      params.push(`%${category}%`);
-      where += ` AND LOWER(category) LIKE LOWER($${params.length})`;
+      params.push(category);
+      where += ` AND LOWER(category) = LOWER($${params.length})`;
     }
     const { rows } = await db.query(
       `SELECT ${PROJECT_FIELDS} FROM projects ${where} ORDER BY featured DESC, sort_order ASC, id ASC`,
