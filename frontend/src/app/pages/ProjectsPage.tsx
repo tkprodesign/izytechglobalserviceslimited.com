@@ -14,6 +14,74 @@ const TAG_COLORS: Record<string, string> = {
   "General Electrical":"#6366F1",
 };
 
+const CATEGORY_META: Record<string, { icon: React.ReactNode; blurb: string }> = {
+  "Solar Energy":      { icon: <Zap size={28} />,       blurb: "Solar installations, inverter systems & battery storage." },
+  "Industrial Wiring": { icon: <Wrench size={28} />,    blurb: "Industrial-grade electrical design & infrastructure." },
+  "Smart Home":        { icon: <Home size={28} />,      blurb: "Lighting, HVAC, security & full home automation." },
+  "Security":          { icon: <ShieldCheck size={28} />, blurb: "CCTV, access control & perimeter protection." },
+  "IT & Tech":         { icon: <Cpu size={28} />,       blurb: "Network infrastructure, servers & IT upgrades." },
+  "General Electrical":{ icon: <Zap size={28} />,       blurb: "General electrical installations & maintenance." },
+};
+
+function EmptyCategoryWidget({ category }: { category: string }) {
+  const color = TAG_COLORS[category] ?? "#041627";
+  const meta = CATEGORY_META[category];
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="col-span-full flex justify-center py-6"
+    >
+      <div
+        className="relative w-full max-w-md overflow-hidden border bg-white"
+        style={{ borderColor: `${color}33` }}
+      >
+        {/* colour accent bar */}
+        <div className="h-1 w-full" style={{ background: color }} />
+
+        <div className="px-8 py-10 text-center">
+          {/* icon */}
+          <div
+            className="mx-auto mb-5 flex h-14 w-14 items-center justify-center"
+            style={{ background: `${color}18`, color }}
+          >
+            {meta?.icon}
+          </div>
+
+          <p
+            className="mb-1 text-xs font-bold uppercase tracking-widest"
+            style={{ color, fontFamily: "var(--font-ui)" }}
+          >
+            {category}
+          </p>
+          <h3
+            className="mb-2 text-xl font-bold tracking-tight text-[#041627]"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            Projects coming soon
+          </h3>
+          <p
+            className="mb-7 text-sm leading-relaxed text-[#041627]/50"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            {meta?.blurb ?? "We're building our portfolio for this category."}{" "}
+            Have a project in mind? Let's make it the first one here.
+          </p>
+
+          <Link
+            to="/#contact"
+            className="inline-flex items-center gap-2 px-6 py-3 text-xs font-bold tracking-wider text-white transition-opacity hover:opacity-90"
+            style={{ background: "#041627", fontFamily: "var(--font-ui)" }}
+          >
+            START A PROJECT <ArrowRight size={13} />
+          </Link>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 function projectImage(project: Project) {
   return project.main_image_url || project.images?.[0] || "";
 }
@@ -64,7 +132,7 @@ export function ProjectsPage() {
 
   const activeCategory = requestedCategory || "All";
 
-  // Fixed service order — only show chips for categories that have projects
+  // Always show all service categories regardless of whether they have projects
   const SERVICES_ORDER = [
     "Solar Energy",
     "Industrial Wiring",
@@ -73,7 +141,7 @@ export function ProjectsPage() {
     "IT & Tech",
     "General Electrical",
   ];
-  const filterOptions = ["All", ...SERVICES_ORDER.filter(s => categories.includes(s))];
+  const filterOptions = ["All", ...SERVICES_ORDER];
 
   function changeCategory(category: string) {
     if (category === "All") {
@@ -173,26 +241,16 @@ export function ProjectsPage() {
                 <RefreshCw size={13} /> TRY AGAIN
               </button>
             </div>
+          ) : projects.length === 0 && requestedCategory ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3" data-testid="projects-empty-category">
+              <EmptyCategoryWidget category={requestedCategory} />
+            </div>
           ) : projects.length === 0 ? (
             <div className="border border-[#e2e8f0] bg-white px-6 py-16 text-center" data-testid="projects-empty">
-              <p
-                className="mb-3 text-xl font-bold text-[#041627]"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                No projects found{requestedCategory ? ` for ${requestedCategory}` : ""}.
+              <p className="mb-3 text-xl font-bold text-[#041627]" style={{ fontFamily: "var(--font-display)" }}>
+                No projects yet.
               </p>
-              <p className="mb-6 text-sm text-[#041627]/50">
-                Try another category or return to the full portfolio.
-              </p>
-              <button
-                type="button"
-                data-testid="button-view-all-projects"
-                onClick={() => changeCategory("All")}
-                className="text-xs font-bold tracking-wider text-[#F0A20E] underline underline-offset-4"
-                style={{ fontFamily: "var(--font-ui)" }}
-              >
-                VIEW ALL PROJECTS
-              </button>
+              <p className="text-sm text-[#041627]/50">Check back soon.</p>
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3" data-testid="projects-grid">
