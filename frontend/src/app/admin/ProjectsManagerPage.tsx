@@ -32,6 +32,7 @@ interface Project {
   title: string;
   slug: string;
   category: string;
+  categories: string[];
   location: string;
   year: string;
   short_description: string;
@@ -52,7 +53,8 @@ type FormState = Omit<Project, 'id' | 'created_at' | 'main_image_url'>;
 const blank = (): FormState => ({
   title: '',
   slug: '',
-  category: 'Solar Energy',
+  category: '',
+  categories: [],
   location: '',
   year: String(new Date().getFullYear()),
   show_year: false,
@@ -168,7 +170,8 @@ export function ProjectsManagerPage() {
     .filter(p => {
       const q = search.toLowerCase();
       const matchSearch = !q || p.title.toLowerCase().includes(q) || (p.location ?? '').toLowerCase().includes(q);
-      const matchCat = !filterCat || p.category === filterCat;
+      const cats = p.categories?.length ? p.categories : (p.category ? [p.category] : []);
+      const matchCat = !filterCat || cats.includes(filterCat);
       return matchSearch && matchCat;
     })
     .sort((a, b) => a.sort_order - b.sort_order);
@@ -190,10 +193,12 @@ export function ProjectsManagerPage() {
   function openEdit(p: Project) {
     slugManual.current = true;
     setEditing(p);
+    const cats = p.categories?.length ? p.categories : (p.category ? [p.category] : []);
     setForm({
       title: p.title,
       slug: p.slug,
-      category: p.category,
+      category: cats[0] ?? p.category,
+      categories: cats,
       location: p.location,
       year: p.year,
       short_description: p.short_description,
@@ -290,6 +295,7 @@ export function ProjectsManagerPage() {
   async function save() {
     if (!form.title.trim()) { setError('Title is required.'); return; }
     if (!form.slug.trim()) { setError('Slug is required.'); return; }
+    if (!form.categories.length) { setError('Select at least one service category.'); return; }
     setSaving(true);
     setError('');
     try {
@@ -380,7 +386,9 @@ export function ProjectsManagerPage() {
   const inputStyle = { borderColor: '#e2e8f0', color: 'var(--izy-navy)' };
 
   /* Unique categories from loaded projects for the filter dropdown */
-  const loadedCategories = Array.from(new Set(projects.map(p => p.category))).sort();
+  const loadedCategories = Array.from(
+    new Set(projects.flatMap(p => p.categories?.length ? p.categories : (p.category ? [p.category] : [])))
+  ).filter(Boolean).sort();
 
   return (
     <DashboardLayout>
@@ -456,7 +464,7 @@ export function ProjectsManagerPage() {
                   </thead>
                   <tbody>
                     {visible.map(p => {
-                      const cc = CATEGORY_COLORS[p.category] ?? { bg: '#f0f3f8', text: '#5a6a82' };
+                      const displayCats = p.categories?.length ? p.categories : (p.category ? [p.category] : []);
                       return (
                         <tr key={p.id} className="transition-colors hover:bg-[#f8fafc]" style={{ borderBottom: '1px solid #eef1f6' }}>
                           <td className="pl-4 py-3">
@@ -468,9 +476,16 @@ export function ProjectsManagerPage() {
                             {p.location && <p className="text-xs mt-0.5" style={{ color: '#8fadc8' }}>{p.location}</p>}
                           </td>
                           <td className="px-4 py-3">
-                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: cc.bg, color: cc.text }}>
-                              {p.category}
-                            </span>
+                            <div className="flex flex-wrap gap-1">
+                              {displayCats.map(cat => {
+                                const cc = CATEGORY_COLORS[cat] ?? { bg: '#f0f3f8', text: '#5a6a82' };
+                                return (
+                                  <span key={cat} className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: cc.bg, color: cc.text }}>
+                                    {cat}
+                                  </span>
+                                );
+                              })}
+                            </div>
                           </td>
                           <td className="px-4 py-3 text-sm" style={{ color: '#5a6a82' }}>{p.year}</td>
                           <td className="px-4 py-3">
@@ -545,7 +560,7 @@ export function ProjectsManagerPage() {
               {/* Mobile cards */}
               <div className="divide-y sm:hidden" style={{ borderColor: '#eef1f6' }}>
                 {visible.map(p => {
-                  const cc = CATEGORY_COLORS[p.category] ?? { bg: '#f0f3f8', text: '#5a6a82' };
+                  const displayCats = p.categories?.length ? p.categories : (p.category ? [p.category] : []);
                   return (
                     <article key={p.id} className="flex min-w-0 gap-3 px-4 py-4">
                       <ProjectThumb images={p.images || []} />
@@ -592,7 +607,10 @@ export function ProjectsManagerPage() {
                           </div>
                         </div>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: cc.bg, color: cc.text }}>{p.category}</span>
+                          {displayCats.map(cat => {
+                            const cc = CATEGORY_COLORS[cat] ?? { bg: '#f0f3f8', text: '#5a6a82' };
+                            return <span key={cat} className="rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: cc.bg, color: cc.text }}>{cat}</span>;
+                          })}
                           <button onClick={() => toggleField(p, 'published')} className="flex items-center gap-1 text-xs font-medium hover:opacity-70">
                             {p.published
                               ? <><ToggleRight size={16} style={{ color: '#10B981' }} /><span style={{ color: '#10B981' }}>Live</span></>
@@ -714,17 +732,42 @@ export function ProjectsManagerPage() {
                 </div>
               </Field>
 
-              {/* Category + Year */}
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Category *">
-                  <select value={form.category} onChange={e => setf('category', e.target.value)} className={inputCls} style={inputStyle}>
-                    {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-                  </select>
-                </Field>
-                <Field label="Year">
-                  <input type="text" value={form.year} onChange={e => setf('year', e.target.value)} placeholder="2024" className={inputCls} style={inputStyle} />
-                </Field>
-              </div>
+              {/* Service Categories */}
+              <Field label="Service Categories *">
+                <div className="grid grid-cols-2 gap-2">
+                  {CATEGORIES.map(c => {
+                    const checked = form.categories.includes(c);
+                    return (
+                      <label
+                        key={c}
+                        className={`flex items-center gap-2 rounded-lg border px-3 py-2 cursor-pointer transition-all select-none ${checked ? 'border-blue-400 bg-blue-50' : 'border-[#e2e8f0] hover:border-blue-200 bg-white'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => setForm(f => ({
+                            ...f,
+                            categories: checked
+                              ? f.categories.filter(x => x !== c)
+                              : [...f.categories, c],
+                            category: !checked && f.categories.length === 0 ? c : (checked && f.categories[0] === c ? (f.categories[1] ?? '') : f.category),
+                          }))}
+                          className="accent-blue-600 shrink-0"
+                        />
+                        <span className="text-sm leading-tight" style={{ color: checked ? 'var(--izy-blue)' : 'var(--izy-navy)' }}>{c}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                {form.categories.length === 0 && (
+                  <p className="text-xs mt-1.5" style={{ color: '#ef4444' }}>Select at least one category.</p>
+                )}
+              </Field>
+
+              {/* Year */}
+              <Field label="Year">
+                <input type="text" value={form.year} onChange={e => setf('year', e.target.value)} placeholder="2024" className={inputCls} style={inputStyle} />
+              </Field>
 
               {/* Location */}
               <Field label="Location">

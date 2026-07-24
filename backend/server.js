@@ -700,14 +700,16 @@ app.get('/api/projects', async (req, res) => {
     let where = 'WHERE published = TRUE';
     if (category && category.toLowerCase() !== 'all') {
       params.push(category);
-      where += ` AND LOWER(category) = LOWER($${params.length})`;
+      where += ` AND EXISTS (SELECT 1 FROM unnest(categories) c WHERE LOWER(c) = LOWER($${params.length}))`;
     }
     const { rows } = await db.query(
       `SELECT ${PROJECT_FIELDS} FROM projects ${where} ORDER BY featured DESC, sort_order ASC, id ASC`,
       params
     );
     const categoryResult = await db.query(
-      'SELECT DISTINCT category FROM projects WHERE published = TRUE ORDER BY category ASC'
+      `SELECT DISTINCT unnest(categories) AS category FROM projects
+       WHERE published = TRUE AND array_length(categories, 1) > 0
+       ORDER BY category ASC`
     );
     res.json({ data: rows, categories: categoryResult.rows.map(row => row.category) });
   } catch (err) {
@@ -740,7 +742,7 @@ app.get('/api/admin/projects', requireAuth, async (req, res) => {
   }
   if (category && category.toLowerCase() !== 'all') {
     params.push(category);
-    filters.push(`LOWER(category) = LOWER($${params.length})`);
+    filters.push(`EXISTS (SELECT 1 FROM unnest(categories) c WHERE LOWER(c) = LOWER($${params.length}))`);
   }
   try {
     const { rows } = await db.query(
@@ -750,7 +752,9 @@ app.get('/api/admin/projects', requireAuth, async (req, res) => {
       params
     );
     const categoryResult = await db.query(
-      'SELECT DISTINCT category FROM projects ORDER BY category ASC'
+      `SELECT DISTINCT unnest(categories) AS category FROM projects
+       WHERE array_length(categories, 1) > 0
+       ORDER BY category ASC`
     );
     res.json({ data: rows, categories: categoryResult.rows.map(row => row.category) });
   } catch (err) {
@@ -765,13 +769,14 @@ app.post('/api/admin/projects', requireAuth, async (req, res) => {
   try {
     const { rows } = await db.query(
       `INSERT INTO projects
-        (title, slug, category, location, year, show_year, short_description, full_description,
+        (title, slug, category, categories, location, year, show_year, short_description, full_description,
          result_metric, services, images, main_image_url, featured, sort_order, published)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
        RETURNING ${PROJECT_FIELDS}`,
       [
-        project.title, project.slug, project.category, project.location, project.year,
-        project.show_year, project.short_description, project.full_description, project.result_metric,
+        project.title, project.slug, project.category, project.categories,
+        project.location, project.year, project.show_year,
+        project.short_description, project.full_description, project.result_metric,
         project.services, project.images, project.main_image_url, project.featured,
         project.sort_order, project.published,
       ]
@@ -790,15 +795,16 @@ app.put('/api/admin/projects/:id', requireAuth, async (req, res) => {
   try {
     const { rows } = await db.query(
       `UPDATE projects SET
-        title=$1, slug=$2, category=$3, location=$4, year=$5, show_year=$6,
-        short_description=$7, full_description=$8, result_metric=$9, services=$10,
-        images=$11, main_image_url=$12, featured=$13, sort_order=$14, published=$15,
+        title=$1, slug=$2, category=$3, categories=$4, location=$5, year=$6, show_year=$7,
+        short_description=$8, full_description=$9, result_metric=$10, services=$11,
+        images=$12, main_image_url=$13, featured=$14, sort_order=$15, published=$16,
         updated_at=NOW()
-       WHERE id=$16
+       WHERE id=$17
        RETURNING ${PROJECT_FIELDS}`,
       [
-        project.title, project.slug, project.category, project.location, project.year,
-        project.show_year, project.short_description, project.full_description, project.result_metric,
+        project.title, project.slug, project.category, project.categories,
+        project.location, project.year, project.show_year,
+        project.short_description, project.full_description, project.result_metric,
         project.services, project.images, project.main_image_url, project.featured,
         project.sort_order, project.published, req.params.id,
       ]
