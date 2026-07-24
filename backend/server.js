@@ -589,8 +589,19 @@ async function initProjectsTable() {
     ALTER TABLE projects ADD COLUMN IF NOT EXISTS show_year BOOLEAN NOT NULL DEFAULT FALSE
   `);
 
+  // Additive migration: multi-category support
+  await db.query(`
+    ALTER TABLE projects ADD COLUMN IF NOT EXISTS categories TEXT[] NOT NULL DEFAULT '{}'
+  `);
+
   // Rename legacy combined category to the proper service name
   await db.query(`UPDATE projects SET category = 'IT & Tech' WHERE category = 'Solar + IT'`);
+
+  // Backfill categories array from category for existing rows
+  await db.query(`
+    UPDATE projects SET categories = ARRAY[category]
+    WHERE categories = '{}' OR categories IS NULL
+  `);
 
   await db.query('CREATE INDEX IF NOT EXISTS projects_category_idx ON projects (category)');
   await db.query('CREATE INDEX IF NOT EXISTS projects_published_order_idx ON projects (published, sort_order, id)');
@@ -642,14 +653,16 @@ function cleanTextArray(value) {
 }
 
 function projectPayload(body = {}) {
-  const title = cleanText(body.title);
-  const category = cleanText(body.category);
+  const categories = cleanTextArray(body.categories);
+  // Primary category = first selected; fall back to legacy single `category` field
+  const category = categories[0] || cleanText(body.category);
   const images = cleanTextArray(body.images);
   const sortOrder = Number.isFinite(Number(body.sort_order)) ? Math.trunc(Number(body.sort_order)) : 0;
   return {
-    title,
-    slug: slugify(body.slug || title),
+    title: cleanText(body.title),
+    slug: slugify(body.slug || cleanText(body.title)),
     category,
+    categories,
     location: cleanText(body.location),
     year: cleanText(body.year),
     short_description: cleanText(body.short_description),
@@ -667,18 +680,17 @@ function projectPayload(body = {}) {
 
 function validateProject(project) {
   if (!project.title) return 'Project title is required';
-  if (!project.category) return 'Project category is required';
+  if (!project.categories || project.categories.length === 0) return 'Select at least one service category';
   if (!project.slug) return 'A valid project slug is required';
   if (project.title.length > 200) return 'Project title must be 200 characters or fewer';
   if (project.slug.length > 120) return 'Project slug must be 120 characters or fewer';
-  if (project.category.length > 100) return 'Project category must be 100 characters or fewer';
   if (project.year.length > 20) return 'Project year must be 20 characters or fewer';
   return null;
 }
 
-const PROJECT_FIELDS = `id, title, slug, category, location, year, show_year, short_description,
-  full_description, result_metric, services, images, main_image_url, featured,
-  sort_order, published, created_at, updated_at`;
+const PROJECT_FIELDS = `id, title, slug, category, categories, location, year, show_year,
+  short_description, full_description, result_metric, services, images, main_image_url,
+  featured, sort_order, published, created_at, updated_at`;
 
 // ── Projects: public ──────────────────────────────────────────────────────────
 app.get('/api/projects', async (req, res) => {
