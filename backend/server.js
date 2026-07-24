@@ -584,6 +584,11 @@ async function initProjectsTable() {
     )
   `);
 
+  // Additive migration: add show_year column if it doesn't exist yet
+  await db.query(`
+    ALTER TABLE projects ADD COLUMN IF NOT EXISTS show_year BOOLEAN NOT NULL DEFAULT FALSE
+  `);
+
   await db.query('CREATE INDEX IF NOT EXISTS projects_category_idx ON projects (category)');
   await db.query('CREATE INDEX IF NOT EXISTS projects_published_order_idx ON projects (published, sort_order, id)');
 
@@ -651,6 +656,7 @@ function projectPayload(body = {}) {
     images,
     main_image_url: cleanText(body.main_image_url) || images[0] || '',
     featured: body.featured === true,
+    show_year: body.show_year === true,
     sort_order: sortOrder,
     published: body.published === true,
   };
@@ -667,7 +673,7 @@ function validateProject(project) {
   return null;
 }
 
-const PROJECT_FIELDS = `id, title, slug, category, location, year, short_description,
+const PROJECT_FIELDS = `id, title, slug, category, location, year, show_year, short_description,
   full_description, result_metric, services, images, main_image_url, featured,
   sort_order, published, created_at, updated_at`;
 
@@ -744,13 +750,13 @@ app.post('/api/admin/projects', requireAuth, async (req, res) => {
   try {
     const { rows } = await db.query(
       `INSERT INTO projects
-        (title, slug, category, location, year, short_description, full_description,
+        (title, slug, category, location, year, show_year, short_description, full_description,
          result_metric, services, images, main_image_url, featured, sort_order, published)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
        RETURNING ${PROJECT_FIELDS}`,
       [
         project.title, project.slug, project.category, project.location, project.year,
-        project.short_description, project.full_description, project.result_metric,
+        project.show_year, project.short_description, project.full_description, project.result_metric,
         project.services, project.images, project.main_image_url, project.featured,
         project.sort_order, project.published,
       ]
@@ -769,14 +775,15 @@ app.put('/api/admin/projects/:id', requireAuth, async (req, res) => {
   try {
     const { rows } = await db.query(
       `UPDATE projects SET
-        title=$1, slug=$2, category=$3, location=$4, year=$5, short_description=$6,
-        full_description=$7, result_metric=$8, services=$9, images=$10, main_image_url=$11,
-        featured=$12, sort_order=$13, published=$14, updated_at=NOW()
-       WHERE id=$15
+        title=$1, slug=$2, category=$3, location=$4, year=$5, show_year=$6,
+        short_description=$7, full_description=$8, result_metric=$9, services=$10,
+        images=$11, main_image_url=$12, featured=$13, sort_order=$14, published=$15,
+        updated_at=NOW()
+       WHERE id=$16
        RETURNING ${PROJECT_FIELDS}`,
       [
         project.title, project.slug, project.category, project.location, project.year,
-        project.short_description, project.full_description, project.result_metric,
+        project.show_year, project.short_description, project.full_description, project.result_metric,
         project.services, project.images, project.main_image_url, project.featured,
         project.sort_order, project.published, req.params.id,
       ]

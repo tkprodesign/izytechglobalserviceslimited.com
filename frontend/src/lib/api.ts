@@ -88,6 +88,7 @@ export interface Project {
   category: string;
   location: string;
   year: string;
+  show_year: boolean;
   short_description: string;
   full_description: string;
   result_metric: string;

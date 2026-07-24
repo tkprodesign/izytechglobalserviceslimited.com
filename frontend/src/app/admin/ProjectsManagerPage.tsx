@@ -38,6 +38,7 @@ interface Project {
   services: string[];
   images: string[];
   main_image_url: string;
+  show_year: boolean;
   featured: boolean;
   sort_order: number;
   published: boolean;
@@ -52,6 +53,7 @@ const blank = (): FormState => ({
   category: 'Solar Energy',
   location: '',
   year: String(new Date().getFullYear()),
+  show_year: false,
   short_description: '',
   full_description: '',
   result_metric: '',
@@ -776,9 +778,12 @@ export function ProjectsManagerPage() {
               </Field>
 
               {/* Toggles */}
-              <div className="flex gap-6 pt-1">
-                <Toggle label="Published" value={form.published} onChange={v => setf('published', v)} />
-                <Toggle label="Featured on homepage" value={form.featured} onChange={v => setf('featured', v)} />
+              <div className="flex flex-col gap-4 pt-1">
+                <div className="flex gap-6">
+                  <Toggle label="Published" value={form.published} onChange={v => setf('published', v)} />
+                  <Toggle label="Featured on homepage" value={form.featured} onChange={v => setf('featured', v)} />
+                </div>
+                <Toggle label="Show year on project page" value={form.show_year} onChange={v => setf('show_year', v)} />
               </div>
 
               {error && (

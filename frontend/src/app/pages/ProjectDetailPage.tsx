@@ -212,8 +212,12 @@ export function ProjectDetailPage() {
               <div className="mb-7 flex items-center gap-2 text-sm text-[#041627]/55">
                 <MapPin size={15} className="text-[#F0A20E]" />
                 {project.location || "Nigeria"}
-                <span className="mx-1 text-[#dfe5ec]">/</span>
-                {project.year}
+                {project.show_year && project.year && (
+                  <>
+                    <span className="mx-1 text-[#dfe5ec]">/</span>
+                    {project.year}
+                  </>
+                )}
               </div>
               <div className="mb-8 border-l-4 border-[#F0A20E] bg-[#F0A20E]/10 px-5 py-4">
                 <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-[#041627]/50">
