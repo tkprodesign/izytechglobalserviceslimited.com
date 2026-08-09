@@ -1,59 +1,7 @@
-import { Sun, Zap, Home, Camera, Cpu, Cable, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
 import { Link } from "react-router";
-
-
-const services = [
-  {
-    num: "01",
-    icon: Sun,
-    title: "Solar Energy Systems",
-    description:
-      "Complete solar design, supply, installation and maintenance for residential, commercial and industrial clients. Grid-tie, off-grid, and hybrid systems.",
-    features: ["System Design & Sizing", "Panel Installation", "Inverter & Battery Setup", "Net Metering & Grid-Tie"],
-    featured: true,
-  },
-  {
-    num: "02",
-    icon: Cable,
-    title: "Industrial Wiring",
-    description:
-      "High-voltage and low-voltage industrial electrical installations, distribution boards, cable trays, conduit systems and power factor correction.",
-    features: ["Distribution Boards", "Cable Tray Systems", "Motor Control Centers", "Earthing & Bonding"],
-  },
-  {
-    num: "03",
-    icon: Home,
-    title: "Smart Home Automation",
-    description:
-      "Transform your home into an intelligent, connected space. Control lighting, climate, entertainment and security from any device, anywhere.",
-    features: ["Lighting Automation", "Climate Control", "Voice & App Integration", "Energy Management"],
-  },
-  {
-    num: "04",
-    icon: Camera,
-    title: "CCTV & Security",
-    description:
-      "End-to-end surveillance and access control solutions. HD/4K cameras, NVR systems, remote monitoring and alarm systems for homes and businesses.",
-    features: ["HD/4K Cameras", "Remote Monitoring", "Access Control", "Alarm Systems"],
-  },
-  {
-    num: "05",
-    icon: Cpu,
-    title: "IT & Tech Services",
-    description:
-      "Networking infrastructure, server setup, IT consulting, structured cabling, and managed IT services for businesses of all sizes.",
-    features: ["Network Infrastructure", "Server Deployment", "Structured Cabling", "IT Consulting"],
-  },
-  {
-    num: "06",
-    icon: Zap,
-    title: "General Electrical",
-    description:
-      "Comprehensive electrical installation, maintenance and repairs for residential and commercial properties. Licensed, insured, and reliable.",
-    features: ["Electrical Installation", "Fault Finding", "Rewiring & Upgrades", "Safety Inspections"],
-  },
-];
+import { services } from "../data/services";
 
 export function Services() {
   return (
@@ -181,7 +129,7 @@ export function Services() {
                 {/* Features + CTA */}
                 <div className="lg:col-span-3">
                   <ul className="space-y-1.5">
-                    {service.features.map((f) => (
+                    {service.features.slice(0, 4).map((f) => (
                       <li key={f} className="flex items-center gap-2 text-xs text-[#041627]/55" style={{ fontFamily: "var(--font-ui)" }}>
                         <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: "#F0A20E" }} />
                         {f}

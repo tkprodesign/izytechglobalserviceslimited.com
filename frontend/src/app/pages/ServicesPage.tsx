@@ -1,53 +1,8 @@
 import { motion } from "motion/react";
-import { Sun, Zap, Home, Camera, Cpu, Cable, ArrowRight, CheckCircle } from "lucide-react";
+import { ArrowRight, CheckCircle } from "lucide-react";
 import { PageLayout } from "../components/PageLayout";
 import { Link } from "react-router";
-
-const services = [
-  {
-    num: "01", icon: Sun, title: "Solar Energy Systems",
-    description: "Complete solar design, supply, installation and maintenance for residential, commercial and industrial clients. Grid-tie, off-grid, and hybrid systems tailored to your load profile.",
-    features: ["System Design & Sizing", "Panel Installation", "Inverter & Battery Setup", "Net Metering & Grid-Tie", "Preventive Maintenance", "Performance Monitoring"],
-    featured: true,
-    image: "/site-images/project-commercial-solar.jpg",
-    color: "#F0A20E",
-  },
-  {
-    num: "02", icon: Cable, title: "Industrial Wiring",
-    description: "High-voltage and low-voltage industrial electrical installations, distribution boards, cable trays, conduit systems and power factor correction for factories, warehouses and plants.",
-    features: ["Distribution Boards", "Cable Tray Systems", "Motor Control Centers", "Earthing & Bonding", "Power Factor Correction", "Transformer Installation"],
-    image: "/site-images/project-power-unit.jpg",
-    color: "#3B82F6",
-  },
-  {
-    num: "03", icon: Home, title: "Smart Home Automation",
-    description: "Transform your home into an intelligent, connected space. Control lighting, climate, entertainment and security from any device, anywhere in the world.",
-    features: ["Lighting Automation", "Climate Control", "Voice & App Integration", "Energy Management", "Smart Locks & Entry", "Entertainment Systems"],
-    image: "/site-images/project-smart-home.jpg",
-    color: "#8B5CF6",
-  },
-  {
-    num: "04", icon: Camera, title: "CCTV & Security",
-    description: "End-to-end surveillance and access control solutions. HD/4K cameras, NVR systems, remote monitoring and alarm systems for homes, businesses and industrial facilities.",
-    features: ["HD/4K Camera Installation", "Remote Monitoring", "Access Control Systems", "Alarm Systems", "Perimeter Security", "Video Analytics"],
-    image: "/site-images/project-industrial.jpg",
-    color: "#EF4444",
-  },
-  {
-    num: "05", icon: Cpu, title: "IT & Tech Services",
-    description: "Networking infrastructure, server setup, IT consulting, structured cabling, and managed IT services for businesses of all sizes across Nigeria.",
-    features: ["Network Infrastructure", "Server Deployment", "Structured Cabling", "IT Consulting", "Wi-Fi Solutions", "Data Centre Setup"],
-    image: "/site-images/project-residential-solar.jpg",
-    color: "#10B981",
-  },
-  {
-    num: "06", icon: Zap, title: "General Electrical",
-    description: "Comprehensive electrical installation, maintenance and repairs for residential and commercial properties. Licensed, insured, and reliable across all 36 states.",
-    features: ["Electrical Installation", "Fault Finding", "Rewiring & Upgrades", "Safety Inspections", "Emergency Repairs", "Generator Installation"],
-    image: "/site-images/project-site-team.jpg",
-    color: "#F59E0B",
-  },
-];
+import { services } from "../data/services";
 
 export function ServicesPage() {
   return (
