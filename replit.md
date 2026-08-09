@@ -64,7 +64,6 @@ All secrets are stored in Replit's secret manager and are automatically availabl
 |---|---|
 | `INFO_EMAIL` / `INFO_EMAIL_PASSWORD` | Info mailbox (`info@izytechglobalservices.com`) |
 | `ADMIN_EMAIL` / `ADMIN_EMAIL_PASSWORD` | Admin mailbox |
-| `CAREERS_EMAIL` / `CAREERS_EMAIL_PASSWORD` | Careers mailbox |
 | `SALES_EMAIL` / `SALES_EMAIL_PASSWORD` | Sales mailbox |
 | `SUPPORT_EMAIL` / `SUPPORT_EMAIL_PASSWORD` | Support mailbox |
 | `NOREPLY_EMAIL` | No-reply send-only address |

@@ -41,7 +41,6 @@ Backend (nodemailer) → port 587 → Brevo SMTP relay → recipients
 |---|---|---|
 | info@izytechglobalservices.com | `INFO_EMAIL` | General enquiries |
 | admin@izytechglobalservices.com | `ADMIN_EMAIL` | Admin panel access |
-| careers@izytechglobalservices.com | `CAREERS_EMAIL` | Job applications |
 | sales@izytechglobalservices.com | `SALES_EMAIL` | Sales enquiries |
 | support@izytechglobalservices.com | `SUPPORT_EMAIL` | Customer support |
 | noreply@izytechglobalservices.com | `NOREPLY_EMAIL` | Outbound only (Brevo) |
@@ -122,7 +121,6 @@ Replace Spacemail credentials with new values in Replit Secrets:
 | `SMTP_SECURE` | `false` |
 | `INFO_EMAIL_PASSWORD` | *(new Mailcow password)* |
 | `ADMIN_EMAIL_PASSWORD` | *(new Mailcow password)* |
-| `CAREERS_EMAIL_PASSWORD` | *(new Mailcow password)* |
 | `SALES_EMAIL_PASSWORD` | *(new Mailcow password)* |
 | `SUPPORT_EMAIL_PASSWORD` | *(new Mailcow password)* |
 | `RESEND_API_KEY` | *(replace with Brevo SMTP key if using Brevo API)* |

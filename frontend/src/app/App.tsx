@@ -78,7 +78,6 @@ import { TestimonialsPage } from "./pages/TestimonialsPage";
 import { ContactPage } from "./pages/ContactPage";
 import { StorePage } from "./pages/StorePage";
 import { StoreEnquiryPage } from "./pages/StoreEnquiryPage";
-import { CareersPage } from "./pages/CareersPage";
 import { Store } from "./sections/Store";
 import { CartProvider } from "./contexts/CartContext";
 
@@ -120,7 +119,6 @@ export default function App() {
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/store" element={<StorePage />} />
       <Route path="/store/enquire" element={<StoreEnquiryPage />} />
-      <Route path="/careers" element={<CareersPage />} />
 
       {/* Auth */}
       <Route path="/admin/login" element={<LoginPage />} />

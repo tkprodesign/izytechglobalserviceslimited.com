@@ -10,7 +10,6 @@ function getAccounts() {
   return [
     { id: 'info',     label: 'Info',     email: process.env.INFO_EMAIL,     password: process.env.INFO_EMAIL_PASSWORD,     color: '#1a56db' },
     { id: 'admin',    label: 'Admin',    email: process.env.ADMIN_EMAIL,    password: process.env.ADMIN_EMAIL_PASSWORD,    color: '#7c3aed' },
-    { id: 'careers',  label: 'Careers',  email: process.env.CAREERS_EMAIL,  password: process.env.CAREERS_EMAIL_PASSWORD,  color: '#059669' },
     { id: 'sales',    label: 'Sales',    email: process.env.SALES_EMAIL,    password: process.env.SALES_EMAIL_PASSWORD,    color: '#d97706' },
     { id: 'support',  label: 'Support',  email: process.env.SUPPORT_EMAIL,  password: process.env.SUPPORT_EMAIL_PASSWORD,  color: '#dc2626' },
     { id: 'noreply',  label: 'No-Reply', email: process.env.NOREPLY_EMAIL,  password: null, sendOnly: true,                color: '#6b7280' },
