@@ -6,12 +6,12 @@ import logoHorizontal from "../../imports/izy-technologies_logo-variation-horizo
 import { api, type SocialLinks } from "../../lib/api";
 
 const services = [
-  { label: "Solar Energy Systems",  slug: "service-solar-energy-systems" },
-  { label: "Industrial Wiring",     slug: "service-industrial-wiring" },
-  { label: "Smart Home Automation", slug: "service-smart-home-automation" },
-  { label: "CCTV & Security",       slug: "service-cctv-security" },
-  { label: "IT & Tech Services",    slug: "service-it-tech-services" },
-  { label: "General Electrical",    slug: "service-general-electrical" },
+  { label: "Solar Energy Systems",  slug: "service-solar" },
+  { label: "Industrial Wiring",     slug: "service-industrial" },
+  { label: "Smart Home Automation", slug: "service-smartHome" },
+  { label: "CCTV & Security",       slug: "service-security" },
+  { label: "IT & Tech Services",    slug: "service-itTech" },
+  { label: "General Electrical",    slug: "service-electrical" },
 ];
 
 const quickLinks = [

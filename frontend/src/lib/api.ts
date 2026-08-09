@@ -70,6 +70,17 @@ export interface SocialLinks {
   platforms: SocialPlatform[];
 }
 
+export interface ServiceContent {
+  id: string;
+  num: string;
+  title: string;
+  description: string;
+  features: string[];
+  image: string;
+  color: string;
+  featured: boolean;
+}
+
 export interface Testimonial {
   id: number;
   name: string;
@@ -128,4 +139,10 @@ export const api = {
 
   updateSocials: (data: { platforms: SocialPlatform[] }) =>
     authPut<{ success: boolean }>('/api/settings/socials', data),
+
+  services: () =>
+    get<{ data: ServiceContent[] }>('/api/settings/services'),
+
+  updateServices: (data: { services: ServiceContent[] }) =>
+    authPut<{ success: boolean }>('/api/settings/services', data),
 };

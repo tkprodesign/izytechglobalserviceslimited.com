@@ -1,9 +1,29 @@
 import { Camera, Cable, Cpu, Home, Sun, Zap } from "lucide-react";
 
-export const services = [
+export interface ServiceContent {
+  id: string;
+  num: string;
+  title: string;
+  description: string;
+  features: string[];
+  image: string;
+  color: string;
+  featured: boolean;
+}
+
+export const serviceIcons = {
+  solar: Sun,
+  industrial: Cable,
+  smartHome: Home,
+  security: Camera,
+  itTech: Cpu,
+  electrical: Zap,
+} as const;
+
+export const serviceContent: ServiceContent[] = [
   {
+    id: "solar",
     num: "01",
-    icon: Sun,
     title: "Solar Energy Systems",
     description:
       "Solar design, installation and energy storage for homes, businesses and industrial facilities. We build practical systems around your load profile, from hybrid backup to large commercial installations.",
@@ -20,8 +40,8 @@ export const services = [
     featured: true,
   },
   {
+    id: "industrial",
     num: "02",
-    icon: Cable,
     title: "Industrial Wiring",
     description:
       "Electrical infrastructure for facilities that need dependable distribution and backup power, including distribution boards, UPS systems, transfer switches and industrial power equipment.",
@@ -38,8 +58,8 @@ export const services = [
     featured: false,
   },
   {
+    id: "smartHome",
     num: "03",
-    icon: Home,
     title: "Smart Home Automation",
     description:
       "We assess your property and plan connected home systems around lighting, access, security and everyday convenience, with the right infrastructure for a smooth integrated installation.",
@@ -56,8 +76,8 @@ export const services = [
     featured: false,
   },
   {
+    id: "security",
     num: "04",
-    icon: Camera,
     title: "CCTV & Security",
     description:
       "Professional CCTV installation and surveillance for homes, businesses, vessels and industrial sites, with camera placement designed around the areas that need visibility most.",
@@ -74,8 +94,8 @@ export const services = [
     featured: false,
   },
   {
+    id: "itTech",
     num: "05",
-    icon: Cpu,
     title: "IT & Tech Services",
     description:
       "Practical technology support for organisations, from computer and network installations to websites and digital brand systems that help teams connect and businesses show up online.",
@@ -92,8 +112,8 @@ export const services = [
     featured: false,
   },
   {
+    id: "electrical",
     num: "06",
-    icon: Zap,
     title: "General Electrical",
     description:
       "Electrical installation and finishing work for residential and commercial spaces, from lighting installations to safe power distribution, upgrades and ongoing maintenance.",
@@ -109,4 +129,16 @@ export const services = [
     color: "#F59E0B",
     featured: false,
   },
-] as const;
+];
+
+export const services = serviceContent.map((service) => ({
+  ...service,
+  icon: serviceIcons[service.id as keyof typeof serviceIcons] ?? Zap,
+}));
+
+export function withServiceIcons(content: ServiceContent[]) {
+  return content.map((service) => ({
+    ...service,
+    icon: serviceIcons[service.id as keyof typeof serviceIcons] ?? Zap,
+  }));
+}

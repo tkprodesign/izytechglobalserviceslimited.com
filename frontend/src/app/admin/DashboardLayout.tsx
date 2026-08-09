@@ -19,6 +19,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   FolderOpen,
+  Wrench,
 } from 'lucide-react';
 
 interface Props {
@@ -81,6 +82,7 @@ export function DashboardLayout({ children }: Props) {
   const developerItems: NavigationItem[] = [
     { to: '/dev/dashboard', label: 'System Status', icon: Activity },
     { to: '/dev/logs', label: 'System Info', icon: Terminal },
+    { to: '/dev/services', label: 'Services Content', icon: Wrench },
   ];
 
   const navBase = 'flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all';

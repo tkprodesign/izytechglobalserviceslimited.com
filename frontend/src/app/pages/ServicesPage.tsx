@@ -1,10 +1,20 @@
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { ArrowRight, CheckCircle } from "lucide-react";
 import { PageLayout } from "../components/PageLayout";
 import { Link } from "react-router";
-import { services } from "../data/services";
+import { serviceContent, withServiceIcons } from "../data/services";
+import { api } from "../../lib/api";
 
 export function ServicesPage() {
+  const [services, setServices] = useState(withServiceIcons(serviceContent));
+
+  useEffect(() => {
+    api.services()
+      .then(({ data }) => setServices(withServiceIcons(data)))
+      .catch(() => {});
+  }, []);
+
   return (
     <PageLayout>
       {/* Page hero */}
@@ -42,8 +52,8 @@ export function ServicesPage() {
             const isEven = i % 2 === 0;
             return (
               <motion.div
-                key={s.num}
-                id={`service-${s.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, '')}`}
+                key={s.id}
+                id={`service-${s.id}`}
                 initial={{ opacity: 0, y: 32 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}

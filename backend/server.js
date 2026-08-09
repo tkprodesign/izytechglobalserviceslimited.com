@@ -97,6 +97,111 @@ async function initSiteSettingsTable() {
       ON CONFLICT (key) DO NOTHING
     `, [key, val]);
   }
+
+  // Service cards are stored as one JSON array so the developer editor can
+  // update the public homepage and Services page together. Do not overwrite
+  // an existing value on startup: unlike the legacy social defaults, this
+  // value begins with "[" rather than "{".
+  await db.query(`
+    INSERT INTO site_settings (key, value) VALUES ($1, $2)
+    ON CONFLICT (key) DO NOTHING
+  `, [
+    'service_content',
+    JSON.stringify([
+      {
+        id: 'solar',
+        num: '01',
+        title: 'Solar Energy Systems',
+        description: 'Solar design, installation and energy storage for homes, businesses and industrial facilities. We build practical systems around your load profile, from hybrid backup to large commercial installations.',
+        features: ['System Design & Sizing', 'Solar Installation', 'Inverter & Battery Systems', 'Off-Grid & Hybrid Systems', 'Preventive Maintenance', 'Performance Monitoring'],
+        image: '/site-images/project-commercial-solar.jpg',
+        color: '#F0A20E',
+        featured: true,
+      },
+      {
+        id: 'industrial',
+        num: '02',
+        title: 'Industrial Wiring',
+        description: 'Electrical infrastructure for facilities that need dependable distribution and backup power, including distribution boards, UPS systems, transfer switches and industrial power equipment.',
+        features: ['Electrical Design', 'Distribution Boards', 'UPS & Backup Systems', 'Transfer Switches', 'Industrial Power Equipment', 'Testing & Commissioning'],
+        image: '/site-images/project-power-unit.jpg',
+        color: '#3B82F6',
+        featured: false,
+      },
+      {
+        id: 'smartHome',
+        num: '03',
+        title: 'Smart Home Automation',
+        description: 'We assess your property and plan connected home systems around lighting, access, security and everyday convenience, with the right infrastructure for a smooth integrated installation.',
+        features: ['Site Assessment', 'Lighting Control', 'Smart Locks & Entry', 'Security Integration', 'Perimeter Security', 'System Planning'],
+        image: '/site-images/project-site-team.jpg',
+        color: '#8B5CF6',
+        featured: false,
+      },
+      {
+        id: 'security',
+        num: '04',
+        title: 'CCTV & Security',
+        description: 'Professional CCTV installation and surveillance for homes, businesses, vessels and industrial sites, with camera placement designed around the areas that need visibility most.',
+        features: ['CCTV Installation', 'Site Surveillance', 'Remote Monitoring', 'Access Control', 'Perimeter Protection', 'Security System Design'],
+        image: '/site-images/project-cctv.jpg',
+        color: '#EF4444',
+        featured: false,
+      },
+      {
+        id: 'itTech',
+        num: '05',
+        title: 'IT & Tech Services',
+        description: 'Practical technology support for organisations, from computer and network installations to websites and digital brand systems that help teams connect and businesses show up online.',
+        features: ['Computer Networking', 'Network Infrastructure', 'Device & Wi-Fi Setup', 'Website Development', 'Digital Brand Management', 'IT Consulting'],
+        image: '/site-images/project-network-installation.jpg',
+        color: '#10B981',
+        featured: false,
+      },
+      {
+        id: 'electrical',
+        num: '06',
+        title: 'General Electrical',
+        description: 'Electrical installation and finishing work for residential and commercial spaces, from lighting installations to safe power distribution, upgrades and ongoing maintenance.',
+        features: ['Lighting Installation', 'Electrical Installation', 'Power Distribution', 'Fault Finding', 'Rewiring & Upgrades', 'Electrical Maintenance'],
+        image: '/site-images/project-electrical-installation.jpg',
+        color: '#F59E0B',
+        featured: false,
+      },
+    ]),
+  ]);
+}
+
+const SERVICE_IDS = ['solar', 'industrial', 'smartHome', 'security', 'itTech', 'electrical'];
+
+function normalizeServiceContent(value) {
+  if (!Array.isArray(value)) return null;
+
+  const services = value
+    .filter(service => service && SERVICE_IDS.includes(service.id))
+    .map(service => ({
+      id: service.id,
+      num: String(service.num || ''),
+      title: String(service.title || '').trim(),
+      description: String(service.description || '').trim(),
+      features: Array.isArray(service.features)
+        ? service.features.map(feature => String(feature || '').trim()).filter(Boolean).slice(0, 12)
+        : [],
+      image: String(service.image || '').trim(),
+      color: String(service.color || '').trim(),
+      featured: Boolean(service.featured),
+    }));
+
+  if (services.length !== SERVICE_IDS.length) return null;
+  if (services.some(service =>
+    !service.title ||
+    !service.description ||
+    !service.image ||
+    !service.color ||
+    service.features.length === 0
+  )) return null;
+
+  return SERVICE_IDS.map(id => services.find(service => service.id === id));
 }
 
 // Prevent dropped connections from crashing the process — pg Pool will reconnect automatically
@@ -383,6 +488,40 @@ app.put('/api/settings/socials', requireAuth, async (req, res) => {
         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
       `, [dbKey, val]);
     }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Site Settings: Services content (public read, developer write) ────────────
+app.get('/api/settings/services', async (_req, res) => {
+  try {
+    const { rows } = await db.query(
+      "SELECT value FROM site_settings WHERE key = 'service_content' LIMIT 1"
+    );
+    const parsed = rows[0] ? JSON.parse(rows[0].value) : null;
+    const data = normalizeServiceContent(parsed);
+    if (!data) return res.status(500).json({ error: 'Service content is invalid' });
+    res.json({ data });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/settings/services', requireDev, async (req, res) => {
+  const data = normalizeServiceContent(req.body?.services);
+  if (!data) {
+    return res.status(400).json({
+      error: 'Six valid service cards are required, with title, writeup, image, color and at least one feature each',
+    });
+  }
+
+  try {
+    await db.query(`
+      INSERT INTO site_settings (key, value, updated_at) VALUES ('service_content', $1, NOW())
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+    `, [JSON.stringify(data)]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

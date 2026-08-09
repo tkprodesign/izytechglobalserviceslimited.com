@@ -1,9 +1,19 @@
+import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
 import { Link } from "react-router";
-import { services } from "../data/services";
+import { serviceContent, withServiceIcons } from "../data/services";
+import { api } from "../../lib/api";
 
 export function Services() {
+  const [services, setServices] = useState(withServiceIcons(serviceContent));
+
+  useEffect(() => {
+    api.services()
+      .then(({ data }) => setServices(withServiceIcons(data)))
+      .catch(() => {});
+  }, []);
+
   return (
     <section id="services" className="py-28 bg-white">
       <div className="max-w-7xl mx-auto px-6">

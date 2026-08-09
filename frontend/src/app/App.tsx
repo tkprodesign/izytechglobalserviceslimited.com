@@ -62,6 +62,7 @@ import { AdminDashboard } from "./admin/AdminDashboard";
 import { ContactsPage } from "./admin/ContactsPage";
 import { QuotesPage } from "./admin/QuotesPage";
 import { DevSystemPage } from "./admin/DevSystemPage";
+import { ServicesContentPage } from "./admin/ServicesContentPage";
 import { EmailPage } from "./admin/EmailPage";
 import { SocialsPage } from "./admin/SocialsPage";
 import { ProtectedRoute } from "./admin/ProtectedRoute";
@@ -165,6 +166,9 @@ export default function App() {
       } />
       <Route path="/dev/logs" element={
         <ProtectedRoute requiredRole="developer"><DevSystemPage /></ProtectedRoute>
+      } />
+      <Route path="/dev/services" element={
+        <ProtectedRoute requiredRole="developer"><ServicesContentPage /></ProtectedRoute>
       } />
       <Route path="/dev/email" element={
         <ProtectedRoute><EmailPage /></ProtectedRoute>
