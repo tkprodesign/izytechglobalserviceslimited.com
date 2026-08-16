@@ -54,12 +54,12 @@ All secrets are stored in Replit's secret manager and are automatically availabl
 | `DATABASE_URL` | Neon PostgreSQL connection string |
 | `SESSION_SECRET` | JWT signing secret for admin auth |
 
-### Frontend config (also set as plain env var in `.replit`)
+### Frontend config
 | Secret | Purpose |
 |---|---|
-| `VITE_API_URL` | Backend base URL used by the React frontend (`https://izytech-api.onrender.com`) |
+| `VITE_API_URL` | Production Railway API base URL used by the Cloudflare Pages build (`https://izytech-website-production.up.railway.app`). Local Replit development uses the Vite `/api` proxy instead. |
 
-### Email accounts (IMAP + SMTP via Spacemail)
+### Email accounts (IMAP via Spacemail, sending via Resend)
 | Secret | Purpose |
 |---|---|
 | `INFO_EMAIL` / `INFO_EMAIL_PASSWORD` | Info mailbox (`info@izytechglobalservices.com`) |
@@ -67,7 +67,9 @@ All secrets are stored in Replit's secret manager and are automatically availabl
 | `SALES_EMAIL` / `SALES_EMAIL_PASSWORD` | Sales mailbox |
 | `SUPPORT_EMAIL` / `SUPPORT_EMAIL_PASSWORD` | Support mailbox |
 | `NOREPLY_EMAIL` | No-reply send-only address |
-| `RESEND_API_KEY` | Resend API for transactional email delivery |
+| `RESEND_API_KEY` | Resend API for email delivery from all managed mailboxes |
+
+The Email Manager reads inboxes from Spacemail over IMAP. Railway blocks outbound SMTP, so all sending goes through Resend over HTTPS. The email account registry is defined in `backend/routes/email.js`.
 
 ### Cloudflare (product image uploads)
 | Secret | Purpose |
@@ -79,9 +81,8 @@ All secrets are stored in Replit's secret manager and are automatically availabl
 ### Infrastructure
 | Secret | Purpose |
 |---|---|
-| `RENDER_API_KEY` | Render account API key (manage the production backend) |
-| `RENDER_SERVICE_ID` | Render service ID: `srv-d9hd617avr4c73ebtj9g` |
-| `GITHUB_TOKEN` | GitHub PAT with `repo` + `workflow` scopes — used to push to the repo from Replit |
+| `RAILWAY_TOKEN` | Railway project token used for deployment administration from Replit |
+| `GITHUB_TOKEN` | GitHub token used to push approved changes to the canonical repository from Replit |
 
 ## Database
 
@@ -89,8 +90,8 @@ Initial schema lives in `backend/migrations/001_initial.sql` (tables: `contact_s
 
 ## Production deployment
 
-- **Frontend**: Cloudflare Pages
-- **Backend**: Railway
+- **Frontend**: Cloudflare Pages (built from GitHub)
+- **Backend**: Railway (`backend/` root directory, Dockerfile builder)
 - **Database**: Neon PostgreSQL
 
 ## Project structure
