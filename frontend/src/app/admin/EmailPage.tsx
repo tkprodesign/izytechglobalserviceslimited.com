@@ -112,7 +112,6 @@ function ComposeModal({
           accountId: from,
           to,
           subject,
-          bodyHtml: `<p style="font-family:Arial,sans-serif;font-size:15px;line-height:1.7;color:#3a4a5c">${body.replace(/\n/g, '<br/>')}</p>`,
           bodyText: body,
           ...((replyHeaders?.messageId || replyHeaders?.references) ? {
             headers: {

@@ -3,6 +3,8 @@
  * Usage: buildEmail({ subject, preheader, bodyHtml, footerNote })
  */
 
+const EMAIL_LOGO_URL = 'https://izytechglobalservices.com/favicon.png';
+
 function buildEmail({ subject = '', preheader = '', bodyHtml = '', footerNote = '' } = {}) {
   return `<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
@@ -65,7 +67,7 @@ function buildEmail({ subject = '', preheader = '', bodyHtml = '', footerNote = 
                     <td>
                       <table role="presentation" cellpadding="0" cellspacing="0">
                         <tr>
-                          <td class="logo-box">IZY</td>
+                          <td><img src="${EMAIL_LOGO_URL}" width="44" height="44" alt="IZY Technologies" style="display:block;width:44px;height:44px;border-radius:10px" /></td>
                           <td style="width:12px"></td>
                           <td>
                             <p style="margin:0;font-size:18px;font-weight:700;color:#ffffff;font-family:'Inter',Arial,sans-serif;letter-spacing:-0.3px">IZY Technologies</p>
@@ -162,9 +164,10 @@ function quoteAutoReply({ name, service, company }) {
   });
 }
 
-function customEmail({ toName, greeting, bodyHtml: body, ctaLabel, ctaUrl }) {
+function customEmail({ subject = '', preheader = '', toName, greeting, bodyHtml: body, ctaLabel, ctaUrl }) {
   return buildEmail({
-    subject: '',
+    subject,
+    preheader,
     bodyHtml: `
       <h2 class="greeting">${escHtml(greeting || `Hi ${toName || 'there'},`)}</h2>
       <div class="body-text">${body || ''}</div>
@@ -173,4 +176,8 @@ function customEmail({ toName, greeting, bodyHtml: body, ctaLabel, ctaUrl }) {
   });
 }
 
-module.exports = { buildEmail, contactAutoReply, quoteAutoReply, customEmail };
+function plainTextToHtml(text = '') {
+  return `<p class="body-text">${escHtml(text).replace(/\r\n?|\n/g, '<br/>')}</p>`;
+}
+
+module.exports = { buildEmail, contactAutoReply, quoteAutoReply, customEmail, plainTextToHtml };

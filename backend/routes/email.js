@@ -2,6 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
+const { customEmail, plainTextToHtml } = require('../lib/emailTemplate');
 
 // ── Account registry ──────────────────────────────────────────────────────────
 function getAccounts() {
@@ -186,14 +187,24 @@ router.post('/send', async (req, res) => {
   if (!acct) return res.status(404).json({ error: 'Account not found' });
 
   try {
+    // Compose sends plain text from the panel. Render it through the shared
+    // branded template so every outgoing message has the same header/footer.
+    // Keep bodyHtml as a backwards-compatible fallback for older clients.
+    const messageText = bodyText || subject;
+    const messageHtml = customEmail({
+      subject,
+      preheader: `Message from IZY Technologies — ${subject}`,
+      greeting: 'Hello,',
+      bodyHtml: plainTextToHtml(bodyText || bodyHtml || subject),
+    });
     const data = await resendRequest('/emails', {
       method: 'POST',
       body: JSON.stringify({
         from: `IZY Technologies <${acct.email}>`,
         to: Array.isArray(to) ? to : [to],
         subject,
-        html: bodyHtml || '',
-        text: bodyText || subject,
+        html: messageHtml,
+        text: messageText,
         ...(replyTo ? { reply_to: replyTo } : {}),
         ...(replyHeaders && typeof replyHeaders === 'object' ? { headers: replyHeaders } : {}),
       }),
