@@ -7,7 +7,7 @@ Official website and digital platform for IZY Technologies Global Services Limit
 ```
 /
 ├── frontend/     React + Vite website (TypeScript, Tailwind CSS, Framer Motion)
-├── backend/      API server (Railway — to be scaffolded)
+├── backend/      API server (Render)
 ├── docs/         Site guide, design guidelines, attributions
 └── .github/      CI/CD workflows
 ```
@@ -34,9 +34,9 @@ pnpm run build     # output → frontend/dist/
 | Layer    | Service          |
 |----------|------------------|
 | Frontend | Cloudflare Pages |
-| Backend  | Railway          |
+| Backend  | Render           |
 | Database | Neon PostgreSQL  |
-| Repo     | GitHub — `izytechgsl/izytech-website` |
+| Repo     | GitHub — `tkprodesign/izytechglobalserviceslimited.com` |
 
 ## Docs
 

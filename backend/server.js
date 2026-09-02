@@ -304,7 +304,7 @@ app.delete('/api/admin/store/products/:id', requireAuth, async (req, res) => {
 
 // ── Admin: Store image upload → Cloudflare Images ────────────────────────────
 // The backend only creates a short-lived upload URL. Image bytes go directly
-// from the admin browser to Cloudflare, so Railway never stores the file.
+// from the admin browser to Cloudflare, so the backend host never stores the file.
 app.post('/api/admin/store/images/direct-upload', requireAuth, async (_req, res) => {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken  = process.env.CLOUDFLARE_API_TOKEN;

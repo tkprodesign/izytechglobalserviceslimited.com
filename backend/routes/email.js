@@ -174,7 +174,7 @@ router.get('/message/:accountId/:uid', async (req, res) => {
   }
 });
 
-// ── Send (all accounts via Resend — SMTP is blocked on Railway) ───────────────
+// ── Send (all accounts via Resend HTTPS API; no SMTP dependency) ──────────────
 router.post('/send', async (req, res) => {
   const { accountId, to, subject, bodyHtml, bodyText, replyTo, headers: replyHeaders } = req.body || {};
   if (!accountId || !to || !subject) {

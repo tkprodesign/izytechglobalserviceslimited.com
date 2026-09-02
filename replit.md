@@ -57,7 +57,7 @@ All secrets are stored in Replit's secret manager and are automatically availabl
 ### Frontend config
 | Secret | Purpose |
 |---|---|
-| `VITE_API_URL` | Production Railway API base URL used by the Cloudflare Pages build (`https://izytech-website-production.up.railway.app`). Local Replit development uses the Vite `/api` proxy instead. |
+| `VITE_API_URL` | Production Render API base URL used by the Cloudflare Pages build (`https://izytech-api.onrender.com`). Local Replit development uses the Vite `/api` proxy instead. |
 
 ### Email accounts (Resend Receiving + sending)
 | Secret | Purpose |
@@ -81,7 +81,7 @@ The Email Manager reads inbound messages from Resend Receiving and sends through
 ### Infrastructure
 | Secret | Purpose |
 |---|---|
-| `RAILWAY_TOKEN` | Railway project token used for deployment administration from Replit |
+| `RENDER_API_KEY` | Render API key used for deployment administration from Replit |
 | `GITHUB_TOKEN` | GitHub token used to push approved changes to the canonical repository from Replit |
 
 ## Database
@@ -91,7 +91,7 @@ Initial schema lives in `backend/migrations/001_initial.sql` (tables: `contact_s
 ## Production deployment
 
 - **Frontend**: Cloudflare Pages (built from GitHub)
-- **Backend**: Railway (`backend/` root directory, Dockerfile builder)
+- **Backend**: Render (`backend/` root directory)
 - **Database**: Neon PostgreSQL
 
 ## Project structure
