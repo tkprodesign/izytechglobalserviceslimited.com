@@ -4,8 +4,7 @@ import { DashboardLayout } from './DashboardLayout';
 import { getToken, removeToken } from '../../lib/auth';
 import {
   Mail, Send, RefreshCw, PenSquare, X, ChevronRight,
-  Inbox, AlertCircle, Loader2, Reply, Trash2,
-  FileEdit, ShieldAlert, Archive,
+  Inbox, AlertCircle, Loader2, Reply,
 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
@@ -19,13 +18,13 @@ interface Account {
 }
 
 interface EmailMeta {
-  uid: number;
-  seq: number;
+  uid: string;
   subject: string;
   from: { name?: string; address?: string } | null;
   to: { name?: string; address?: string } | null;
   date: string | null;
   seen: boolean;
+  messageId?: string;
 }
 
 interface EmailBody {
@@ -36,24 +35,24 @@ interface EmailBody {
     from?: { name?: string; address?: string } | null;
     to?: { name?: string; address?: string } | null;
     date?: string;
+    messageId?: string;
+    inReplyTo?: string;
+    references?: string;
   };
 }
 
 interface Folder {
   name: string;   // display label
-  imap: string;   // IMAP mailbox name
+  key: string;    // Resend Receiving virtual folder key
   icon: React.ReactNode;
-  sendOnly?: boolean; // show even for send-only accounts
 }
 
 const FOLDERS: Folder[] = [
-  { name: 'Inbox',   imap: 'INBOX',   icon: <Inbox      size={14} /> },
-  { name: 'Drafts',  imap: 'Drafts',  icon: <FileEdit   size={14} /> },
-  { name: 'Sent',    imap: 'Sent',    icon: <Send       size={14} />, sendOnly: true },
-  { name: 'Spam',    imap: 'Spam',    icon: <ShieldAlert size={14} /> },
-  { name: 'Trash',   imap: 'Trash',   icon: <Trash2     size={14} /> },
-  { name: 'Archive', imap: 'Archive', icon: <Archive    size={14} /> },
+  { name: 'Inbox', key: 'INBOX', icon: <Inbox size={14} /> },
 ];
+
+type ThreadHeaders = Pick<EmailBody['headers'], 'messageId' | 'inReplyTo' | 'references'>;
+type ComposeDefaults = { to: string; subject: string; replyHeaders?: ThreadHeaders };
 
 function fmt(d: string | null) {
   if (!d) return '';
@@ -81,12 +80,14 @@ function ComposeModal({
   defaultAccount,
   defaultTo = '',
   defaultSubject = '',
+  replyHeaders,
   onClose,
 }: {
   accounts: Account[];
   defaultAccount: string;
   defaultTo?: string;
   defaultSubject?: string;
+  replyHeaders?: ThreadHeaders;
   onClose: () => void;
 }) {
   const token = getToken();
@@ -113,6 +114,12 @@ function ComposeModal({
           subject,
           bodyHtml: `<p style="font-family:Arial,sans-serif;font-size:15px;line-height:1.7;color:#3a4a5c">${body.replace(/\n/g, '<br/>')}</p>`,
           bodyText: body,
+          ...((replyHeaders?.messageId || replyHeaders?.references) ? {
+            headers: {
+              ...(replyHeaders.messageId ? { 'In-Reply-To': replyHeaders.messageId } : {}),
+              References: [replyHeaders.references, replyHeaders.messageId].filter(Boolean).join(' '),
+            },
+          } : {}),
         }),
       });
       const data = await res.json();
@@ -243,8 +250,9 @@ export function EmailPage() {
   const [loadingInbox, setLoadingInbox] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState(false);
   const [inboxError, setInboxError] = useState('');
+  const [inboxNote, setInboxNote] = useState('');
   const [compose, setCompose] = useState(false);
-  const [composeDefaults, setComposeDefaults] = useState({ to: '', subject: '' });
+  const [composeDefaults, setComposeDefaults] = useState<ComposeDefaults>({ to: '', subject: '' });
   const [mobileEmailView, setMobileEmailView] = useState<'mailboxes' | 'messages' | 'detail'>('mailboxes');
 
   const headers = { Authorization: `Bearer ${token}` };
@@ -269,17 +277,18 @@ export function EmailPage() {
     setSelected(null);
     setSelectedMeta(null);
     setInboxError('');
-    if (acct.sendOnly && !folder.sendOnly) return;
-    if (acct.sendOnly) return; // send-only accounts have no IMAP
+    setInboxNote('');
+    if (acct.sendOnly) return;
     setLoadingInbox(true);
     try {
       const res = await fetch(
-        `${API}/api/dev/email/messages/${acct.id}/${encodeURIComponent(folder.imap)}`,
+        `${API}/api/dev/email/messages/${acct.id}/${encodeURIComponent(folder.key)}`,
         { headers }
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load folder');
       setMessages(data.messages || []);
+      setInboxNote(data.note || '');
     } catch (err: unknown) {
       setInboxError(err instanceof Error ? err.message : 'Failed to load');
     } finally {
@@ -307,10 +316,11 @@ export function EmailPage() {
     setLoadingMsg(true);
     try {
       const res = await fetch(
-        `${API}/api/dev/email/message/${activeAccount.id}/${msg.uid}?folder=${encodeURIComponent(activeFolder.imap)}`,
+        `${API}/api/dev/email/message/${activeAccount.id}/${encodeURIComponent(msg.uid)}`,
         { headers }
       );
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not load message body');
       setSelected(data);
       setMessages(prev => prev.map(m => m.uid === msg.uid ? { ...m, seen: true } : m));
     } catch {
@@ -325,16 +335,13 @@ export function EmailPage() {
     setComposeDefaults({
       to: selectedMeta.from?.address || '',
       subject: `Re: ${selectedMeta.subject || ''}`,
+      replyHeaders: selected?.headers,
     });
     setCompose(true);
   }
 
-  const unread = messages.filter(m => !m.seen).length;
-
-  // Visible folders depend on whether account is send-only
-  const visibleFolders = activeAccount?.sendOnly
-    ? [] // send-only: no folders (compose-only UI shown)
-    : FOLDERS;
+  // Resend Receiving exposes one virtual Inbox; send-only accounts have none.
+  const visibleFolders = activeAccount?.sendOnly ? [] : FOLDERS;
 
   return (
     <DashboardLayout>
@@ -378,7 +385,7 @@ export function EmailPage() {
             ))}
           </div>
 
-          {/* Folders section — shown for accounts with IMAP */}
+          {/* Folders section — Resend Receiving exposes one Inbox */}
           {visibleFolders.length > 0 && (
             <>
               <div className="px-4 pt-4 pb-2 border-t" style={{ borderColor: '#eef1f6' }}>
@@ -386,10 +393,10 @@ export function EmailPage() {
               </div>
               <div className="pb-3">
                 {visibleFolders.map(folder => {
-                  const isActive = activeFolder.imap === folder.imap;
+                  const isActive = activeFolder.key === folder.key;
                   return (
                     <button
-                      key={folder.imap}
+                      key={folder.key}
                       onClick={() => {
                         setActiveFolder(folder);
                         setMobileEmailView('messages');
@@ -409,14 +416,6 @@ export function EmailPage() {
                       >
                         {folder.name}
                       </span>
-                      {folder.imap === 'INBOX' && unread > 0 && (
-                        <span
-                          className="text-xs font-bold px-1.5 py-0.5 rounded-full text-white"
-                          style={{ background: activeAccount?.color || '#1a56db' }}
-                        >
-                          {unread}
-                        </span>
-                      )}
                     </button>
                   );
                 })}
@@ -445,13 +444,11 @@ export function EmailPage() {
                 {activeAccount?.label || 'Inbox'}
                 {' · '}
                 <span style={{ color: '#8fadc8', fontWeight: 400 }}>{activeFolder.name}</span>
-                {unread > 0 && activeFolder.imap === 'INBOX' && (
-                  <span className="ml-2 text-xs font-bold px-1.5 py-0.5 rounded-full text-white" style={{ background: '#1a56db' }}>
-                    {unread}
-                  </span>
-                )}
               </p>
               <p className="text-xs mt-0.5" style={{ color: '#8fadc8' }}>{activeAccount?.email}</p>
+              {inboxNote && (
+                <p className="mt-2 max-w-md text-[11px] leading-relaxed" style={{ color: '#8fadc8' }}>{inboxNote}</p>
+              )}
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -585,6 +582,7 @@ export function EmailPage() {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button
                       onClick={handleReply}
+                      disabled={loadingMsg || !selected}
                       className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-blue-50"
                       style={{ color: '#1a56db' }}
                     >
@@ -632,6 +630,7 @@ export function EmailPage() {
           defaultAccount={activeAccount?.id || ''}
           defaultTo={composeDefaults.to}
           defaultSubject={composeDefaults.subject}
+          replyHeaders={composeDefaults.replyHeaders}
           onClose={() => setCompose(false)}
         />
       )}

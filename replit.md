@@ -59,17 +59,17 @@ All secrets are stored in Replit's secret manager and are automatically availabl
 |---|---|
 | `VITE_API_URL` | Production Railway API base URL used by the Cloudflare Pages build (`https://izytech-website-production.up.railway.app`). Local Replit development uses the Vite `/api` proxy instead. |
 
-### Email accounts (IMAP via Spacemail, sending via Resend)
+### Email accounts (Resend Receiving + sending)
 | Secret | Purpose |
 |---|---|
-| `INFO_EMAIL` / `INFO_EMAIL_PASSWORD` | Info mailbox (`info@izytechglobalservices.com`) |
-| `ADMIN_EMAIL` / `ADMIN_EMAIL_PASSWORD` | Admin mailbox |
-| `SALES_EMAIL` / `SALES_EMAIL_PASSWORD` | Sales mailbox |
-| `SUPPORT_EMAIL` / `SUPPORT_EMAIL_PASSWORD` | Support mailbox |
+| `INFO_EMAIL` | Info mailbox (`info@izytechglobalservices.com`) |
+| `ADMIN_EMAIL` | Admin mailbox |
+| `SALES_EMAIL` | Sales mailbox |
+| `SUPPORT_EMAIL` | Support mailbox |
 | `NOREPLY_EMAIL` | No-reply send-only address |
-| `RESEND_API_KEY` | Resend API for email delivery from all managed mailboxes |
+| `RESEND_API_KEY` | Resend API for receiving and delivery from all managed mailboxes |
 
-The Email Manager reads inboxes from Spacemail over IMAP. Railway blocks outbound SMTP, so all sending goes through Resend over HTTPS. The email account registry is defined in `backend/routes/email.js`.
+The Email Manager reads inbound messages from Resend Receiving and sends through Resend over HTTPS. Resend provides one Inbox per managed address; it does not provide IMAP folders or persistent read/unread state. Receiving remains pending until the domain's root MX records are changed to the exact values shown in the Resend Receiving dashboard. The email account registry is defined in `backend/routes/email.js`.
 
 ### Cloudflare (product image uploads)
 | Secret | Purpose |

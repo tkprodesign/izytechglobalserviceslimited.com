@@ -2,36 +2,113 @@
 
 const express = require('express');
 const router = express.Router();
-const { ImapFlow } = require('imapflow');
-const { simpleParser } = require('mailparser');
 
 // ── Account registry ──────────────────────────────────────────────────────────
 function getAccounts() {
   return [
-    { id: 'info',     label: 'Info',     email: process.env.INFO_EMAIL,     password: process.env.INFO_EMAIL_PASSWORD,     color: '#1a56db' },
-    { id: 'admin',    label: 'Admin',    email: process.env.ADMIN_EMAIL,    password: process.env.ADMIN_EMAIL_PASSWORD,    color: '#7c3aed' },
-    { id: 'sales',    label: 'Sales',    email: process.env.SALES_EMAIL,    password: process.env.SALES_EMAIL_PASSWORD,    color: '#d97706' },
-    { id: 'support',  label: 'Support',  email: process.env.SUPPORT_EMAIL,  password: process.env.SUPPORT_EMAIL_PASSWORD,  color: '#dc2626' },
-    { id: 'noreply',  label: 'No-Reply', email: process.env.NOREPLY_EMAIL,  password: null, sendOnly: true,                color: '#6b7280' },
+    { id: 'info',     label: 'Info',     email: process.env.INFO_EMAIL,    color: '#1a56db' },
+    { id: 'admin',    label: 'Admin',    email: process.env.ADMIN_EMAIL,   color: '#7c3aed' },
+    { id: 'sales',    label: 'Sales',   email: process.env.SALES_EMAIL,   color: '#d97706' },
+    { id: 'support',  label: 'Support', email: process.env.SUPPORT_EMAIL, color: '#dc2626' },
+    { id: 'noreply',  label: 'No-Reply', email: process.env.NOREPLY_EMAIL, sendOnly: true, color: '#6b7280' },
   ].filter(a => a.email);
 }
 
-// ── IMAP helpers ──────────────────────────────────────────────────────────────
-async function withImap(email, password, fn) {
-  const client = new ImapFlow({
-    host: 'mail.spacemail.com',
-    port: 993,
-    secure: true,
-    auth: { user: email, pass: password },
-    logger: false,
-    tls: { rejectUnauthorized: false },
-  });
-  await client.connect();
-  try {
-    return await fn(client);
-  } finally {
-    await client.logout().catch(() => {});
+// ── Resend helpers ────────────────────────────────────────────────────────────
+const RESEND_API = 'https://api.resend.com';
+
+async function resendRequest(path, options = {}) {
+  const resendKey = process.env.RESEND_API_KEY;
+  if (!resendKey) {
+    const error = new Error('RESEND_API_KEY not configured');
+    error.status = 500;
+    throw error;
   }
+
+  const response = await fetch(`${RESEND_API}${path}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${resendKey}`,
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(data?.message || data?.error || `Resend request failed (${response.status})`);
+    error.status = response.status;
+    error.detail = data;
+    throw error;
+  }
+  return data;
+}
+
+function normalizeMailbox(value) {
+  if (!value) return null;
+  if (Array.isArray(value)) return normalizeMailbox(value[0]);
+  if (typeof value === 'object') {
+    return {
+      name: value.name || undefined,
+      address: value.address || value.email || undefined,
+    };
+  }
+
+  const text = String(value).trim();
+  const match = text.match(/^(.*?)\s*<([^>]+)>$/);
+  return match
+    ? { name: match[1].trim().replace(/^["']|["']$/g, '') || undefined, address: match[2].trim() }
+    : { address: text };
+}
+
+function addressValues(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.flatMap(addressValues);
+  if (typeof value === 'object') {
+    return [value.address || value.email].filter(Boolean).map(String);
+  }
+  return [String(value).replace(/^.*<([^>]+)>.*$/, '$1')];
+}
+
+function emailBelongsToAccount(message, accountEmail) {
+  const target = String(accountEmail).toLowerCase();
+  return [
+    ...addressValues(message.to),
+    ...addressValues(message.received_for),
+    ...addressValues(message.cc),
+    ...addressValues(message.bcc),
+  ].some(address => address.toLowerCase() === target);
+}
+
+function headerValue(headers, name) {
+  if (!headers) return undefined;
+  if (Array.isArray(headers)) {
+    const header = headers.find(item => String(item?.name || '').toLowerCase() === name.toLowerCase());
+    return header?.value;
+  }
+  const key = Object.keys(headers).find(item => item.toLowerCase() === name.toLowerCase());
+  return key ? headers[key] : undefined;
+}
+
+function messageSummary(message) {
+  return {
+    uid: String(message.id),
+    subject: message.subject || '(no subject)',
+    from: normalizeMailbox(message.from),
+    to: normalizeMailbox(message.to),
+    date: message.created_at || message.date || null,
+    // Resend Receiving does not expose a persistent read/unread flag.
+    seen: true,
+    messageId: message.message_id || headerValue(message.headers, 'message-id') || undefined,
+  };
+}
+
+async function receivedMessages(account) {
+  const result = await resendRequest('/emails/receiving?limit=100');
+  const data = Array.isArray(result?.data) ? result.data : [];
+  return data
+    .filter(message => emailBelongsToAccount(message, account.email))
+    .map(messageSummary)
+    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 }
 
 // ── List accounts ─────────────────────────────────────────────────────────────
@@ -48,93 +125,58 @@ router.get('/inbox/:accountId', async (req, res) => {
   const acct = accounts.find(a => a.id === req.params.accountId);
   if (!acct) return res.status(404).json({ error: 'Account not found' });
   if (acct.sendOnly) return res.json({ messages: [], note: 'Send-only account' });
-  if (!acct.password) return res.status(400).json({ error: 'No IMAP credentials for this account' });
 
   try {
-    const messages = await withImap(acct.email, acct.password, async (client) => {
-      const mailbox = await client.mailboxOpen('INBOX');
-      const total = mailbox.exists;
-      if (total === 0) return [];
-
-      const fetchFrom = Math.max(1, total - 49); // last 50
-      const msgs = [];
-      for await (const msg of client.fetch(`${fetchFrom}:*`, {
-        envelope: true,
-        flags: true,
-        bodyStructure: false,
-      })) {
-        msgs.push({
-          uid: msg.uid,
-          seq: msg.seq,
-          subject: msg.envelope?.subject || '(no subject)',
-          from: msg.envelope?.from?.[0] || null,
-          to: msg.envelope?.to?.[0] || null,
-          date: msg.envelope?.date || null,
-          seen: msg.flags?.has('\\Seen') ?? false,
-        });
-      }
-      return msgs.reverse();
+    const messages = await receivedMessages(acct);
+    res.json({
+      messages,
+      source: 'resend-receiving',
+      note: messages.length === 0
+        ? 'No received messages yet. Resend will show inbound mail after the domain MX records point to Resend.'
+        : 'Resend Receiving provides inbound messages in one Inbox; folders and read status are not available.',
     });
-    res.json({ messages });
   } catch (err) {
-    console.error(`IMAP error for ${acct.email}:`, err.message);
-    res.status(502).json({ error: err.message });
+    console.error(`Resend receiving error for ${acct.email}:`, err.message);
+    res.status(err.status || 502).json({ error: err.message, detail: err.detail });
   }
 });
 
 // ── Message body ──────────────────────────────────────────────────────────────
-// Uses mailparser (simpleParser) on the raw RFC-822 source so that all
-// Content-Transfer-Encodings (base64, quoted-printable) and charsets are
-// handled correctly without fragile manual MIME walking.
 router.get('/message/:accountId/:uid', async (req, res) => {
   const accounts = getAccounts();
   const acct = accounts.find(a => a.id === req.params.accountId);
-  if (!acct || acct.sendOnly || !acct.password) return res.status(404).json({ error: 'Not available' });
+  if (!acct || acct.sendOnly) return res.status(404).json({ error: 'Not available' });
 
   try {
-    const uid = parseInt(req.params.uid, 10);
-    const folder = String(req.query.folder || 'INBOX');
-    const result = await withImap(acct.email, acct.password, async (client) => {
-      await client.mailboxOpen(folder);
-      let rawSource = null;
-      let envelope = null;
-
-      // Fetch the full raw source — no other IMAP commands inside this loop
-      // (imapflow deadlocks if you call another command while FETCH is in-flight)
-      for await (const msg of client.fetch({ uid }, { source: true, envelope: true })) {
-        rawSource = msg.source;
-        envelope = msg.envelope;
-      }
-
-      // Mark as seen only after the fetch loop has fully completed
-      await client.messageFlagsAdd({ uid }, ['\\Seen']).catch(() => {});
-
-      if (!rawSource) return { html: '', text: '(message not found)', headers: {} };
-
-      // mailparser handles all MIME types, QP, base64, charsets automatically
-      const parsed = await simpleParser(rawSource);
-
-      return {
-        html: parsed.html || '',
-        text: parsed.text || '',
-        headers: {
-          subject: envelope?.subject ?? parsed.subject ?? '',
-          from: envelope?.from?.[0] ?? null,
-          to: envelope?.to?.[0] ?? null,
-          date: envelope?.date ?? parsed.date ?? null,
-        },
-      };
+    const message = await resendRequest(`/emails/receiving/${encodeURIComponent(req.params.uid)}`);
+    if (!emailBelongsToAccount(message, acct.email)) {
+      return res.status(404).json({ error: 'Message not found for this account' });
+    }
+    const messageId = message.message_id || headerValue(message.headers, 'message-id');
+    const inReplyTo = headerValue(message.headers, 'in-reply-to');
+    const references = headerValue(message.headers, 'references');
+    res.json({
+      html: message.html || '',
+      text: message.text || '',
+      headers: {
+        subject: message.subject || '',
+        from: normalizeMailbox(message.from),
+        to: normalizeMailbox(message.to),
+        date: message.created_at || null,
+        messageId,
+        inReplyTo,
+        references,
+      },
     });
-    res.json(result);
   } catch (err) {
-    console.error('IMAP fetch error:', err.message);
-    res.status(502).json({ error: err.message });
+    console.error('Resend received message error:', err.message);
+    res.status(err.status || 502).json({ error: err.message, detail: err.detail });
   }
 });
 
 // ── Send (all accounts via Resend — SMTP is blocked on Railway) ───────────────
 router.post('/send', async (req, res) => {
-  const { accountId, to, subject, bodyHtml, bodyText, replyTo } = req.body || {};
+  const { accountId, to, subject, bodyHtml, bodyText, replyTo, headers: replyHeaders } = req.body || {};
   if (!accountId || !to || !subject) {
     return res.status(400).json({ error: 'accountId, to, and subject are required' });
   }
@@ -143,13 +185,9 @@ router.post('/send', async (req, res) => {
   const acct = accounts.find(a => a.id === accountId);
   if (!acct) return res.status(404).json({ error: 'Account not found' });
 
-  const resendKey = process.env.RESEND_API_KEY;
-  if (!resendKey) return res.status(500).json({ error: 'RESEND_API_KEY not configured' });
-
   try {
-    const r = await fetch('https://api.resend.com/emails', {
+    const data = await resendRequest('/emails', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: `IZY Technologies <${acct.email}>`,
         to: Array.isArray(to) ? to : [to],
@@ -157,58 +195,45 @@ router.post('/send', async (req, res) => {
         html: bodyHtml || '',
         text: bodyText || subject,
         ...(replyTo ? { reply_to: replyTo } : {}),
+        ...(replyHeaders && typeof replyHeaders === 'object' ? { headers: replyHeaders } : {}),
       }),
     });
-    const data = await r.json();
-    if (!r.ok) return res.status(r.status).json({ error: data?.message || 'Resend error', detail: data });
     return res.json({ success: true, messageId: data.id, via: 'resend' });
   } catch (err) {
     console.error('Resend send error:', err.message);
-    return res.status(500).json({ error: err.message });
+    return res.status(err.status || 502).json({ error: err.message, detail: err.detail });
   }
 });
 
-// ── Messages by folder (generic) ──────────────────────────────────────────────
-// Used by the Email Manager for Inbox, Drafts, Sent, Spam, Trash, Archive.
-// Folder name is passed as a URL segment; use encodeURIComponent on the client.
+// ── Messages by folder ────────────────────────────────────────────────────────
+// Resend Receiving is inbound-only, so INBOX is the only supported folder.
 router.get('/messages/:accountId/*', async (req, res) => {
   const accounts = getAccounts();
   const acct = accounts.find(a => a.id === req.params.accountId);
   if (!acct) return res.status(404).json({ error: 'Account not found' });
   if (acct.sendOnly) return res.json({ messages: [], note: 'Send-only account' });
-  if (!acct.password) return res.status(400).json({ error: 'No IMAP credentials for this account' });
 
-  const folder = req.params[0] || 'INBOX';
+  const folder = String(req.params[0] || 'INBOX');
+  if (folder.toUpperCase() !== 'INBOX') {
+    return res.json({
+      messages: [],
+      source: 'resend-receiving',
+      note: 'Resend Receiving provides inbound messages in one Inbox; this folder is not available.',
+    });
+  }
 
   try {
-    const messages = await withImap(acct.email, acct.password, async (client) => {
-      const mailbox = await client.mailboxOpen(folder);
-      const total = mailbox.exists;
-      if (total === 0) return [];
-
-      const fetchFrom = Math.max(1, total - 49);
-      const msgs = [];
-      for await (const msg of client.fetch(`${fetchFrom}:*`, {
-        envelope: true,
-        flags: true,
-        bodyStructure: false,
-      })) {
-        msgs.push({
-          uid: msg.uid,
-          seq: msg.seq,
-          subject: msg.envelope?.subject || '(no subject)',
-          from: msg.envelope?.from?.[0] || null,
-          to: msg.envelope?.to?.[0] || null,
-          date: msg.envelope?.date || null,
-          seen: msg.flags?.has('\\Seen') ?? false,
-        });
-      }
-      return msgs.reverse();
+    const messages = await receivedMessages(acct);
+    res.json({
+      messages,
+      source: 'resend-receiving',
+      note: messages.length === 0
+        ? 'No received messages yet. Resend will show inbound mail after the domain MX records point to Resend.'
+        : 'Resend Receiving provides inbound messages in one Inbox; folders and read status are not available.',
     });
-    res.json({ messages });
   } catch (err) {
-    console.error(`IMAP folder error for ${acct.email} [${folder}]:`, err.message);
-    res.status(502).json({ error: err.message });
+    console.error(`Resend folder error for ${acct.email} [${folder}]:`, err.message);
+    res.status(err.status || 502).json({ error: err.message, detail: err.detail });
   }
 });
 
@@ -216,18 +241,7 @@ router.get('/messages/:accountId/*', async (req, res) => {
 router.get('/folders/:accountId', async (req, res) => {
   const accounts = getAccounts();
   const acct = accounts.find(a => a.id === req.params.accountId);
-  if (!acct || acct.sendOnly || !acct.password) return res.json({ folders: ['INBOX'] });
-
-  try {
-    const folders = await withImap(acct.email, acct.password, async (client) => {
-      const list = [];
-      for await (const mbox of client.list()) list.push(mbox.path);
-      return list;
-    });
-    res.json({ folders });
-  } catch (err) {
-    res.status(502).json({ error: err.message });
-  }
+  res.json({ folders: acct?.sendOnly ? [] : ['INBOX'], source: 'resend-receiving' });
 });
 
 module.exports = router;
