@@ -316,6 +316,17 @@ app.use(cors({
 
 app.use(express.json());
 
+function cloudflareDirectUploadError(response, data, fallback) {
+  const errors = Array.isArray(data?.errors) ? data.errors : [];
+  const isAuthError = response.status === 401
+    || response.status === 403
+    || errors.some(error => error?.code === 10000 || /authentication|unauthorized|permission/i.test(error?.message || ''));
+  if (isAuthError) {
+    return 'Cloudflare Images rejected the server token. Update CLOUDFLARE_API_TOKEN with Account > Cloudflare Images > Edit permission for this account.';
+  }
+  return errors[0]?.message || fallback;
+}
+
 // ── Auth middleware ───────────────────────────────────────────────────────────
 function requireAuth(req, res, next) {
   const header = req.headers.authorization;
@@ -514,7 +525,7 @@ app.post('/api/admin/store/images/direct-upload', requireAuth, async (_req, res)
     );
     const data = await cfRes.json();
     if (!data.success)
-      return res.status(502).json({ error: data.errors?.[0]?.message || 'Cloudflare upload failed' });
+      return res.status(502).json({ error: cloudflareDirectUploadError(cfRes, data, 'Cloudflare upload failed') });
 
     const imageId = data.result?.id;
     const uploadURL = data.result?.uploadURL;
@@ -895,7 +906,7 @@ app.post('/api/site-assessments/uploads/direct-upload', async (req, res) => {
     );
     const data = await cfRes.json();
     if (!data.success) {
-      return res.status(502).json({ error: data.errors?.[0]?.message || 'Could not start image upload.' });
+      return res.status(502).json({ error: cloudflareDirectUploadError(cfRes, data, 'Could not start image upload.') });
     }
     const imageId = data.result?.id;
     const uploadURL = data.result?.uploadURL;
@@ -1583,7 +1594,7 @@ app.post('/api/admin/projects/images/direct-upload', requireAuth, async (req, re
       { method: 'POST', headers: { Authorization: `Bearer ${apiToken}` } }
     );
     const data = await cfRes.json();
-    if (!data.success) return res.status(502).json({ error: data.errors?.[0]?.message || 'Cloudflare upload failed' });
+     if (!data.success) return res.status(502).json({ error: cloudflareDirectUploadError(cfRes, data, 'Cloudflare upload failed') });
     const imageId = data.result?.id;
     const uploadURL = data.result?.uploadURL;
     if (!imageId || !uploadURL) return res.status(502).json({ error: 'Cloudflare did not return an upload URL' });
