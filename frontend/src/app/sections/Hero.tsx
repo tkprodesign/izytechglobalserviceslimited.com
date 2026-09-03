@@ -32,7 +32,7 @@ const slides = [
     primaryLabel: "EXPLORE ALTPower FINANCING",
     secondaryLabel: "START YOUR APPLICATION",
     secondaryHref: "#contact",
-    background: "/site-images/hero-bg.jpg",
+    background: "/site-images/project-commercial-solar.jpg",
     overlay: "linear-gradient(100deg, rgba(4,22,39,0.96) 0%, rgba(4,22,39,0.86) 44%, rgba(7,49,38,0.54) 100%)",
     highlights: [
       ["20%", "minimum deposit*"],
