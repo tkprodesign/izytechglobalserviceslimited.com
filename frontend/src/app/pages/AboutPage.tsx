@@ -15,7 +15,7 @@ const milestones = [
   {
     year: "2018",
     title: "Company Founded",
-    detail: "IZY Tech Global Services Limited was established on March 8, 2018 in Port Harcourt by Israel Ideozu — a small, driven team of solar enthusiasts committed to clean, reliable energy.",
+    detail: "Izy Technologies Global Services Limited was established on March 8, 2018 in Port Harcourt by Israel Ideozu — a small, driven team of solar enthusiasts committed to clean, reliable energy.",
   },
   {
     year: "2019",
@@ -48,7 +48,7 @@ const achievements = [
   {
     icon: Users,
     title: "Extensive Client Base",
-    detail: "Izy-Tech has successfully completed thousands of solar installations, serving a diverse range of clients from homeowners to large enterprises across Nigeria.",
+    detail: "Izy Tech Services has successfully completed thousands of solar installations, serving a diverse range of clients from homeowners to large enterprises across Nigeria.",
   },
   {
     icon: Leaf,
@@ -117,7 +117,7 @@ export function AboutPage() {
               className="text-white mb-6"
               style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2.4rem, 5.5vw, 4.5rem)", fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.05 }}
             >
-              About IZY Tech<br />Global Services
+              About Izy Tech Services<br />Global Services Limited
             </h1>
             <p className="text-white/50 max-w-lg text-base leading-relaxed mb-8" style={{ fontFamily: "var(--font-body)" }}>
               Illuminating the future of solar energy. Established March 8, 2018 — powering homes, businesses and industries across Nigeria.
@@ -171,7 +171,7 @@ export function AboutPage() {
               A Leader in Sustainable Energy Solutions
             </h2>
             <p className="text-white/55 leading-relaxed mb-6" style={{ fontFamily: "var(--font-body)", fontSize: "1rem" }}>
-              Since its inception in 2018, Izy-Tech Global Services Limited has emerged as a leader in the solar energy sector, dedicated to providing innovative and sustainable energy solutions. With a strong commitment to excellence and customer satisfaction, Izy-Tech has been transforming the way individuals and businesses harness solar power for a cleaner and more sustainable future.
+              Since its inception in 2018, Izy Technologies Global Services Limited has emerged as a leader in the solar energy sector, dedicated to providing innovative and sustainable energy solutions. With a strong commitment to excellence and customer satisfaction, Izy Tech Services has been transforming the way individuals and businesses harness solar power for a cleaner and more sustainable future.
             </p>
             <p className="text-white/40 leading-relaxed" style={{ fontFamily: "var(--font-body)", fontSize: "0.95rem" }}>
               Founded by Israel Ideozu in Port Harcourt, Rivers State, we have grown from a small team of enthusiasts into Nigeria's trusted partner for solar energy, CCTV, smart home automation, and industrial electrical solutions.
@@ -240,7 +240,7 @@ export function AboutPage() {
             {[
               {
                 label: "Our Mission",
-                text: "Our mission at Izy-Tech Global Services Limited is to empower communities through accessible and reliable solar energy solutions. We aim to reduce dependence on fossil fuels, promote environmental stewardship, and enhance energy independence for our clients.",
+                text: "Our mission at Izy Tech Services is to empower communities through accessible and reliable solar energy solutions. We aim to reduce dependence on fossil fuels, promote environmental stewardship, and enhance energy independence for our clients.",
                 accent: "#F0A20E",
               },
               {
@@ -295,7 +295,7 @@ export function AboutPage() {
               Starting Small, Growing Strong
             </h2>
             <p className="text-[#041627]/50 mt-3 max-w-xl text-sm leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-              Starting as a small team of solar enthusiasts, Izy-Tech quickly established itself in the industry by focusing on high-quality installations and exceptional customer service.
+              Starting as a small team of solar enthusiasts, Izy Tech Services quickly established itself in the industry by focusing on high-quality installations and exceptional customer service.
             </p>
           </motion.div>
 
@@ -418,7 +418,7 @@ export function AboutPage() {
               A Greener, Brighter Future for All
             </h2>
             <p className="text-white/55 leading-relaxed mb-6" style={{ fontFamily: "var(--font-body)", fontSize: "1rem" }}>
-              As we look to the future, Izy-Tech Global Services Limited remains committed to innovation and excellence. We are dedicated to researching and developing new technologies that will make solar energy even more efficient and accessible.
+              As we look to the future, Izy Technologies Global Services Limited remains committed to innovation and excellence. We are dedicated to researching and developing new technologies that will make solar energy even more efficient and accessible.
             </p>
             <p className="text-white/40 leading-relaxed mb-10" style={{ fontFamily: "var(--font-body)", fontSize: "0.95rem" }}>
               Our focus on sustainability and customer satisfaction will continue to drive our efforts as we work toward a greener, brighter future for all. Join us in making a positive impact on our planet.

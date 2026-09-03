@@ -178,7 +178,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-20">
         {/* Logo */}
         <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex-shrink-0 flex items-center gap-2.5">
-          <img src={logoIcon} alt="IZY" className="h-9 w-auto" />
+          <img src={logoIcon} alt="Izy Tech Services" className="h-9 w-auto" />
           <div style={{ fontFamily: "var(--font-ui)" }}>
             <div className={`whitespace-nowrap font-bold text-sm leading-tight tracking-wide ${isTransparent ? "text-white" : "text-[#041627]"}`}>
               IZY TECHNOLOGIES

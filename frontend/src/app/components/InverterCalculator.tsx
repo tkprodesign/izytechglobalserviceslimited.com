@@ -251,7 +251,7 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
 
         <div className="flex items-center gap-3 border-t border-[#dfe7ee] bg-white px-5 py-4 text-xs leading-relaxed text-[#60758a] sm:px-8">
           <SunMedium size={16} className="shrink-0 text-[#F0A20E]" />
-          <p>Need a precise quote? <a href="#contact" onClick={() => onOpenChange(false)} className="font-bold text-[#298054] underline decoration-[#298054]/35 underline-offset-2 hover:text-[#1f6b46]">Talk to an IZY energy specialist.</a></p>
+          <p>Need a precise quote? <a href="#contact" onClick={() => onOpenChange(false)} className="font-bold text-[#298054] underline decoration-[#298054]/35 underline-offset-2 hover:text-[#1f6b46]">Talk to an Izy Tech Services energy specialist.</a></p>
         </div>
       </DialogContent>
     </Dialog>

@@ -130,7 +130,7 @@ export function About() {
             </h2>
             <div className="space-y-4 text-[#64748b] leading-relaxed text-[0.95rem]" style={{ fontFamily: "var(--font-body)" }}>
               <p>
-                Since our inception in 2018, <span className="whitespace-nowrap">IZY Technologies</span> Global Services Limited has emerged as a leader in the solar energy sector, dedicated to providing innovative and sustainable energy solutions across Nigeria.
+                Since our inception in 2018, <span className="whitespace-nowrap">Izy Technologies Global Services Limited</span> has emerged as a leader in the solar energy sector, dedicated to providing innovative and sustainable energy solutions across Nigeria.
               </p>
               <p>
                 With a strong commitment to excellence and customer satisfaction, we have grown from a small team of solar enthusiasts into a comprehensive energy and technology company — transforming the way individuals and businesses harness solar power for a cleaner, more sustainable future.
@@ -183,7 +183,7 @@ export function About() {
               >
                 <img
                   src="/site-images/about-team.jpg"
-                  alt="IZY Technologies team on site"
+                  alt="Izy Tech Services team on site"
                   className="w-full h-full object-cover"
                   style={{ objectPosition: "center 35%" }}
                 />
@@ -404,7 +404,7 @@ export function About() {
             <div className="flex items-center gap-3 mb-4">
               <div className="w-6 h-px" style={{ background: "#F0A20E" }} />
               <span className="text-xs font-semibold tracking-widest uppercase" style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}>
-                Why Choose IZY
+                Why Choose Izy Tech Services
               </span>
             </div>
             <h2
@@ -417,7 +417,7 @@ export function About() {
                 letterSpacing: "-0.025em",
               }}
             >
-              The <span className="whitespace-nowrap">IZY Technologies</span> Advantage
+              The <span className="whitespace-nowrap">Izy Tech Services</span> Advantage
             </h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">

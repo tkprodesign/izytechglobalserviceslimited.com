@@ -194,7 +194,7 @@ export function StorePage() {
                 className="text-xs font-semibold tracking-widest uppercase"
                 style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}
               >
-                IZY Store
+                Izy Tech Services Store
               </span>
             </div>
             <h1
@@ -210,7 +210,7 @@ export function StorePage() {
               Energy & Tech Products
             </h1>
             <p className="text-white/45 max-w-xl text-base leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-              Quality-guaranteed solar panels, inverters, batteries, CCTV kits and smart home devices — sourced, tested and backed by IZY's engineers.
+              Quality-guaranteed solar panels, inverters, batteries, CCTV kits and smart home devices — sourced, tested and backed by Izy Tech Services engineers.
             </p>
           </motion.div>
         </div>
@@ -318,7 +318,7 @@ export function StorePage() {
               {
                 icon: Shield,
                 title: "After-Sales Support",
-                body: "2-year workmanship warranty on all IZY installations. Emergency support available 24/7.",
+                body: "2-year workmanship warranty on all Izy Tech Services installations. Emergency support available 24/7.",
               },
             ].map(({ icon: Icon, title, body }, i) => (
               <motion.div

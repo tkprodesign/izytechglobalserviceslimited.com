@@ -2,6 +2,8 @@
 
 Official digital platform — React/Vite frontend + Node.js/Express backend + Neon PostgreSQL.
 
+**Brand naming:** The full legal name is **Izy Technologies Global Services Limited**. The preferred short alias is **Izy Tech Services**. Avoid using “IZY” as a standalone company reference in customer-facing copy.
+
 ---
 
 > ## ⚠️ AGENT RULE — READ BEFORE ANY WORK ⚠️

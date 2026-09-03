@@ -55,7 +55,7 @@ export function Store() {
                 className="text-xs font-semibold tracking-widest uppercase"
                 style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}
               >
-                IZY Store
+                Izy Tech Services Store
               </span>
             </div>
             <h2
@@ -76,7 +76,7 @@ export function Store() {
               className="text-[#64748b] text-sm leading-relaxed max-w-xs"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              Quality-tested solar, inverters, CCTV, smart home and electrical products — backed by IZY's engineers.
+              Quality-tested solar, inverters, CCTV, smart home and electrical products — backed by Izy Tech Services engineers.
             </p>
             <Link
               to="/store"

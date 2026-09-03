@@ -20,7 +20,7 @@ const slides = [
     eyebrow: "Nigeria's Premier Energy Solutions Provider",
     titleLines: [["Power", "the", "Future,"], ["Future-Ready", "Solutions,", "Today"]],
     accent: "Today",
-    description: "From solar energy systems to smart homes and industrial wiring — IZY Technologies delivers cutting-edge solutions across Nigeria and beyond.",
+    description: "From solar energy systems to smart homes and industrial wiring — Izy Tech Services delivers cutting-edge solutions across Nigeria and beyond.",
     primaryLabel: "START A PROJECT ENQUIRY",
     secondaryLabel: "OUR SERVICES",
     secondaryHref: "#services",
@@ -29,10 +29,10 @@ const slides = [
   },
   {
     id: "finance",
-    eyebrow: "IZY × ALTPower BY THE ALTERNATIVE BANK",
+    eyebrow: "IZY TECH SERVICES × ALTPOWER BY THE ALTERNATIVE BANK",
     titleLines: [["Pay", "Small", "Small."], ["Power", "Big."]],
     accent: "Big.",
-    description: "Our partnership gives eligible IZY customers a smarter way to fund approved power projects: apply through AltPower for deferred-payment financing, then repay in manageable instalments.",
+    description: "Our partnership gives eligible Izy Tech Services customers a smarter way to fund approved power projects: apply through AltPower for deferred-payment financing, then repay in manageable instalments.",
     primaryLabel: "CALCULATE YOUR INVERTER NEEDS",
     secondaryLabel: "START YOUR APPLICATION",
     secondaryHref: "#contact",
@@ -121,7 +121,7 @@ export function Hero() {
       ref={ref}
       id="home"
       aria-roledescription="carousel"
-      aria-label="IZY Technologies featured messages"
+      aria-label="Izy Tech Services featured messages"
       className="relative min-h-screen flex flex-col overflow-hidden"
       onFocus={event => {
         if (event.currentTarget === event.target || !event.currentTarget.contains(event.relatedTarget as Node | null)) {
@@ -230,7 +230,7 @@ export function Hero() {
                     alt<span className="text-white">power</span>
                   </span>
                   <span className="text-white/35">×</span>
-                  <span className="text-xs font-bold tracking-[0.15em] text-white/85" style={{ fontFamily: "var(--font-ui)" }}>IZY</span>
+                  <span className="text-xs font-bold tracking-[0.12em] text-white/85" style={{ fontFamily: "var(--font-ui)" }}>Izy Tech Services</span>
                   <span className="hidden text-[10px] uppercase tracking-wider text-white/45 sm:inline">Powering access</span>
                 </div>
               )}
