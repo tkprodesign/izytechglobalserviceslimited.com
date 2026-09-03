@@ -7,3 +7,4 @@
 - [Replit config replacement](replit-config-replacement.md) — `.replit` changes require schema-validated replacement rather than direct edits
 - [Resend inbound email routing](email-receiving.md) — Company-domain mail is routed to Resend Receiving through the root MX record
 - [React singleton in Vite](react-vite-singleton.md) — Public Radix components need React and React DOM deduplicated in Vite to avoid invalid hook calls during HMR
+- [Hero carousel autoplay](hero-carousel-autoplay.md) — The full-screen hero carousel must not pause on pointer hover or disable autoplay when reduced motion is enabled
