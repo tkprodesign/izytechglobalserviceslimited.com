@@ -7,6 +7,19 @@ Format: newest first. Dates are UTC.
 
 ## 2026-09-03
 
+### Added — Testimonials management for admin and developer panels
+
+- Added authenticated `GET/POST/PUT/DELETE /api/admin/testimonials` endpoints.
+- Added a shared Testimonials manager at `/admin/testimonials`, available to both admin and developer roles.
+- Added responsive testimonial cards with customer details, rating, result metric, display order, Edit, and Delete actions.
+- Added an Add/Edit slide-over form for name, role, company, testimonial text, rating, avatar initials, metric, and display order.
+- Added required-field and rating validation, automatic avatar initials when omitted, delete confirmation, success toasts, error messages, and authentication expiry handling.
+- Added Testimonials to the shared control-panel navigation.
+
+---
+
+## 2026-09-03
+
 ### Changed — Replaced the installation reel video
 
 - Replaced `frontend/public/site-videos/work-reel-1.mp4` with the newly supplied installation video.

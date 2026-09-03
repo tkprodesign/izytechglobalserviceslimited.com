@@ -21,6 +21,7 @@ Express + TypeScript API for IZY Technologies platform, deployed on Render.
 | GET | `/api/projects/:slug` | Get one published project |
 | GET/POST/PUT/DELETE | `/api/admin/projects` | Manage projects (authenticated admin/developer) |
 | POST | `/api/admin/projects/images/direct-upload` | Create a Cloudflare Images direct-upload URL |
+| GET/POST/PUT/DELETE | `/api/admin/testimonials` | Manage testimonials (authenticated admin/developer) |
 
 ## Local development
 

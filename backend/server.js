@@ -542,6 +542,112 @@ app.get('/api/testimonials', async (_req, res) => {
   }
 });
 
+// ── Admin: Testimonials CRUD ───────────────────────────────────────────────────
+app.get('/api/admin/testimonials', requireAuth, async (_req, res) => {
+  try {
+    const { rows } = await db.query(
+      'SELECT id, name, role, company, text, rating, avatar, metric, sort_order, created_at FROM testimonials ORDER BY sort_order ASC, id ASC'
+    );
+    res.json({ data: rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/testimonials', requireAuth, async (req, res) => {
+  const { name, role, company, text, rating, avatar, metric, sort_order } = req.body || {};
+  const cleanName = String(name || '').trim();
+  const cleanRole = String(role || '').trim();
+  const cleanCompany = String(company || '').trim();
+  const cleanText = String(text || '').trim();
+  const cleanMetric = String(metric || '').trim();
+  const cleanAvatar = String(avatar || '').trim();
+  const numericRating = Number(rating);
+  const numericSortOrder = Number.isFinite(Number(sort_order)) ? Number(sort_order) : 0;
+
+  if (!cleanName || !cleanRole || !cleanCompany || !cleanText || !cleanMetric) {
+    return res.status(400).json({ error: 'name, role, company, text and metric are required' });
+  }
+  if (!Number.isInteger(numericRating) || numericRating < 1 || numericRating > 5) {
+    return res.status(400).json({ error: 'rating must be a whole number from 1 to 5' });
+  }
+  if (numericSortOrder < 0) {
+    return res.status(400).json({ error: 'sort_order cannot be negative' });
+  }
+
+  const initials = cleanName
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(part => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+  try {
+    const { rows } = await db.query(
+      `INSERT INTO testimonials (name, role, company, text, rating, avatar, metric, sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      [cleanName, cleanRole, cleanCompany, cleanText, numericRating, cleanAvatar || initials, cleanMetric, numericSortOrder]
+    );
+    res.status(201).json({ data: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/testimonials/:id', requireAuth, async (req, res) => {
+  const { name, role, company, text, rating, avatar, metric, sort_order } = req.body || {};
+  const cleanName = String(name || '').trim();
+  const cleanRole = String(role || '').trim();
+  const cleanCompany = String(company || '').trim();
+  const cleanText = String(text || '').trim();
+  const cleanMetric = String(metric || '').trim();
+  const cleanAvatar = String(avatar || '').trim();
+  const numericRating = Number(rating);
+  const numericSortOrder = Number.isFinite(Number(sort_order)) ? Number(sort_order) : 0;
+
+  if (!cleanName || !cleanRole || !cleanCompany || !cleanText || !cleanMetric) {
+    return res.status(400).json({ error: 'name, role, company, text and metric are required' });
+  }
+  if (!Number.isInteger(numericRating) || numericRating < 1 || numericRating > 5) {
+    return res.status(400).json({ error: 'rating must be a whole number from 1 to 5' });
+  }
+  if (numericSortOrder < 0) {
+    return res.status(400).json({ error: 'sort_order cannot be negative' });
+  }
+
+  const initials = cleanName
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(part => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+  try {
+    const { rows } = await db.query(
+      `UPDATE testimonials
+       SET name=$1, role=$2, company=$3, text=$4, rating=$5, avatar=$6, metric=$7, sort_order=$8
+       WHERE id=$9 RETURNING *`,
+      [cleanName, cleanRole, cleanCompany, cleanText, numericRating, cleanAvatar || initials, cleanMetric, numericSortOrder, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'testimonial not found' });
+    res.json({ data: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/testimonials/:id', requireAuth, async (req, res) => {
+  try {
+    const result = await db.query('DELETE FROM testimonials WHERE id=$1', [req.params.id]);
+    if (!result.rowCount) return res.status(404).json({ error: 'testimonial not found' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Site Settings: Socials (public read, auth write) ─────────────────────────
 const SOCIAL_KEYS = ['social_facebook','social_instagram','social_whatsapp','social_x','social_linkedin','social_youtube','social_telegram'];
 

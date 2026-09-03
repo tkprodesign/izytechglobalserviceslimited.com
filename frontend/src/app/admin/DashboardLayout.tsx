@@ -21,6 +21,7 @@ import {
   PanelLeftOpen,
   FolderOpen,
   Wrench,
+  MessageSquare,
 } from 'lucide-react';
 
 interface Props {
@@ -76,6 +77,7 @@ export function DashboardLayout({ children }: Props) {
     { to: '/admin/products', label: 'Store Products', icon: ShoppingBag },
     { to: '/admin/enquiries', label: 'Store Enquiries', icon: ClipboardList },
     { to: '/admin/projects', label: 'Projects', icon: FolderOpen },
+    { to: '/admin/testimonials', label: 'Testimonials', icon: MessageSquare },
     { to: '/admin/milestones', label: 'Milestones', icon: Milestone },
     { to: '/admin/founder', label: 'Founder Profile', icon: UserCircle },
     { to: '/dev/email', label: 'Email Manager', icon: Inbox },

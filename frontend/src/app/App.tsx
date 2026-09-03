@@ -71,6 +71,7 @@ import { StoreEnquiriesPage } from "./admin/StoreEnquiriesPage";
 import { MilestonesPage } from "./admin/MilestonesPage";
 import { FounderPage } from "./admin/FounderPage";
 import { ProjectsManagerPage } from "./admin/ProjectsManagerPage";
+import { TestimonialsManagerPage } from "./admin/TestimonialsManagerPage";
 import { SiteAssessmentsPage } from "./admin/SiteAssessmentsPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ServicesPage } from "./pages/ServicesPage";
@@ -156,6 +157,9 @@ export default function App() {
       {/* Projects management — both roles */}
       <Route path="/admin/projects" element={
         <ProtectedRoute><ProjectsManagerPage /></ProtectedRoute>
+      } />
+      <Route path="/admin/testimonials" element={
+        <ProtectedRoute><TestimonialsManagerPage /></ProtectedRoute>
       } />
 
       {/* Company content — both roles */}
