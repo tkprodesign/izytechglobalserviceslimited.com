@@ -48,6 +48,8 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 export interface ContactPayload {
   name: string;
   email: string;
+  phone?: string;
+  service?: string;
   subject?: string;
   message: string;
 }

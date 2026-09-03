@@ -137,7 +137,30 @@ function contactAutoReply({ name, subject, message }) {
       <hr class="divider"/>
       <p class="body-text" style="font-size:13px">While you wait, explore our services or call us directly:</p>
       <p class="body-text" style="font-size:13px">📞 <a href="tel:+2348101262814" style="color:#1a56db">+234 810 126 2814</a></p>
-      <table role="presentation" cellpadding="0" cellspacing="0"><tr><td><a href="https://izytechglobalservices.com/#services" class="cta-btn">Explore Our Services →</a></td></tr></table>
+       <table role="presentation" cellpadding="0" cellspacing="0"><tr><td><a href="https://izytechglobalservices.com/services" class="cta-btn">Explore Our Services →</a></td></tr></table>
+    `,
+  });
+}
+
+function contactNotification({ name, email, phone, service, subject, message }) {
+  return buildEmail({
+    subject: `New website enquiry from ${name}`,
+    preheader: `${name} submitted a new enquiry through the IZY Technologies website.`,
+    bodyHtml: `
+      <h2 class="greeting">New Website Enquiry</h2>
+      <p class="body-text">A visitor has submitted a new enquiry through the IZY Technologies website.</p>
+      <div class="info-box">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Name</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml(name)}</span></td></tr>
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Email</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><a href="mailto:${escHtml(email)}" style="font-size:13px;font-weight:600;color:#1a56db">${escHtml(email)}</a></td></tr>
+          ${phone ? `<tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Phone</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><a href="tel:${escHtml(phone)}" style="font-size:13px;font-weight:600;color:#1a56db">${escHtml(phone)}</a></td></tr>` : ''}
+          ${service ? `<tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Service</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml(service)}</span></td></tr>` : ''}
+          ${subject ? `<tr><td style="padding:8px 0"><span style="font-size:13px;color:#5a6a82;font-weight:500">Subject</span></td><td style="padding:8px 0;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml(subject)}</span></td></tr>` : ''}
+        </table>
+      </div>
+      <hr class="divider"/>
+      <p class="body-text" style="font-size:13px"><strong>Project details</strong></p>
+      <p class="body-text" style="white-space:pre-wrap">${escHtml(message)}</p>
     `,
   });
 }
@@ -180,4 +203,4 @@ function plainTextToHtml(text = '') {
   return `<p class="body-text">${escHtml(text).replace(/\r\n?|\n/g, '<br/>')}</p>`;
 }
 
-module.exports = { buildEmail, contactAutoReply, quoteAutoReply, customEmail, plainTextToHtml };
+module.exports = { buildEmail, contactAutoReply, contactNotification, quoteAutoReply, customEmail, plainTextToHtml };

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Phone, Mail, MapPin, Send, CheckCircle, ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
 import { useSearchParams } from "react-router";
+import { api } from "../../lib/api";
 
 const contactInfo = [
   {
@@ -14,9 +15,9 @@ const contactInfo = [
   {
     icon: Mail,
     label: "Email Us",
-    value: "info@izytechnologies.com",
+    value: "info@izytechglobalservices.com",
     sub: "We reply within 24 hours",
-    href: "mailto:info@izytechnologies.com",
+    href: "mailto:info@izytechglobalservices.com",
   },
   {
     icon: MapPin,
@@ -29,6 +30,8 @@ const contactInfo = [
 
 export function Contact() {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [form, setForm] = useState({ name: "", email: "", phone: "", service: "", message: "" });
   const [searchParams] = useSearchParams();
 
@@ -38,9 +41,25 @@ export function Contact() {
     setForm(f => ({ ...f, service: svc }));
   }, [searchParams]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      await api.contact({
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        service: form.service,
+        subject: `${form.service} enquiry`,
+        message: form.message,
+      });
+      setSubmitted(true);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "We couldn't send your request. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -208,6 +227,7 @@ export function Contact() {
                   </label>
                   <input
                     type="email"
+                    required
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     placeholder="john@company.com"
@@ -253,8 +273,16 @@ export function Contact() {
                   />
                 </div>
 
+                {submitError && (
+                  <p role="alert" className="text-sm text-red-300" style={{ fontFamily: "var(--font-body)" }}>
+                    {submitError}
+                  </p>
+                )}
+
                 <button
                   type="submit"
+                  disabled={submitting}
+                  aria-busy={submitting}
                   className="btn-shimmer w-full py-4 font-bold text-[#041627] flex items-center justify-center gap-2.5 transition-all hover:shadow-[0_8px_30px_rgba(240,162,14,0.4)] hover:scale-[1.01] text-sm tracking-wider"
                   style={{
                     background: "linear-gradient(135deg, #F0A20E 0%, #FFB830 100%)",
@@ -262,7 +290,7 @@ export function Contact() {
                     letterSpacing: "0.07em",
                   }}
                 >
-                  <Send size={15} strokeWidth={2.5} /> SEND MY REQUEST
+                  <Send size={15} strokeWidth={2.5} /> {submitting ? "SENDING..." : "SEND MY REQUEST"}
                 </button>
               </form>
             )}

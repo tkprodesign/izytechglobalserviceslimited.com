@@ -3,6 +3,8 @@ const cors = require('cors');
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const emailRoutes = require('./routes/email');
+const { contactAutoReply, contactNotification } = require('./lib/emailTemplate');
+const { sendResendEmail } = require('./lib/resend');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -471,15 +473,63 @@ app.get('/api/admin/quotes', requireAuth, async (req, res) => {
 
 // ── Admin: Submit contact form (public) ───────────────────────────────────────
 app.post('/api/contact', async (req, res) => {
-  const { name, email, message, subject } = req.body || {};
+  const { name, email, phone, service, message, subject } = req.body || {};
   if (!name || !email || !message) return res.status(400).json({ error: 'name, email and message required' });
   try {
+    const enquirySubject = subject || (service ? `${service} enquiry` : 'Website contact enquiry');
     await db.query(
       'INSERT INTO contact_submissions (name, email, subject, message, created_at) VALUES ($1,$2,$3,$4,NOW())',
-      [name, email, subject || null, message]
+      [name, email, enquirySubject, [
+        phone ? `Phone: ${phone}` : '',
+        service ? `Service: ${service}` : '',
+        message,
+      ].filter(Boolean).join('\n\n')]
     );
+
+    const from = process.env.NOREPLY_EMAIL;
+    const recipient = process.env.INFO_EMAIL;
+    if (!from || !recipient) {
+      console.error('Contact submission saved, but email sender or recipient is not configured');
+      return res.status(500).json({ error: 'Your message was saved, but email notification is not configured.' });
+    }
+
+    const notificationHtml = contactNotification({
+      name, email, phone, service, subject: enquirySubject, message,
+    });
+    const autoReplyHtml = contactAutoReply({
+      name, subject: enquirySubject, message: [
+        phone ? `Phone: ${phone}` : '',
+        service ? `Service: ${service}` : '',
+        message,
+      ].filter(Boolean).join('\n\n'),
+    });
+    const results = await Promise.allSettled([
+      sendResendEmail({
+        from: `IZY Technologies <${from}>`,
+        to: recipient,
+        subject: `New website enquiry: ${enquirySubject}`,
+        html: notificationHtml,
+        text: `New website enquiry from ${name}\n\nEmail: ${email}\n${phone ? `Phone: ${phone}\n` : ''}${service ? `Service: ${service}\n` : ''}\n${message}`,
+        replyTo: email,
+      }),
+      sendResendEmail({
+        from: `IZY Technologies <${from}>`,
+        to: email,
+        subject: "We've received your message — IZY Technologies",
+        html: autoReplyHtml,
+        text: `Hi ${name},\n\nThank you for contacting IZY Technologies Global Services Limited. We've received your message and our team will get back to you within 24–48 hours.\n\n${message}`,
+        replyTo: recipient,
+      }),
+    ]);
+    const failed = results.filter(result => result.status === 'rejected');
+    if (failed.length > 0) {
+      failed.forEach(result => console.error('Contact email delivery error:', result.reason?.message || result.reason));
+      return res.status(502).json({ error: 'Your message was saved, but email delivery failed. Please try again or call us directly.' });
+    }
+
     res.status(201).json({ success: true });
   } catch (err) {
+    console.error('Contact submission error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
