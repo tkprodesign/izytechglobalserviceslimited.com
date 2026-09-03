@@ -27,6 +27,16 @@
   to { left: 180%; }
 }
 
+/* Active hero slide countdown */
+.hero-slide-progress {
+  transform-origin: left center;
+  animation: hero-slide-progress linear both;
+}
+@keyframes hero-slide-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
 /* Service row left-border reveal */
 .service-row {
   position: relative;

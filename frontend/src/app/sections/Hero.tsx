@@ -11,6 +11,9 @@ const stats = [
   { value: 24,   suffix: "/7", label: "Support Available" },
 ];
 
+const SLIDE_DURATION_MS = 5000;
+const SLIDE_DURATION_SECONDS = SLIDE_DURATION_MS / 1000;
+
 const slides = [
   {
     id: "energy",
@@ -76,6 +79,7 @@ export function Hero() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
+  const [secondsRemaining, setSecondsRemaining] = useState(SLIDE_DURATION_SECONDS);
   const reducedMotion = useReducedMotion();
   const slide = slides[activeSlide];
 
@@ -88,15 +92,24 @@ export function Hero() {
   };
 
   const goToSlide = (index: number) => {
+    setSecondsRemaining(SLIDE_DURATION_SECONDS);
     setActiveSlide((index + slides.length) % slides.length);
   };
 
   useEffect(() => {
     if (isPaused) return;
-    const timer = window.setInterval(() => {
+    setSecondsRemaining(SLIDE_DURATION_SECONDS);
+    const slideTimer = window.setInterval(() => {
       setActiveSlide(current => (current + 1) % slides.length);
-    }, 8000);
-    return () => window.clearInterval(timer);
+      setSecondsRemaining(SLIDE_DURATION_SECONDS);
+    }, SLIDE_DURATION_MS);
+    const countdownTimer = window.setInterval(() => {
+      setSecondsRemaining(current => Math.max(1, current - 1));
+    }, 1000);
+    return () => {
+      window.clearInterval(slideTimer);
+      window.clearInterval(countdownTimer);
+    };
   }, [isPaused]);
 
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
@@ -156,7 +169,11 @@ export function Hero() {
         >
           {isPaused ? <Play size={13} fill="currentColor" /> : <Pause size={13} />}
         </button>
-        <div className="flex items-center gap-1.5" role="tablist" aria-label="Hero slides">
+        <div className="flex items-center gap-2" role="tablist" aria-label="Hero slides">
+          <span className="hidden text-[10px] font-semibold uppercase tracking-[0.12em] text-white/45 sm:inline" aria-live="polite">
+            {isPaused ? "Paused" : `Next in ${secondsRemaining}s`}
+          </span>
+          <div className="flex items-center gap-1.5">
           {slides.map((item, index) => (
             <button
               key={item.id}
@@ -165,9 +182,21 @@ export function Hero() {
               aria-selected={activeSlide === index}
               aria-label={`Show ${item.id === "finance" ? "AltPower partnership" : "energy solutions"} slide`}
               onClick={() => goToSlide(index)}
-              className={`h-1.5 transition-all ${activeSlide === index ? "w-8 bg-[#F0A20E]" : "w-4 bg-white/35 hover:bg-white/70"}`}
-            />
+              className={`relative h-1.5 overflow-hidden transition-all ${activeSlide === index ? "w-8 bg-white/25" : "w-4 bg-white/35 hover:bg-white/70"}`}
+            >
+              {activeSlide === index && (
+                <span
+                  aria-hidden="true"
+                  className="hero-slide-progress absolute inset-0 bg-[#F0A20E]"
+                  style={{
+                    animationDuration: `${SLIDE_DURATION_MS}ms`,
+                    animationPlayState: isPaused ? "paused" : "running",
+                  }}
+                />
+              )}
+            </button>
           ))}
+          </div>
         </div>
       </div>
 
