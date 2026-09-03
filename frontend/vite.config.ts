@@ -31,6 +31,8 @@ export default defineConfig(({ mode }) => ({
     tailwindcss(),
   ],
   resolve: {
+    // Keep React singleton across Radix and the application during Vite HMR.
+    dedupe: ['react', 'react-dom'],
     alias: {
       // Alias @ to the src directory
       '@': path.resolve(__dirname, './src'),

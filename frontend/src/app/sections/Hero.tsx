@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ExternalLink, Pause, Play } from "lucide-react";
+import { ArrowRight, Pause, Play } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { useSearchParams } from "react-router";
+import { InverterCalculator } from "../components/InverterCalculator";
 
 const stats = [
   { value: 1000, suffix: "+", label: "Installations" },
@@ -29,7 +30,7 @@ const slides = [
     titleLines: [["Pay", "Small", "Small."], ["Power", "Big."]],
     accent: "Big.",
     description: "Our partnership gives eligible IZY customers a smarter way to fund approved power projects: apply through AltPower for deferred-payment financing, then repay in manageable instalments.",
-    primaryLabel: "EXPLORE ALTPower FINANCING",
+    primaryLabel: "CALCULATE YOUR INVERTER NEEDS",
     secondaryLabel: "START YOUR APPLICATION",
     secondaryHref: "#contact",
     background: "/site-images/project-commercial-solar.jpg",
@@ -74,6 +75,7 @@ export function Hero() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeSlide, setActiveSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
   const reducedMotion = useReducedMotion();
   const slide = slides[activeSlide];
 
@@ -245,15 +247,15 @@ export function Hero() {
 
               <div className="flex flex-wrap gap-3">
                 {slide.id === "finance" ? (
-                  <a
-                    href="https://altpower.ng/"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => setCalculatorOpen(true)}
+                    aria-haspopup="dialog"
                     className="btn-shimmer inline-flex items-center gap-3 px-7 py-3.5 font-bold text-[#041627] transition-all hover:scale-[1.03] hover:shadow-[0_8px_30px_rgba(75,196,122,0.35)] text-sm tracking-wider"
                     style={{ fontFamily: "var(--font-ui)", background: "linear-gradient(135deg, #4BC47A 0%, #8BE0A8 100%)", letterSpacing: "0.06em" }}
                   >
-                    {slide.primaryLabel} <ExternalLink size={14} strokeWidth={2.5} />
-                  </a>
+                    {slide.primaryLabel} <ArrowRight size={14} strokeWidth={2.5} />
+                  </button>
                 ) : (
                   <a
                     href="#contact"
@@ -305,6 +307,7 @@ export function Hero() {
           </div>
         </div>
       </motion.div>
+      <InverterCalculator open={calculatorOpen} onOpenChange={setCalculatorOpen} />
     </section>
   );
 }
