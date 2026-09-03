@@ -7,6 +7,16 @@ Format: newest first. Dates are UTC.
 
 ## 2026-09-03
 
+### Changed — Replaced the installation reel video
+
+- Replaced `frontend/public/site-videos/work-reel-1.mp4` with the newly supplied installation video.
+- Kept the existing shared path, so every page and component using the installation reel now loads the replacement automatically.
+- Preserved the existing card label, play/pause behavior, mute control, looping, and responsive presentation.
+
+---
+
+## 2026-09-03
+
 ### Fixed — Restored branding changes to their requested scope
 
 - Restored the original `IZY TECHNOLOGIES / Global Services Limited` navbar and footer branding.
