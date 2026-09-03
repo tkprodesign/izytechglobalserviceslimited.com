@@ -6,3 +6,4 @@
 - [Service portfolio alignment](service-portfolio-alignment.md) — Service-page claims and imagery should be grounded in matching published project records
 - [Replit config replacement](replit-config-replacement.md) — `.replit` changes require schema-validated replacement rather than direct edits
 - [Resend inbound email routing](email-receiving.md) — Company-domain mail is routed to Resend Receiving through the root MX record
+- [React singleton in Vite](react-vite-singleton.md) — Public Radix components need React and React DOM deduplicated in Vite to avoid invalid hook calls during HMR
