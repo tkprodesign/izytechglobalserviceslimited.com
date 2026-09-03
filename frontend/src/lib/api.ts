@@ -1,8 +1,8 @@
 /**
  * IZY Technologies API client
  *
- * Set VITE_API_URL in your Cloudflare Pages environment variables to point at
- * your Railway backend, e.g. https://izytech-website.up.railway.app
+ * Set VITE_API_URL in the production build environment to point at the
+ * Render backend, e.g. https://izytech-api.onrender.com
  */
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
