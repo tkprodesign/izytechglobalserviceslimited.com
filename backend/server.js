@@ -811,6 +811,7 @@ app.post('/api/site-assessments/:token/payment-proof', async (req, res) => {
        SET payment_proof_url = $1, payment_reference = $2,
            payment_status = 'proof_submitted', status = 'payment_proof_submitted', updated_at = NOW()
        WHERE public_token = $3 AND request_type = 'site_assessment'
+         AND payment_status IN ('pending', 'rejected')
          AND payment_status NOT IN ('confirmed') AND status NOT IN ('cancelled', 'completed')
        RETURNING id`,
       [url, String(reference || name || '').trim().slice(0, 160) || null, req.params.token],
