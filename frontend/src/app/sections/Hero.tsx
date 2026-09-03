@@ -92,12 +92,12 @@ export function Hero() {
   };
 
   useEffect(() => {
-    if (isPaused || reducedMotion) return;
+    if (isPaused) return;
     const timer = window.setInterval(() => {
       setActiveSlide(current => (current + 1) % slides.length);
     }, 8000);
     return () => window.clearInterval(timer);
-  }, [isPaused, reducedMotion]);
+  }, [isPaused]);
 
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "28%"]);
@@ -110,8 +110,6 @@ export function Hero() {
       aria-roledescription="carousel"
       aria-label="IZY Technologies featured messages"
       className="relative min-h-screen flex flex-col overflow-hidden"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
       onFocus={event => {
         if (event.currentTarget === event.target || !event.currentTarget.contains(event.relatedTarget as Node | null)) {
           setIsPaused(true);
