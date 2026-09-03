@@ -15,14 +15,17 @@ interface Account {
   email: string;
   color: string;
   sendOnly: boolean;
+  isVirtual?: boolean;
 }
 
 interface EmailMeta {
   uid: string;
+  source: 'received' | 'sent';
   subject: string;
   from: { name?: string; address?: string } | null;
   to: { name?: string; address?: string } | null;
   date: string | null;
+  status?: string;
   seen: boolean;
   messageId?: string;
 }
@@ -31,6 +34,7 @@ interface EmailBody {
   html: string;
   text: string;
   headers: {
+    source?: 'received' | 'sent';
     subject?: string;
     from?: { name?: string; address?: string } | null;
     to?: { name?: string; address?: string } | null;
@@ -48,8 +52,19 @@ interface Folder {
 }
 
 const FOLDERS: Folder[] = [
+  { name: 'All Mail', key: 'ALL', icon: <Mail size={14} /> },
   { name: 'Inbox', key: 'INBOX', icon: <Inbox size={14} /> },
+  { name: 'Sent', key: 'SENT', icon: <Send size={14} /> },
 ];
+
+const ALL_MAIL_ACCOUNT: Account = {
+  id: 'all',
+  label: 'All Mail',
+  email: 'All configured mailboxes',
+  color: '#0f766e',
+  sendOnly: false,
+  isVirtual: true,
+};
 
 type ThreadHeaders = Pick<EmailBody['headers'], 'messageId' | 'inReplyTo' | 'references'>;
 type ComposeDefaults = { to: string; subject: string; replyHeaders?: ThreadHeaders };
@@ -72,6 +87,12 @@ function initials(name?: string, address?: string) {
 function senderName(from: EmailMeta['from']) {
   if (!from) return 'Unknown';
   return from.name || from.address || 'Unknown';
+}
+
+function listParty(message: EmailMeta) {
+  return message.source === 'sent'
+    ? `To ${senderName(message.to)}`
+    : senderName(message.from);
 }
 
 // ── Compose Modal ─────────────────────────────────────────────────────────────
@@ -246,6 +267,7 @@ export function EmailPage() {
   const [messages, setMessages] = useState<EmailMeta[]>([]);
   const [selected, setSelected] = useState<EmailBody | null>(null);
   const [selectedMeta, setSelectedMeta] = useState<EmailMeta | null>(null);
+  const [bodyView, setBodyView] = useState<'rendered' | 'text'>('rendered');
   const [loadingInbox, setLoadingInbox] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState(false);
   const [inboxError, setInboxError] = useState('');
@@ -267,7 +289,7 @@ export function EmailPage() {
       .then(d => {
         if (!d) return;
         setAccounts(d.accounts || []);
-        if (d.accounts?.length) setActiveAccount(d.accounts[0]);
+        if (d.accounts?.length) setActiveAccount(ALL_MAIL_ACCOUNT);
       });
   }, []);
 
@@ -277,7 +299,6 @@ export function EmailPage() {
     setSelectedMeta(null);
     setInboxError('');
     setInboxNote('');
-    if (acct.sendOnly) return;
     setLoadingInbox(true);
     try {
       const res = await fetch(
@@ -300,10 +321,10 @@ export function EmailPage() {
     if (activeAccount) loadFolder(activeAccount, activeFolder);
   }, [activeAccount, activeFolder]);
 
-  // Reset to Inbox when switching accounts
+  // Reset to the broadest relevant catalog when switching accounts
   function switchAccount(acct: Account) {
     setActiveAccount(acct);
-    setActiveFolder(FOLDERS[0]);
+    setActiveFolder(acct.sendOnly ? FOLDERS[2] : FOLDERS[0]);
     setMobileEmailView('messages');
   }
 
@@ -311,11 +332,12 @@ export function EmailPage() {
     if (!activeAccount) return;
     setSelectedMeta(msg);
     setSelected(null);
+    setBodyView('rendered');
     setMobileEmailView('detail');
     setLoadingMsg(true);
     try {
       const res = await fetch(
-        `${API}/api/dev/email/message/${activeAccount.id}/${encodeURIComponent(msg.uid)}`,
+        `${API}/api/dev/email/message/${activeAccount.id}/${encodeURIComponent(msg.uid)}?source=${msg.source}`,
         { headers }
       );
       const data = await res.json();
@@ -332,15 +354,20 @@ export function EmailPage() {
   function handleReply() {
     if (!selectedMeta) return;
     setComposeDefaults({
-      to: selectedMeta.from?.address || '',
+      to: (selectedMeta.source === 'sent' ? selectedMeta.to?.address : selectedMeta.from?.address) || '',
       subject: `Re: ${selectedMeta.subject || ''}`,
       replyHeaders: selected?.headers,
     });
     setCompose(true);
   }
 
-  // Resend Receiving exposes one virtual Inbox; send-only accounts have none.
-  const visibleFolders = activeAccount?.sendOnly ? [] : FOLDERS;
+  function composeAccountId() {
+    return activeAccount?.isVirtual
+      ? accounts.find(acct => !acct.sendOnly)?.id || accounts[0]?.id || ''
+      : activeAccount?.id || '';
+  }
+
+  const visibleFolders = activeAccount?.sendOnly ? [FOLDERS[2]] : FOLDERS;
 
   return (
     <DashboardLayout>
@@ -360,7 +387,7 @@ export function EmailPage() {
             <span className="text-[11px] font-medium md:hidden" style={{ color: '#8fadc8' }}>Choose an account</span>
           </div>
           <div className="py-2">
-            {accounts.map(acct => (
+            {[ALL_MAIL_ACCOUNT, ...accounts].map(acct => (
               <button
                 key={acct.id}
                 onClick={() => switchAccount(acct)}
@@ -378,13 +405,15 @@ export function EmailPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate" style={{ color: activeAccount?.id === acct.id ? acct.color : '#041627' }}>{acct.label}</p>
-                  <p className="text-xs truncate" style={{ color: '#8fadc8' }}>{acct.sendOnly ? 'Send only' : 'Inbox'}</p>
+                  <p className="text-xs truncate" style={{ color: '#8fadc8' }}>
+                    {acct.isVirtual ? 'All configured mail' : acct.sendOnly ? 'Send only' : 'All mail'}
+                  </p>
                 </div>
               </button>
             ))}
           </div>
 
-          {/* Folders section — Resend Receiving exposes one Inbox */}
+          {/* Folders section */}
           {visibleFolders.length > 0 && (
             <>
               <div className="px-4 pt-4 pb-2 border-t" style={{ borderColor: '#eef1f6' }}>
@@ -468,20 +497,7 @@ export function EmailPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            {activeAccount?.sendOnly ? (
-              <div className="flex flex-col items-center justify-center h-48 px-6 text-center">
-                <Send size={28} style={{ color: '#dce8ff' }} />
-                <p className="text-sm mt-3 font-medium" style={{ color: '#5a6a82' }}>Send-only account</p>
-                <p className="text-xs mt-1" style={{ color: '#8fadc8' }}>This mailbox doesn't have inbox access</p>
-                <button
-                  onClick={() => { setComposeDefaults({ to: '', subject: '' }); setCompose(true); }}
-                  className="mt-4 px-4 py-2 text-sm rounded-lg font-medium text-white"
-                  style={{ background: '#1a56db' }}
-                >
-                  Compose
-                </button>
-              </div>
-            ) : loadingInbox ? (
+            {loadingInbox ? (
               <div className="flex items-center justify-center h-40">
                 <Loader2 size={24} className="animate-spin" style={{ color: '#1a56db' }} />
               </div>
@@ -513,7 +529,7 @@ export function EmailPage() {
                         className="text-sm truncate"
                         style={{ color: '#041627', fontWeight: msg.seen ? 400 : 600 }}
                       >
-                        {senderName(msg.from)}
+                        {listParty(msg)}
                       </span>
                       <span className="text-xs flex-shrink-0" style={{ color: '#8fadc8' }}>{fmt(msg.date)}</span>
                     </div>
@@ -521,7 +537,10 @@ export function EmailPage() {
                       {!msg.seen && (
                         <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: '#1a56db' }} />
                       )}
-                      <p className="text-xs truncate" style={{ color: '#5a6a82' }}>{msg.subject || '(no subject)'}</p>
+                      <p className="text-xs truncate" style={{ color: '#5a6a82' }}>
+                        {msg.subject || '(no subject)'}
+                        {msg.source === 'sent' && msg.status ? ` · ${msg.status}` : ''}
+                      </p>
                     </div>
                   </button>
                 ))}
@@ -573,8 +592,12 @@ export function EmailPage() {
                         {initials(selectedMeta.from?.name, selectedMeta.from?.address)}
                       </div>
                       <div>
-                        <p className="text-sm font-medium" style={{ color: '#041627' }}>{senderName(selectedMeta.from)}</p>
-                        <p className="text-xs" style={{ color: '#8fadc8' }}>{selectedMeta.from?.address} · {fmt(selectedMeta.date)}</p>
+                        <p className="text-sm font-medium" style={{ color: '#041627' }}>
+                          {selectedMeta.source === 'sent' ? 'To' : 'From'} {senderName(selectedMeta.source === 'sent' ? selectedMeta.to : selectedMeta.from)}
+                        </p>
+                        <p className="text-xs" style={{ color: '#8fadc8' }}>
+                          {selectedMeta.source === 'sent' ? selectedMeta.to?.address : selectedMeta.from?.address} · {fmt(selectedMeta.date)}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -599,15 +622,51 @@ export function EmailPage() {
                   </div>
                 ) : selected ? (
                   <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                    {selected.html ? (
+                    {selected.html && (
+                      <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: '#eef1f6' }}>
+                        <span className="text-xs font-medium" style={{ color: '#8fadc8' }}>Message content</span>
+                        <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: '#f0f3f8' }}>
+                          <button
+                            type="button"
+                            onClick={() => setBodyView('rendered')}
+                            className="px-2.5 py-1 text-xs rounded-md font-medium transition-colors"
+                            style={{
+                              background: bodyView === 'rendered' ? '#fff' : 'transparent',
+                              color: bodyView === 'rendered' ? '#1a56db' : '#5a6a82',
+                              boxShadow: bodyView === 'rendered' ? '0 1px 3px rgba(4,22,39,0.08)' : 'none',
+                            }}
+                          >
+                            Rendered
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBodyView('text')}
+                            className="px-2.5 py-1 text-xs rounded-md font-medium transition-colors"
+                            style={{
+                              background: bodyView === 'text' ? '#fff' : 'transparent',
+                              color: bodyView === 'text' ? '#1a56db' : '#5a6a82',
+                              boxShadow: bodyView === 'text' ? '0 1px 3px rgba(4,22,39,0.08)' : 'none',
+                            }}
+                          >
+                            Plain text
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {selected.html && bodyView === 'rendered' ? (
                       <iframe
                         srcDoc={selected.html}
+                        title="Email content"
                         className="w-full"
-                        style={{ minHeight: '500px', border: 'none' }}
-                        sandbox="allow-same-origin"
+                        style={{ minHeight: '500px', height: '500px', border: 'none', background: '#fff' }}
+                        sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
                         onLoad={e => {
                           const iframe = e.currentTarget;
-                          iframe.style.height = iframe.contentDocument?.body?.scrollHeight + 32 + 'px';
+                          const documentHeight = Math.max(
+                            iframe.contentDocument?.documentElement?.scrollHeight || 0,
+                            iframe.contentDocument?.body?.scrollHeight || 0,
+                          );
+                          iframe.style.height = `${Math.max(500, Math.min(documentHeight + 32, 5000))}px`;
                         }}
                       />
                     ) : (
@@ -626,7 +685,7 @@ export function EmailPage() {
       {compose && (
         <ComposeModal
           accounts={accounts}
-          defaultAccount={activeAccount?.id || ''}
+          defaultAccount={composeAccountId()}
           defaultTo={composeDefaults.to}
           defaultSubject={composeDefaults.subject}
           replyHeaders={composeDefaults.replyHeaders}

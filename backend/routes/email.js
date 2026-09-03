@@ -43,6 +43,7 @@ function addressValues(value) {
 }
 
 function emailBelongsToAccount(message, accountEmail) {
+  if (!accountEmail) return true;
   const target = String(accountEmail).toLowerCase();
   return [
     ...addressValues(message.to),
@@ -50,6 +51,12 @@ function emailBelongsToAccount(message, accountEmail) {
     ...addressValues(message.cc),
     ...addressValues(message.bcc),
   ].some(address => address.toLowerCase() === target);
+}
+
+function sentEmailBelongsToAccount(message, accountEmail) {
+  if (!accountEmail) return true;
+  const target = String(accountEmail).toLowerCase();
+  return addressValues(message.from).some(address => address.toLowerCase() === target);
 }
 
 function headerValue(headers, name) {
@@ -62,14 +69,16 @@ function headerValue(headers, name) {
   return key ? headers[key] : undefined;
 }
 
-function messageSummary(message) {
+function messageSummary(message, source) {
   return {
     uid: String(message.id),
+    source,
     subject: message.subject || '(no subject)',
     from: normalizeMailbox(message.from),
     to: normalizeMailbox(message.to),
     date: message.created_at || message.date || null,
-    // Resend Receiving does not expose a persistent read/unread flag.
+    status: message.last_event || undefined,
+    // Resend does not expose a persistent read/unread flag.
     seen: true,
     messageId: message.message_id || headerValue(message.headers, 'message-id') || undefined,
   };
@@ -79,8 +88,26 @@ async function receivedMessages(account) {
   const result = await resendRequest('/emails/receiving?limit=100');
   const data = Array.isArray(result?.data) ? result.data : [];
   return data
-    .filter(message => emailBelongsToAccount(message, account.email))
-    .map(messageSummary)
+    .filter(message => emailBelongsToAccount(message, account?.email))
+    .map(message => messageSummary(message, 'received'))
+    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+}
+
+async function sentMessages(account) {
+  const result = await resendRequest('/emails?limit=100');
+  const data = Array.isArray(result?.data) ? result.data : [];
+  return data
+    .filter(message => sentEmailBelongsToAccount(message, account?.email))
+    .map(message => messageSummary(message, 'sent'))
+    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+}
+
+async function allMessages(account) {
+  const [received, sent] = await Promise.all([
+    receivedMessages(account),
+    sentMessages(account),
+  ]);
+  return [...received, ...sent]
     .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 }
 
@@ -117,12 +144,18 @@ router.get('/inbox/:accountId', async (req, res) => {
 // ── Message body ──────────────────────────────────────────────────────────────
 router.get('/message/:accountId/:uid', async (req, res) => {
   const accounts = getAccounts();
+  const isAllMail = req.params.accountId === 'all';
   const acct = accounts.find(a => a.id === req.params.accountId);
-  if (!acct || acct.sendOnly) return res.status(404).json({ error: 'Not available' });
+  if (!acct && !isAllMail) return res.status(404).json({ error: 'Not available' });
 
   try {
-    const message = await resendRequest(`/emails/receiving/${encodeURIComponent(req.params.uid)}`);
-    if (!emailBelongsToAccount(message, acct.email)) {
+    const source = String(req.query.source || 'received').toLowerCase() === 'sent' ? 'sent' : 'received';
+    const endpoint = source === 'sent' ? '/emails/' : '/emails/receiving/';
+    const message = await resendRequest(`${endpoint}${encodeURIComponent(req.params.uid)}`);
+    const belongsToAccount = source === 'sent'
+      ? sentEmailBelongsToAccount(message, isAllMail ? null : acct.email)
+      : emailBelongsToAccount(message, isAllMail ? null : acct.email);
+    if (!belongsToAccount) {
       return res.status(404).json({ error: 'Message not found for this account' });
     }
     const messageId = message.message_id || headerValue(message.headers, 'message-id');
@@ -132,6 +165,7 @@ router.get('/message/:accountId/:uid', async (req, res) => {
       html: message.html || '',
       text: message.text || '',
       headers: {
+        source,
         subject: message.subject || '',
         from: normalizeMailbox(message.from),
         to: normalizeMailbox(message.to),
@@ -192,30 +226,48 @@ router.post('/send', async (req, res) => {
 // Resend Receiving is inbound-only, so INBOX is the only supported folder.
 router.get('/messages/:accountId/*', async (req, res) => {
   const accounts = getAccounts();
+  const isAllMail = req.params.accountId === 'all';
   const acct = accounts.find(a => a.id === req.params.accountId);
-  if (!acct) return res.status(404).json({ error: 'Account not found' });
-  if (acct.sendOnly) return res.json({ messages: [], note: 'Send-only account' });
-
-  const folder = String(req.params[0] || 'INBOX');
-  if (folder.toUpperCase() !== 'INBOX') {
-    return res.json({
-      messages: [],
-      source: 'resend-receiving',
-      note: 'Resend Receiving provides inbound messages in one Inbox; this folder is not available.',
-    });
+  if (!acct && !isAllMail) return res.status(404).json({ error: 'Account not found' });
+  if (acct?.sendOnly) {
+    const folder = String(req.params[0] || 'SENT').toUpperCase();
+    if (folder !== 'SENT') {
+      return res.json({
+        messages: [],
+        source: 'resend',
+        note: 'This is a send-only account. Only sent messages are available.',
+      });
+    }
   }
 
+  const folder = String(req.params[0] || 'INBOX');
+
   try {
-    const messages = await receivedMessages(acct);
+    const folderKey = folder.toUpperCase();
+    let messages;
+    if (folderKey === 'ALL') {
+      messages = await allMessages(isAllMail ? null : acct);
+    } else if (folderKey === 'SENT') {
+      messages = await sentMessages(isAllMail ? null : acct);
+    } else if (folderKey === 'INBOX') {
+      messages = await receivedMessages(isAllMail ? null : acct);
+    } else {
+      return res.json({
+        messages: [],
+        source: 'resend',
+        note: 'This folder is not available.',
+      });
+    }
+
     res.json({
       messages,
-      source: 'resend-receiving',
+      source: 'resend',
       note: messages.length === 0
-        ? 'No received messages yet. Resend will show inbound mail after the domain MX records point to Resend.'
-        : 'Resend Receiving provides inbound messages in one Inbox; folders and read status are not available.',
+        ? 'No messages found in this catalog.'
+        : 'Showing the latest 100 messages available from Resend.',
     });
   } catch (err) {
-    console.error(`Resend folder error for ${acct.email} [${folder}]:`, err.message);
+    console.error(`Resend folder error for ${acct?.email || 'all accounts'} [${folder}]:`, err.message);
     res.status(err.status || 502).json({ error: err.message, detail: err.detail });
   }
 });
@@ -224,7 +276,11 @@ router.get('/messages/:accountId/*', async (req, res) => {
 router.get('/folders/:accountId', async (req, res) => {
   const accounts = getAccounts();
   const acct = accounts.find(a => a.id === req.params.accountId);
-  res.json({ folders: acct?.sendOnly ? [] : ['INBOX'], source: 'resend-receiving' });
+  if (!acct && req.params.accountId !== 'all') return res.status(404).json({ error: 'Account not found' });
+  res.json({
+    folders: acct?.sendOnly ? ['SENT'] : ['ALL', 'INBOX', 'SENT'],
+    source: 'resend',
+  });
 });
 
 module.exports = router;
