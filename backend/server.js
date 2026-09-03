@@ -2,7 +2,16 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const emailRoutes = require('./routes/email');
+const {
+  contactAutoReply,
+  contactNotification,
+  siteAssessmentAutoReply,
+  siteAssessmentNotification,
+  assessmentChargeEmail,
+} = require('./lib/emailTemplate');
+const { sendResendEmail } = require('./lib/resend');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,12 +28,38 @@ const db = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
+emailRoutes.setArchiveStore({
+  async list(source) {
+    const { rows } = await db.query(
+      'SELECT provider_id FROM email_archives WHERE source = $1',
+      [source],
+    );
+    return rows.map(row => row.provider_id);
+  },
+  async set({ source, providerId, archivedBy }) {
+    await db.query(`
+      INSERT INTO email_archives (source, provider_id, archived_by)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (source, provider_id) DO UPDATE
+        SET archived_at = NOW(), archived_by = EXCLUDED.archived_by
+    `, [source, providerId, archivedBy || null]);
+  },
+  async remove(source, providerId) {
+    await db.query(
+      'DELETE FROM email_archives WHERE source = $1 AND provider_id = $2',
+      [source, providerId],
+    );
+  },
+});
+
 db.connect()
   .then(() => {
     console.log('Connected to Neon PostgreSQL');
     return initTestimonialsTable();
   })
   .then(() => initSiteSettingsTable())
+  .then(() => initEmailArchiveTable())
+  .then(() => initQuoteRequestFields())
   .then(() => initStoreTable())
   .then(() => initMilestonesTable())
   .then(() => initFounderTable())
@@ -202,6 +237,58 @@ function normalizeServiceContent(value) {
   )) return null;
 
   return SERVICE_IDS.map(id => services.find(service => service.id === id));
+}
+
+async function initEmailArchiveTable() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS email_archives (
+      source      TEXT        NOT NULL CHECK (source IN ('received', 'sent')),
+      provider_id TEXT        NOT NULL,
+      archived_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      archived_by TEXT,
+      PRIMARY KEY (source, provider_id)
+    )
+  `);
+}
+
+async function initQuoteRequestFields() {
+  const columns = [
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS request_type TEXT NOT NULL DEFAULT 'quote'`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS public_token TEXT`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS phone TEXT`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS address_line_1 TEXT`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS address_line_2 TEXT`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS city TEXT`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS state TEXT`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS landmark TEXT`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS property_type TEXT`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS project_stage TEXT`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS preferred_visit_date DATE`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS preferred_visit_time TEXT`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS attachments JSONB NOT NULL DEFAULT '[]'::jsonb`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'new'`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS assessment_fee NUMERIC(12,2)`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS payment_status TEXT NOT NULL DEFAULT 'not_requested'`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS payment_instructions TEXT`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS payment_reference TEXT`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS payment_proof_url TEXT`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS payment_notes TEXT`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS payment_requested_at TIMESTAMPTZ`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS payment_confirmed_at TIMESTAMPTZ`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS scheduled_for TIMESTAMPTZ`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS site_notes TEXT`,
+    `ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
+  ];
+  for (const statement of columns) await db.query(statement);
+  await db.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS quote_requests_public_token_idx
+    ON quote_requests (public_token)
+    WHERE public_token IS NOT NULL
+  `);
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS quote_requests_assessment_idx
+    ON quote_requests (request_type, created_at DESC)
+  `);
 }
 
 // Prevent dropped connections from crashing the process — pg Pool will reconnect automatically
@@ -409,7 +496,7 @@ app.delete('/api/admin/store/products/:id', requireAuth, async (req, res) => {
 
 // ── Admin: Store image upload → Cloudflare Images ────────────────────────────
 // The backend only creates a short-lived upload URL. Image bytes go directly
-// from the admin browser to Cloudflare, so Railway never stores the file.
+// from the admin browser to Cloudflare, so the backend host never stores the file.
 app.post('/api/admin/store/images/direct-upload', requireAuth, async (_req, res) => {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken  = process.env.CLOUDFLARE_API_TOKEN;
@@ -610,16 +697,401 @@ app.get('/api/admin/quotes', requireAuth, async (req, res) => {
 
 // ── Admin: Submit contact form (public) ───────────────────────────────────────
 app.post('/api/contact', async (req, res) => {
-  const { name, email, message, subject } = req.body || {};
+  const { name, email, phone, service, message, subject } = req.body || {};
   if (!name || !email || !message) return res.status(400).json({ error: 'name, email and message required' });
   try {
+    const enquirySubject = subject || (service ? `${service} enquiry` : 'Website contact enquiry');
     await db.query(
       'INSERT INTO contact_submissions (name, email, subject, message, created_at) VALUES ($1,$2,$3,$4,NOW())',
-      [name, email, subject || null, message]
+      [name, email, enquirySubject, [
+        phone ? `Phone: ${phone}` : '',
+        service ? `Service: ${service}` : '',
+        message,
+      ].filter(Boolean).join('\n\n')]
     );
+
+    const from = process.env.NOREPLY_EMAIL;
+    const recipient = process.env.INFO_EMAIL;
+    if (!from || !recipient) {
+      console.error('Contact submission saved, but email sender or recipient is not configured');
+      return res.status(500).json({ error: 'Your message was saved, but email notification is not configured.' });
+    }
+
+    const notificationHtml = contactNotification({
+      name, email, phone, service, subject: enquirySubject, message,
+    });
+    const autoReplyHtml = contactAutoReply({
+      name, subject: enquirySubject, message: [
+        phone ? `Phone: ${phone}` : '',
+        service ? `Service: ${service}` : '',
+        message,
+      ].filter(Boolean).join('\n\n'),
+    });
+    const results = await Promise.allSettled([
+      sendResendEmail({
+        from: `IZY Technologies <${from}>`,
+        to: recipient,
+        subject: `New website enquiry: ${enquirySubject}`,
+        html: notificationHtml,
+        text: `New website enquiry from ${name}\n\nEmail: ${email}\n${phone ? `Phone: ${phone}\n` : ''}${service ? `Service: ${service}\n` : ''}\n${message}`,
+        replyTo: email,
+      }),
+      sendResendEmail({
+        from: `IZY Technologies <${from}>`,
+        to: email,
+        subject: "We've received your message — IZY Technologies",
+        html: autoReplyHtml,
+        text: `Hi ${name},\n\nThank you for contacting IZY Technologies Global Services Limited. We've received your message and our team will get back to you within 24–48 hours.\n\n${message}`,
+        replyTo: recipient,
+      }),
+    ]);
+    const failed = results.filter(result => result.status === 'rejected');
+    if (failed.length > 0) {
+      failed.forEach(result => console.error('Contact email delivery error:', result.reason?.message || result.reason));
+      return res.status(502).json({ error: 'Your message was saved, but email delivery failed. Please try again or call us directly.' });
+    }
+
     res.status(201).json({ success: true });
   } catch (err) {
+    console.error('Contact submission error:', err.message);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Public: Site assessment uploads ───────────────────────────────────────────
+// Images go directly from the visitor's browser to Cloudflare Images. This keeps
+// file bytes out of the API process and lets the request store only safe URLs.
+app.post('/api/site-assessments/uploads/direct-upload', async (req, res) => {
+  const MAX_BYTES = 10 * 1024 * 1024;
+  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  const { contentType, fileSize } = req.body || {};
+  const normalizedType = String(contentType || '').toLowerCase().split(';')[0].trim();
+  const size = Number(fileSize);
+
+  if (!ALLOWED_TYPES.includes(normalizedType)) {
+    return res.status(400).json({ error: 'Please upload a JPEG, PNG, WebP, or GIF image.' });
+  }
+  if (!Number.isFinite(size) || size <= 0 || size > MAX_BYTES) {
+    return res.status(400).json({ error: 'Images must be larger than 0 bytes and no larger than 10 MB.' });
+  }
+
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+  const imagesHash = process.env.CLOUDFLARE_IMAGE_HASH || process.env.CLOUDFLARE_IMAGES_HASH;
+  if (!accountId || !apiToken || !imagesHash) {
+    return res.status(500).json({ error: 'Image uploads are not configured on the server.' });
+  }
+
+  try {
+    const cfRes = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v2/direct_upload`,
+      { method: 'POST', headers: { Authorization: `Bearer ${apiToken}` } },
+    );
+    const data = await cfRes.json();
+    if (!data.success) {
+      return res.status(502).json({ error: data.errors?.[0]?.message || 'Could not start image upload.' });
+    }
+    const imageId = data.result?.id;
+    const uploadURL = data.result?.uploadURL;
+    if (!imageId || !uploadURL) {
+      return res.status(502).json({ error: 'Cloudflare did not return an upload URL.' });
+    }
+    res.json({ uploadURL, url: `https://imagedelivery.net/${imagesHash}/${imageId}/public` });
+  } catch (err) {
+    res.status(502).json({ error: err.message });
+  }
+});
+
+function isAllowedAssessmentImage(url) {
+  return typeof url === 'string'
+    && /^https:\/\/imagedelivery\.net\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+\/public(?:$|[?#])/.test(url);
+}
+
+function normalizeAssessmentAttachments(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(item => item && isAllowedAssessmentImage(item.url))
+    .slice(0, 5)
+    .map(item => ({
+      url: item.url,
+      name: String(item.name || 'Site image').slice(0, 120),
+      type: String(item.type || 'image/*').slice(0, 80),
+    }));
+}
+
+// ── Public: Request a paid site assessment ─────────────────────────────────────
+app.post('/api/site-assessments', async (req, res) => {
+  const {
+    name, email, phone, service, propertyType, projectStage,
+    addressLine1, addressLine2, city, state, landmark,
+    preferredVisitDate, preferredVisitTime, details, attachments,
+  } = req.body || {};
+
+  const required = { name, email, phone, service, propertyType, projectStage, addressLine1, city, state, details };
+  const missing = Object.entries(required).filter(([, value]) => !String(value || '').trim()).map(([key]) => key);
+  if (missing.length) {
+    return res.status(400).json({ error: `Please complete the required fields: ${missing.join(', ')}` });
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
+    return res.status(400).json({ error: 'Please provide a valid email address.' });
+  }
+  if (preferredVisitDate && !/^\d{4}-\d{2}-\d{2}$/.test(String(preferredVisitDate))) {
+    return res.status(400).json({ error: 'Preferred visit date must be a valid date.' });
+  }
+
+  const publicToken = crypto.randomUUID();
+  const safeAttachments = normalizeAssessmentAttachments(attachments);
+  try {
+    const { rows } = await db.query(`
+      INSERT INTO quote_requests (
+        name, email, company, service, details, created_at,
+        request_type, public_token, phone, address_line_1, address_line_2,
+        city, state, landmark, property_type, project_stage,
+        preferred_visit_date, preferred_visit_time, attachments, status, payment_status, updated_at
+      ) VALUES (
+        $1,$2,$3,$4,$5,NOW(),
+        'site_assessment',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,
+        'new','not_requested',NOW()
+      )
+      RETURNING id
+    `, [
+      String(name).trim(), String(email).trim(), null, String(service).trim(),
+      String(details).trim(), publicToken, String(phone).trim(),
+      String(addressLine1).trim(), String(addressLine2 || '').trim() || null,
+      String(city).trim(), String(state).trim(), String(landmark || '').trim() || null,
+      String(propertyType).trim(), String(projectStage).trim(),
+      preferredVisitDate || null, String(preferredVisitTime || '').trim() || null,
+      JSON.stringify(safeAttachments),
+    ]);
+
+    const requestId = rows[0].id;
+    const from = process.env.NOREPLY_EMAIL;
+    const recipient = process.env.INFO_EMAIL;
+    if (!from || !recipient) {
+      return res.status(500).json({ error: 'Your request was saved, but email notification is not configured.' });
+    }
+
+    const notificationHtml = siteAssessmentNotification({
+      id: requestId, name, email, phone, service, propertyType, projectStage,
+      addressLine1, addressLine2, city, state, landmark, preferredVisitDate,
+      preferredVisitTime, details,
+    });
+    const autoReplyHtml = siteAssessmentAutoReply({ name, service, publicToken });
+    const results = await Promise.allSettled([
+      sendResendEmail({
+        from: `IZY Technologies <${from}>`,
+        to: recipient,
+        subject: `New site assessment request: ${name}`,
+        html: notificationHtml,
+        text: `New site assessment request #${requestId}\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nService: ${service}\nProperty: ${propertyType}\nProject stage: ${projectStage}\nSite: ${[addressLine1, addressLine2, city, state, landmark].filter(Boolean).join(', ')}\nPreferred visit: ${[preferredVisitDate, preferredVisitTime].filter(Boolean).join(' — ') || 'Not specified'}\n\n${details}`,
+        replyTo: email,
+      }),
+      sendResendEmail({
+        from: `IZY Technologies <${from}>`,
+        to: email,
+        subject: 'Your site assessment request is received — IZY Technologies',
+        html: autoReplyHtml,
+        text: `Hello ${name},\n\nWe received your request for a paid on-site assessment for ${service}. Our team will review your project and location before sending payment instructions.\n\nRequest status: Under review\n\nView request status: https://izytechglobalservices.com/assessment/${publicToken}`,
+        replyTo: recipient,
+      }),
+    ]);
+    const failed = results.filter(result => result.status === 'rejected');
+    if (failed.length) {
+      failed.forEach(result => console.error('Site assessment email error:', result.reason?.message || result.reason));
+      return res.status(502).json({ error: 'Your request was saved, but email delivery failed. Please call us directly if you do not receive a confirmation.' });
+    }
+    res.status(201).json({ success: true, requestId, token: publicToken });
+  } catch (err) {
+    console.error('Site assessment submission error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+function publicAssessmentStatus(row) {
+  return {
+    requestId: row.id,
+    name: row.name,
+    service: row.service,
+    status: row.status,
+    paymentStatus: row.payment_status,
+    assessmentFee: row.assessment_fee,
+    paymentInstructions: row.payment_instructions,
+    preferredVisitDate: row.preferred_visit_date,
+    preferredVisitTime: row.preferred_visit_time,
+    scheduledFor: row.scheduled_for,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+app.get('/api/site-assessments/:token', async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT id, name, service, status, payment_status, assessment_fee, payment_instructions,
+              preferred_visit_date, preferred_visit_time, scheduled_for, created_at, updated_at
+       FROM quote_requests WHERE public_token = $1 AND request_type = 'site_assessment'`,
+      [req.params.token],
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Assessment request not found.' });
+    res.json({ data: publicAssessmentStatus(rows[0]) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/site-assessments/:token/payment-proof', async (req, res) => {
+  const { url, name, reference } = req.body || {};
+  if (!isAllowedAssessmentImage(url)) {
+    return res.status(400).json({ error: 'Please upload a valid receipt or invoice image.' });
+  }
+  try {
+    const { rows } = await db.query(
+      `UPDATE quote_requests
+       SET payment_proof_url = $1, payment_reference = $2,
+           payment_status = 'proof_submitted', status = 'payment_proof_submitted', updated_at = NOW()
+       WHERE public_token = $3 AND request_type = 'site_assessment'
+         AND payment_status IN ('pending', 'rejected')
+         AND payment_status NOT IN ('confirmed') AND status NOT IN ('cancelled', 'completed')
+       RETURNING id`,
+      [url, String(reference || name || '').trim().slice(0, 160) || null, req.params.token],
+    );
+    if (!rows.length) return res.status(404).json({ error: 'This request cannot accept payment proof.' });
+    res.json({ success: true, status: 'payment_proof_submitted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Admin: Site assessment queue ───────────────────────────────────────────────
+app.get('/api/admin/site-assessments', requireAuth, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 100, 500);
+    const status = String(req.query.status || '').trim();
+    const values = [];
+    const where = [`request_type = 'site_assessment'`];
+    if (status) {
+      values.push(status);
+      where.push(`status = $${values.length}`);
+    }
+    values.push(limit);
+    const { rows } = await db.query(
+      `SELECT * FROM quote_requests WHERE ${where.join(' AND ')} ORDER BY created_at DESC LIMIT $${values.length}`,
+      values,
+    );
+    res.json({ data: rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/site-assessments/:id', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT * FROM quote_requests WHERE id = $1 AND request_type = 'site_assessment'`,
+      [req.params.id],
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Site assessment not found.' });
+    res.json({ data: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/admin/site-assessments/:id', requireAuth, async (req, res) => {
+  const {
+    status, paymentStatus, assessmentFee, paymentInstructions,
+    paymentReference, paymentNotes, scheduledFor, siteNotes,
+  } = req.body || {};
+  const validStatuses = ['new', 'under_review', 'charge_sent', 'payment_proof_submitted', 'paid', 'scheduled', 'completed', 'proposal_sent', 'cancelled'];
+  const validPaymentStatuses = ['not_requested', 'pending', 'proof_submitted', 'confirmed', 'rejected'];
+  if (status !== undefined && !validStatuses.includes(status)) {
+    return res.status(400).json({ error: 'Invalid assessment status.' });
+  }
+  if (paymentStatus !== undefined && !validPaymentStatuses.includes(paymentStatus)) {
+    return res.status(400).json({ error: 'Invalid payment status.' });
+  }
+  const fee = assessmentFee === undefined || assessmentFee === null || assessmentFee === ''
+    ? null : Number(assessmentFee);
+  if (fee !== null && (!Number.isFinite(fee) || fee <= 0)) {
+    return res.status(400).json({ error: 'Assessment fee must be a positive amount.' });
+  }
+  try {
+    const { rows } = await db.query(`
+      UPDATE quote_requests
+      SET status = COALESCE($1, status),
+          payment_status = COALESCE($2, payment_status),
+          assessment_fee = COALESCE($3, assessment_fee),
+          payment_instructions = COALESCE($4, payment_instructions),
+          payment_reference = COALESCE($5, payment_reference),
+          payment_notes = COALESCE($6, payment_notes),
+          scheduled_for = COALESCE($7::timestamptz, scheduled_for),
+          site_notes = COALESCE($8, site_notes),
+          payment_confirmed_at = CASE
+            WHEN $2 = 'confirmed' THEN COALESCE(payment_confirmed_at, NOW())
+            ELSE payment_confirmed_at
+          END,
+          updated_at = NOW()
+      WHERE id = $9 AND request_type = 'site_assessment'
+      RETURNING *
+    `, [
+      status ?? null, paymentStatus ?? null, fee,
+      paymentInstructions === undefined ? null : String(paymentInstructions).trim(),
+      paymentReference === undefined ? null : String(paymentReference).trim(),
+      paymentNotes === undefined ? null : String(paymentNotes).trim(),
+      scheduledFor || null, siteNotes === undefined ? null : String(siteNotes).trim(),
+      req.params.id,
+    ]);
+    if (!rows.length) return res.status(404).json({ error: 'Site assessment not found.' });
+    res.json({ data: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/site-assessments/:id/send-charge', requireAuth, async (req, res) => {
+  const { assessmentFee, paymentInstructions, currency = 'NGN' } = req.body || {};
+  const fee = Number(assessmentFee);
+  if (!Number.isFinite(fee) || fee <= 0 || !String(paymentInstructions || '').trim()) {
+    return res.status(400).json({ error: 'A positive assessment fee and payment instructions are required.' });
+  }
+  const from = process.env.NOREPLY_EMAIL;
+  if (!from) return res.status(500).json({ error: 'No-reply email is not configured.' });
+
+  try {
+    const { rows } = await db.query(
+      `SELECT id, name, email, service, public_token FROM quote_requests WHERE id = $1 AND request_type = 'site_assessment'`,
+      [req.params.id],
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Site assessment not found.' });
+    const assessment = rows[0];
+    const html = assessmentChargeEmail({
+      name: assessment.name,
+      service: assessment.service,
+      fee: fee.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      currency: String(currency).slice(0, 8).toUpperCase(),
+      instructions: String(paymentInstructions).trim(),
+      publicToken: assessment.public_token,
+    });
+    await sendResendEmail({
+      from: `IZY Technologies <${from}>`,
+      to: assessment.email,
+      subject: `Site assessment charge — IZY Technologies`,
+      html,
+      text: `Hello ${assessment.name},\n\nYour site assessment fee is ${String(currency).toUpperCase()} ${fee.toLocaleString('en-NG', { minimumFractionDigits: 2 })}.\n\nPayment instructions:\n${String(paymentInstructions).trim()}\n\nSubmit payment proof: https://izytechglobalservices.com/assessment/${assessment.public_token}`,
+      replyTo: process.env.INFO_EMAIL || from,
+    });
+    const { rows: updated } = await db.query(`
+      UPDATE quote_requests
+      SET assessment_fee = $1, payment_instructions = $2,
+          payment_status = 'pending', status = 'charge_sent',
+          payment_requested_at = NOW(), updated_at = NOW()
+      WHERE id = $3 AND request_type = 'site_assessment'
+      RETURNING *
+    `, [fee, String(paymentInstructions).trim(), req.params.id]);
+    res.json({ success: true, data: updated[0] });
+  } catch (err) {
+    console.error('Site assessment charge error:', err.message);
+    res.status(err.status || 502).json({ error: err.message });
   }
 });
 

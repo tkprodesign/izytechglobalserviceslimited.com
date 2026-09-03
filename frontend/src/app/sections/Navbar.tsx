@@ -213,7 +213,7 @@ export function Navbar() {
             className="px-5 py-2.5 text-sm font-semibold transition-all hover:opacity-90 bg-[#C8971A] text-[#041627]"
             style={{ fontFamily: "var(--font-ui)", borderRadius: 0 }}
           >
-            Get a Free Quote
+            Start a Project Enquiry
           </a>
         </div>
 
@@ -316,7 +316,7 @@ export function Navbar() {
               style={{ background: "#C8971A", borderRadius: 0 }}
               onClick={() => setMobileOpen(false)}
             >
-              Get a Free Quote
+              Start a Project Enquiry
             </a>
           </div>
         </div>

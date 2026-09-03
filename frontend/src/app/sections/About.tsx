@@ -323,31 +323,50 @@ export function About() {
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="mb-20 border border-[#e8edf3] overflow-hidden"
           >
-            <div className="grid lg:grid-cols-3">
+            <div className="grid lg:grid-cols-[minmax(18rem,0.9fr)_minmax(0,1.6fr)]">
               {/* Photo */}
               <div
-                className="flex items-center justify-center p-10 lg:p-14"
+                className="group relative min-h-[320px] overflow-hidden sm:min-h-[390px] lg:min-h-[460px]"
                 style={{ background: "linear-gradient(135deg, #0d1b2e 0%, #1a3a5c 100%)" }}
               >
                 {founder.photo_url ? (
-                  <img
+                  <motion.img
                     src={founder.photo_url}
                     alt={founder.name}
-                    className="w-36 h-36 rounded-full object-cover object-top ring-4"
-                    style={{ ringColor: "rgba(240,162,14,0.4)" }}
+                    className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                    style={{ objectPosition: "center 18%" }}
                   />
                 ) : (
-                  <div
-                    className="w-36 h-36 rounded-full flex items-center justify-center text-white"
-                    style={{ background: "rgba(240,162,14,0.15)", border: "2px dashed rgba(240,162,14,0.4)" }}
-                  >
-                    <User size={48} style={{ color: "rgba(240,162,14,0.6)" }} />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div
+                      className="flex h-32 w-32 items-center justify-center rounded-full text-white sm:h-40 sm:w-40"
+                      style={{ background: "rgba(240,162,14,0.15)", border: "2px dashed rgba(240,162,14,0.4)" }}
+                    >
+                      <User size={56} style={{ color: "rgba(240,162,14,0.6)" }} />
+                    </div>
                   </div>
                 )}
+                <div
+                  className="absolute inset-0"
+                  style={{ background: "linear-gradient(to top, rgba(4,22,39,0.82) 0%, rgba(4,22,39,0.08) 52%, transparent 100%)" }}
+                />
+                <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between gap-4 sm:bottom-7 sm:left-8 sm:right-8">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#F0A20E]" style={{ fontFamily: "var(--font-ui)" }}>
+                      Leadership
+                    </p>
+                    <p className="mt-1 text-lg font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
+                      Founder & CEO
+                    </p>
+                  </div>
+                  <div className="h-8 w-8 flex-shrink-0 border border-[#F0A20E]/60 text-center text-lg leading-7 text-[#F0A20E]">
+                    I
+                  </div>
+                </div>
               </div>
 
               {/* Details */}
-              <div className="lg:col-span-2 p-10 lg:p-14 flex flex-col justify-center">
+              <div className="flex flex-col justify-center p-7 sm:p-10 lg:p-14">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-6 h-px" style={{ background: "#F0A20E" }} />
                   <span

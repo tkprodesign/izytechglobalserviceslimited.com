@@ -14,7 +14,7 @@ description: Governing charter for all development on the IZY Technologies websi
 | Layer | Service |
 |---|---|
 | Frontend | Cloudflare Pages (direct GitHub integration — NO GitHub Actions) |
-| Backend | Railway (`/backend` root directory) |
+| Backend | Render (`/backend` root directory) |
 | Database | Neon PostgreSQL |
 | Repo | GitHub (`tkprodesign/izytechglobalserviceslimited.com`) |
 | Dev assistant | Replit Agent |
@@ -24,9 +24,9 @@ Custom domain: purchased, to be connected. Until then use Cloudflare Pages domai
 ## Infrastructure Status (as of 2026-07-17)
 - ✓ Repository recovered — fresh Git history at new repo
 - ✓ Cloudflare Pages configured
-- ✓ Railway project created
+- ✓ Render service configured
 - ✓ Neon database created
-- ⏳ Railway backend deployment — in progress (npm install fix pushed)
+- ⏳ Render backend deployment — verify the current GitHub-connected build
 - ⏳ Backend ↔ Neon connection — pending
 - ⏳ Frontend ↔ Backend API — pending
 - ⏳ Custom domain — pending
@@ -37,17 +37,17 @@ Custom domain: purchased, to be connected. Until then use Cloudflare Pages domai
 GitHub Repository
       ↓
 Cloudflare Pages (Frontend)
-      ↓
-Railway (Backend)
+       ↓
+Render (Backend)
       ↓
 Neon PostgreSQL (Database)
 ```
 
 - GitHub is the single source of truth.
 - **Never deploy directly from Replit.** Every change must be committed to GitHub first.
-- Railway and Cloudflare must always deploy from GitHub, never from local state.
+- Render and Cloudflare must always deploy from GitHub, never from local state.
 - Before making any infrastructure change, verify the current production configuration — never assume.
-- **Never recreate** Cloudflare Pages, Railway services, or the Neon database unless explicitly instructed.
+- **Never recreate** Cloudflare Pages, Render services, or the Neon database unless explicitly instructed.
 
 ## .github/workflows — STRICT RULE
 **Never create, modify, or manage any files inside `.github/workflows/`.**

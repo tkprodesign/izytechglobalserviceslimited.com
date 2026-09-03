@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
-import { Phone, Mail, MapPin, Send, CheckCircle, ArrowRight } from "lucide-react";
+import { Phone, Mail, MapPin } from "lucide-react";
 import { motion } from "motion/react";
-import { useSearchParams } from "react-router";
+import { SiteAssessmentForm } from "../components/SiteAssessmentForm";
 
 const contactInfo = [
   {
@@ -14,9 +13,9 @@ const contactInfo = [
   {
     icon: Mail,
     label: "Email Us",
-    value: "info@izytechnologies.com",
+    value: "info@izytechglobalservices.com",
     sub: "We reply within 24 hours",
-    href: "mailto:info@izytechnologies.com",
+    href: "mailto:info@izytechglobalservices.com",
   },
   {
     icon: MapPin,
@@ -28,21 +27,6 @@ const contactInfo = [
 ];
 
 export function Contact() {
-  const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", service: "", message: "" });
-  const [searchParams] = useSearchParams();
-
-  // Sync service field with ?service= param — clears back to default when param is absent
-  useEffect(() => {
-    const svc = searchParams.get("service") ?? "";
-    setForm(f => ({ ...f, service: svc }));
-  }, [searchParams]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitted(true);
-  };
-
   return (
     <section id="contact" className="py-28 overflow-hidden" style={{ background: "#041627" }}>
       <div className="max-w-7xl mx-auto px-6">
@@ -67,7 +51,7 @@ export function Contact() {
             Start Your Project Today
           </h2>
           <p className="text-white/45 text-[0.95rem] leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-            Get a free consultation and quote. Our team responds within 24 hours.
+            For projects that require a site visit, submit your details and location. We review every request before sending the assessment charge.
           </p>
         </div>
 
@@ -146,126 +130,7 @@ export function Contact() {
             className="lg:col-span-3 p-8 border border-white/8"
             style={{ background: "rgba(255,255,255,0.04)" }}
           >
-            {submitted ? (
-              <div className="h-full flex flex-col items-center justify-center text-center py-12">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 18 }}
-                  className="w-16 h-16 flex items-center justify-center mb-5"
-                  style={{ background: "rgba(240,162,14,0.15)" }}
-                >
-                  <CheckCircle size={32} style={{ color: "#F0A20E" }} />
-                </motion.div>
-                <h3 className="text-white mb-2" style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", fontWeight: 700 }}>
-                  Message Received
-                </h3>
-                <p className="text-white/40 text-sm" style={{ fontFamily: "var(--font-body)" }}>
-                  Thank you. Our team will contact you within 24 hours to discuss your project.
-                </p>
-                <button
-                  onClick={() => setSubmitted(false)}
-                  className="mt-6 text-sm font-semibold hover:underline"
-                  style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}
-                >
-                  Send another message
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <h3
-                  className="text-white mb-6"
-                  style={{ fontFamily: "var(--font-display)", fontSize: "1.15rem", fontWeight: 700 }}
-                >
-                  Request a Free Quote
-                </h3>
-
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {[
-                    { label: "Full Name", key: "name", type: "text", placeholder: "John Adeyemi", required: true },
-                    { label: "Phone Number", key: "phone", type: "tel", placeholder: "+234 810 126 2814", required: true },
-                  ].map(({ label, key, type, placeholder, required }) => (
-                    <div key={key}>
-                      <label className="block text-xs font-semibold text-white/35 mb-2 uppercase tracking-wide" style={{ fontFamily: "var(--font-ui)" }}>
-                        {label} {required && "*"}
-                      </label>
-                      <input
-                        type={type}
-                        required={required}
-                        value={form[key as keyof typeof form]}
-                        onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                        placeholder={placeholder}
-                        className="w-full px-4 py-3 border border-white/10 text-white placeholder:text-white/20 focus:outline-none focus:border-[#F0A20E]/50 focus:ring-1 focus:ring-[#F0A20E]/30 transition-all text-sm bg-transparent"
-                        style={{ fontFamily: "var(--font-body)" }}
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-white/35 mb-2 uppercase tracking-wide" style={{ fontFamily: "var(--font-ui)" }}>
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    placeholder="john@company.com"
-                    className="w-full px-4 py-3 border border-white/10 text-white placeholder:text-white/20 focus:outline-none focus:border-[#F0A20E]/50 focus:ring-1 focus:ring-[#F0A20E]/30 transition-all text-sm bg-transparent"
-                    style={{ fontFamily: "var(--font-body)" }}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-white/35 mb-2 uppercase tracking-wide" style={{ fontFamily: "var(--font-ui)" }}>
-                    Service Required *
-                  </label>
-                  <select
-                    required
-                    value={form.service}
-                    onChange={(e) => setForm({ ...form, service: e.target.value })}
-                    className="w-full px-4 py-3 border border-white/10 text-white focus:outline-none focus:border-[#F0A20E]/50 focus:ring-1 focus:ring-[#F0A20E]/30 transition-all text-sm bg-[#041627]"
-                    style={{ fontFamily: "var(--font-body)" }}
-                  >
-                    <option value="" className="text-white/30">Select a service...</option>
-                    <option>Solar Energy Systems</option>
-                    <option>Industrial Wiring</option>
-                    <option>Smart Home Automation</option>
-                    <option>CCTV & Security</option>
-                    <option>IT & Tech Services</option>
-                    <option>General Electrical</option>
-                    <option>Multiple Services</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-white/35 mb-2 uppercase tracking-wide" style={{ fontFamily: "var(--font-ui)" }}>
-                    Project Details *
-                  </label>
-                  <textarea
-                    required
-                    rows={4}
-                    value={form.message}
-                    onChange={(e) => setForm({ ...form, message: e.target.value })}
-                    placeholder="Describe your project, location, and any specific requirements..."
-                    className="w-full px-4 py-3 border border-white/10 text-white placeholder:text-white/20 focus:outline-none focus:border-[#F0A20E]/50 focus:ring-1 focus:ring-[#F0A20E]/30 transition-all text-sm resize-none bg-transparent"
-                    style={{ fontFamily: "var(--font-body)" }}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="btn-shimmer w-full py-4 font-bold text-[#041627] flex items-center justify-center gap-2.5 transition-all hover:shadow-[0_8px_30px_rgba(240,162,14,0.4)] hover:scale-[1.01] text-sm tracking-wider"
-                  style={{
-                    background: "linear-gradient(135deg, #F0A20E 0%, #FFB830 100%)",
-                    fontFamily: "var(--font-ui)",
-                    letterSpacing: "0.07em",
-                  }}
-                >
-                  <Send size={15} strokeWidth={2.5} /> SEND MY REQUEST
-                </button>
-              </form>
-            )}
+            <SiteAssessmentForm dark />
           </motion.div>
         </div>
       </div>

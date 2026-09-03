@@ -429,7 +429,7 @@ export function AboutPage() {
                 className="inline-flex items-center justify-center gap-3 px-9 py-4 font-bold text-[#041627] text-sm tracking-wider hover:opacity-90 transition-opacity"
                 style={{ background: "linear-gradient(135deg,#F0A20E 0%,#FFB830 100%)", fontFamily: "var(--font-ui)", letterSpacing: "0.08em" }}
               >
-                GET A FREE QUOTE <ArrowRight size={15} />
+                START A PROJECT ENQUIRY <ArrowRight size={15} />
               </Link>
               <Link
                 to="/services"

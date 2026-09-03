@@ -180,7 +180,7 @@ export function Services() {
               letterSpacing: "0.07em",
             }}
           >
-            FREE ASSESSMENT <ArrowRight size={14} strokeWidth={2.5} />
+            REQUEST ASSESSMENT <ArrowRight size={14} strokeWidth={2.5} />
           </a>
         </div>
       </div>

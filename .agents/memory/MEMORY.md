@@ -4,3 +4,5 @@
 - [Store image storage](cloudflare-image-uploads.md) — Product image bytes bypass Railway and upload directly to Cloudflare Images
 - [Schema rollout safety](schema-rollout-safety.md) — Additive Neon schema changes need idempotent startup initialization and conflict-safe seed inserts
 - [Service portfolio alignment](service-portfolio-alignment.md) — Service-page claims and imagery should be grounded in matching published project records
+- [Replit config replacement](replit-config-replacement.md) — `.replit` changes require schema-validated replacement rather than direct edits
+- [Resend inbound email routing](email-receiving.md) — Company-domain mail is routed to Resend Receiving through the root MX record

@@ -3,6 +3,8 @@
  * Usage: buildEmail({ subject, preheader, bodyHtml, footerNote })
  */
 
+const EMAIL_LOGO_URL = 'https://izytechglobalservices.com/favicon.png';
+
 function buildEmail({ subject = '', preheader = '', bodyHtml = '', footerNote = '' } = {}) {
   return `<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
@@ -20,11 +22,9 @@ function buildEmail({ subject = '', preheader = '', bodyHtml = '', footerNote = 
     body{margin:0;padding:0;background:#f0f3f8;font-family:'Inter',Arial,sans-serif}
     .wrapper{background:#f0f3f8;padding:40px 16px}
     .container{max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(4,22,39,0.08)}
-    .header{background:#041627;padding:32px 40px;text-align:center}
-    .logo-badge{display:inline-flex;align-items:center;gap:12px}
-    .logo-box{width:44px;height:44px;background:#1a56db;border-radius:10px;display:inline-block;line-height:44px;text-align:center;font-weight:700;font-size:14px;color:#ffffff;letter-spacing:0.5px;vertical-align:middle}
-    .logo-text{font-size:18px;font-weight:700;color:#ffffff;vertical-align:middle;letter-spacing:-0.3px}
-    .logo-sub{font-size:11px;color:#8fadc8;letter-spacing:0.5px;text-transform:uppercase;display:block;margin-top:2px}
+    .header{background:#041627;padding:28px 40px;text-align:left}
+    .logo-text{font-size:14px;font-weight:700;color:#ffffff;vertical-align:middle;letter-spacing:0.025em;text-transform:uppercase}
+    .logo-sub{font-size:9px;color:rgba(255,255,255,0.5);letter-spacing:0.18em;text-transform:uppercase;display:block;margin-top:3px}
     .accent-bar{height:4px;background:linear-gradient(90deg,#F0A20E 0%,#f6c24a 50%,#1a56db 100%)}
     .body{padding:40px}
     .greeting{font-size:22px;font-weight:700;color:#041627;margin:0 0 8px 0}
@@ -45,7 +45,7 @@ function buildEmail({ subject = '', preheader = '', bodyHtml = '', footerNote = 
     .social-icons{margin:16px 0 0}
     @media only screen and (max-width:600px){
       .body{padding:28px 24px}
-      .header{padding:24px}
+       .header{padding:24px}
       .footer{padding:24px}
     }
   </style>
@@ -59,17 +59,17 @@ function buildEmail({ subject = '', preheader = '', bodyHtml = '', footerNote = 
         <td class="header">
           <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
             <tr>
-              <td style="text-align:center">
-                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto">
+              <td style="text-align:left">
+                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0">
                   <tr>
                     <td>
                       <table role="presentation" cellpadding="0" cellspacing="0">
                         <tr>
-                          <td class="logo-box">IZY</td>
+                          <td><img src="${EMAIL_LOGO_URL}" width="36" height="36" alt="IZY Technologies" style="display:block;width:36px;height:36px" /></td>
                           <td style="width:12px"></td>
                           <td>
-                            <p style="margin:0;font-size:18px;font-weight:700;color:#ffffff;font-family:'Inter',Arial,sans-serif;letter-spacing:-0.3px">IZY Technologies</p>
-                            <p style="margin:4px 0 0;font-size:11px;color:#8fadc8;font-family:'Inter',Arial,sans-serif;letter-spacing:0.5px;text-transform:uppercase">Global Services Limited</p>
+                            <p style="margin:0;font-size:14px;font-weight:700;color:#ffffff;font-family:'Inter',Arial,sans-serif;letter-spacing:0.025em;text-transform:uppercase">IZY TECHNOLOGIES</p>
+                            <p style="margin:3px 0 0;font-size:9px;color:rgba(255,255,255,0.5);font-family:'Inter',Arial,sans-serif;letter-spacing:0.18em;text-transform:uppercase">Global Services Limited</p>
                           </td>
                         </tr>
                       </table>
@@ -99,8 +99,8 @@ function buildEmail({ subject = '', preheader = '', bodyHtml = '', footerNote = 
           </p>
           <div class="footer-links">
             <a href="https://izytechglobalservices.com">Website</a>
-            <a href="https://izytechglobalservices.com/#contact">Contact</a>
-            <a href="https://izytechglobalservices.com/#services">Services</a>
+            <a href="https://izytechglobalservices.com/contact">Contact</a>
+            <a href="https://izytechglobalservices.com/services">Services</a>
           </div>
           ${footerNote ? `<p class="footer-fine">${escHtml(footerNote)}</p>` : ''}
           <p class="footer-fine" style="margin-top:8px">© ${new Date().getFullYear()} IZY Technologies Global Services Limited. All rights reserved.</p>
@@ -135,7 +135,30 @@ function contactAutoReply({ name, subject, message }) {
       <hr class="divider"/>
       <p class="body-text" style="font-size:13px">While you wait, explore our services or call us directly:</p>
       <p class="body-text" style="font-size:13px">📞 <a href="tel:+2348101262814" style="color:#1a56db">+234 810 126 2814</a></p>
-      <table role="presentation" cellpadding="0" cellspacing="0"><tr><td><a href="https://izytechglobalservices.com/#services" class="cta-btn">Explore Our Services →</a></td></tr></table>
+       <table role="presentation" cellpadding="0" cellspacing="0"><tr><td><a href="https://izytechglobalservices.com/services" class="cta-btn">Explore Our Services →</a></td></tr></table>
+    `,
+  });
+}
+
+function contactNotification({ name, email, phone, service, subject, message }) {
+  return buildEmail({
+    subject: `New website enquiry from ${name}`,
+    preheader: `${name} submitted a new enquiry through the IZY Technologies website.`,
+    bodyHtml: `
+      <h2 class="greeting">New Website Enquiry</h2>
+      <p class="body-text">A visitor has submitted a new enquiry through the IZY Technologies website.</p>
+      <div class="info-box">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Name</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml(name)}</span></td></tr>
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Email</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><a href="mailto:${escHtml(email)}" style="font-size:13px;font-weight:600;color:#1a56db">${escHtml(email)}</a></td></tr>
+          ${phone ? `<tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Phone</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><a href="tel:${escHtml(phone)}" style="font-size:13px;font-weight:600;color:#1a56db">${escHtml(phone)}</a></td></tr>` : ''}
+          ${service ? `<tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Service</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml(service)}</span></td></tr>` : ''}
+          ${subject ? `<tr><td style="padding:8px 0"><span style="font-size:13px;color:#5a6a82;font-weight:500">Subject</span></td><td style="padding:8px 0;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml(subject)}</span></td></tr>` : ''}
+        </table>
+      </div>
+      <hr class="divider"/>
+      <p class="body-text" style="font-size:13px"><strong>Project details</strong></p>
+      <p class="body-text" style="white-space:pre-wrap">${escHtml(message)}</p>
     `,
   });
 }
@@ -162,9 +185,83 @@ function quoteAutoReply({ name, service, company }) {
   });
 }
 
-function customEmail({ toName, greeting, bodyHtml: body, ctaLabel, ctaUrl }) {
+function siteAssessmentNotification({
+  id, name, email, phone, service, propertyType, projectStage,
+  addressLine1, addressLine2, city, state, landmark, preferredVisitDate,
+  preferredVisitTime, details,
+}) {
+  const address = [addressLine1, addressLine2, city, state, landmark ? `Landmark: ${landmark}` : '']
+    .filter(Boolean)
+    .join(', ');
   return buildEmail({
-    subject: '',
+    subject: `New site assessment request from ${name}`,
+    preheader: `${name} requested a paid on-site assessment for ${service}.`,
+    bodyHtml: `
+      <h2 class="greeting">New Site Assessment Request</h2>
+      <p class="body-text">A visitor has requested a paid on-site assessment. Review the project and address before sending the assessment charge.</p>
+      <div class="info-box">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Request ID</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">#${escHtml(id)}</span></td></tr>
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Name</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml(name)}</span></td></tr>
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Email</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><a href="mailto:${escHtml(email)}" style="font-size:13px;font-weight:600;color:#1a56db">${escHtml(email)}</a></td></tr>
+          ${phone ? `<tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Phone</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><a href="tel:${escHtml(phone)}" style="font-size:13px;font-weight:600;color:#1a56db">${escHtml(phone)}</a></td></tr>` : ''}
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Service</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml(service)}</span></td></tr>
+          ${propertyType ? `<tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Property</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml(propertyType)}</span></td></tr>` : ''}
+          ${projectStage ? `<tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Project stage</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml(projectStage)}</span></td></tr>` : ''}
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Site address</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml(address)}</span></td></tr>
+          ${preferredVisitDate || preferredVisitTime ? `<tr><td style="padding:8px 0"><span style="font-size:13px;color:#5a6a82;font-weight:500">Preferred visit</span></td><td style="padding:8px 0;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml([preferredVisitDate, preferredVisitTime].filter(Boolean).join(' · '))}</span></td></tr>` : ''}
+        </table>
+      </div>
+      <hr class="divider"/>
+      <p class="body-text" style="white-space:pre-wrap"><strong>Project details</strong><br/>${escHtml(details)}</p>
+    `,
+  });
+}
+
+function siteAssessmentAutoReply({ name, service, publicToken }) {
+  const proofUrl = `https://izytechglobalservices.com/assessment/${encodeURIComponent(publicToken)}`;
+  return buildEmail({
+    subject: `Your site assessment request is received — IZY Technologies`,
+    preheader: `We received your on-site assessment request for ${service}.`,
+    bodyHtml: `
+      <h2 class="greeting">Hello ${escHtml(name)},</h2>
+      <p class="body-text">We have received your request for an on-site assessment for <strong>${escHtml(service)}</strong>. Our team will review your project details and location before sending the assessment charge.</p>
+      <div class="info-box">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Current status</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:12px;font-weight:600;color:#b45309;background:#fff4d6;padding:3px 10px;border-radius:20px">Under review</span></td></tr>
+          <tr><td colspan="2" style="padding-top:12px"><p style="font-size:13px;color:#5a6a82;line-height:1.6;margin:0">Site assessments are chargeable for field projects. We will send payment instructions after review; a visit is scheduled after payment confirmation unless our team approves an exception.</p></td></tr>
+        </table>
+      </div>
+      <p class="body-text" style="font-size:13px">You can use this secure request page later to check the status and submit payment proof:</p>
+      <table role="presentation" cellpadding="0" cellspacing="0"><tr><td><a href="${proofUrl}" class="cta-btn">View Request Status →</a></td></tr></table>
+    `,
+  });
+}
+
+function assessmentChargeEmail({ name, service, fee, currency = 'NGN', instructions, publicToken }) {
+  const proofUrl = `https://izytechglobalservices.com/assessment/${encodeURIComponent(publicToken)}`;
+  return buildEmail({
+    subject: `Site assessment charge — IZY Technologies`,
+    preheader: `Payment instructions for your ${service} site assessment.`,
+    bodyHtml: `
+      <h2 class="greeting">Hello ${escHtml(name)},</h2>
+      <p class="body-text">We have reviewed your request for a site assessment for <strong>${escHtml(service)}</strong>. To arrange the field visit, please settle the assessment charge below.</p>
+      <div class="info-box">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Assessment fee</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:16px;font-weight:700;color:#041627">${escHtml(currency)} ${escHtml(fee)}</span></td></tr>
+          <tr><td colspan="2" style="padding-top:14px"><p style="font-size:13px;color:#5a6a82;font-weight:500;margin:0 0 6px">Payment instructions</p><p style="font-size:13px;color:#041627;line-height:1.6;margin:0;white-space:pre-wrap">${escHtml(instructions)}</p></td></tr>
+        </table>
+      </div>
+      <p class="body-text" style="font-size:13px">After payment, upload your receipt or invoice using the request page below. Our team will manually verify it and confirm your visit.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0"><tr><td><a href="${proofUrl}" class="cta-btn">Submit Payment Proof →</a></td></tr></table>
+    `,
+  });
+}
+
+function customEmail({ subject = '', preheader = '', toName, greeting, bodyHtml: body, ctaLabel, ctaUrl }) {
+  return buildEmail({
+    subject,
+    preheader,
     bodyHtml: `
       <h2 class="greeting">${escHtml(greeting || `Hi ${toName || 'there'},`)}</h2>
       <div class="body-text">${body || ''}</div>
@@ -173,4 +270,18 @@ function customEmail({ toName, greeting, bodyHtml: body, ctaLabel, ctaUrl }) {
   });
 }
 
-module.exports = { buildEmail, contactAutoReply, quoteAutoReply, customEmail };
+function plainTextToHtml(text = '') {
+  return `<p class="body-text">${escHtml(text).replace(/\r\n?|\n/g, '<br/>')}</p>`;
+}
+
+module.exports = {
+  buildEmail,
+  contactAutoReply,
+  contactNotification,
+  quoteAutoReply,
+  siteAssessmentNotification,
+  siteAssessmentAutoReply,
+  assessmentChargeEmail,
+  customEmail,
+  plainTextToHtml,
+};

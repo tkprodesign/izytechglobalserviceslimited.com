@@ -183,7 +183,7 @@ Full admin Projects panel.
 
 ### 6. Image Storage
 
-All project images are stored on **Cloudflare Images** — never on Railway.
+All project images are stored on **Cloudflare Images** — never on the backend host.
 
 Flow:
 1. Admin clicks "Upload from device"
@@ -192,7 +192,7 @@ Flow:
 4. Backend returns `{ uploadURL, url }` to the frontend
 5. Frontend POSTs the file directly to Cloudflare's `uploadURL`
 6. On success, the `url` (Cloudflare delivery URL) is appended to `form.images`
-7. Only the URL string is stored in PostgreSQL — no file bytes touch Railway
+7. Only the URL string is stored in PostgreSQL — no file bytes touch the backend host
 
 ---
 

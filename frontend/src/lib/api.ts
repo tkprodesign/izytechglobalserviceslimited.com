@@ -1,8 +1,8 @@
 /**
  * IZY Technologies API client
  *
- * Set VITE_API_URL in your Cloudflare Pages environment variables to point at
- * your Railway backend, e.g. https://izytech-website.up.railway.app
+ * Set VITE_API_URL in the production build environment to point at the
+ * Render backend, e.g. https://izytech-api.onrender.com
  */
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
@@ -48,6 +48,8 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 export interface ContactPayload {
   name: string;
   email: string;
+  phone?: string;
+  service?: string;
   subject?: string;
   message: string;
 }
@@ -58,6 +60,24 @@ export interface QuotePayload {
   company?: string;
   service: string;
   details?: string;
+}
+
+export interface SiteAssessmentPayload {
+  name: string;
+  email: string;
+  phone: string;
+  service: string;
+  propertyType: string;
+  projectStage: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  landmark?: string;
+  preferredVisitDate?: string;
+  preferredVisitTime?: string;
+  details: string;
+  attachments?: { url: string; name: string; type: string }[];
 }
 
 export interface SocialPlatform {
@@ -124,6 +144,9 @@ export const api = {
 
   quote: (data: QuotePayload) =>
     post<{ success: boolean }>('/api/quote', data),
+
+  siteAssessment: (data: SiteAssessmentPayload) =>
+    post<{ success: boolean; requestId: number; token: string }>('/api/site-assessments', data),
 
   testimonials: () =>
     get<{ data: Testimonial[] }>('/api/testimonials'),

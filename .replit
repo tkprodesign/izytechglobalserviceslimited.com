@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "bash", "web"]
+modules = ["nodejs-20", "bash", "web", "python-base-3.13"]
 [agent]
 expertMode = true
 stack = "BEST_EFFORT_FALLBACK"
@@ -60,8 +60,8 @@ externalPort = 3001
 
 [deployment]
 deploymentTarget = "static"
-build = ["bash", "-c", "cd 'Website for Izy Tech' && pnpm run build"]
-publicDir = "Website for Izy Tech/dist"
+build = ["bash", "-c", "cd frontend && pnpm run build"]
+publicDir = "frontend/dist"
 
 [userenv]
 
@@ -69,12 +69,6 @@ publicDir = "Website for Izy Tech/dist"
 INFO_EMAIL = "info@izytechglobalservices.com"
 SALES_EMAIL = "sales@izytechglobalservices.com"
 SUPPORT_EMAIL = "support@izytechglobalservices.com"
-IMAP_HOST = "mail.spacemail.com"
-IMAP_PORT = "993"
-SMTP_HOST = "mail.spacemail.com"
-SMTP_PORT = "587"
-SMTP_SECURE = "false"
-VITE_API_URL = "https://izytech-api.onrender.com"
 ADMIN_EMAIL = "admin@izytechglobalservices.com"
 NOREPLY_EMAIL = "noreply@izytechglobalservices.com"
-RENDER_SERVICE_ID = "srv-d9hd617avr4c73ebtj9g"
+VITE_API_URL = "https://izytech-api.onrender.com"

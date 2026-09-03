@@ -71,6 +71,7 @@ import { StoreEnquiriesPage } from "./admin/StoreEnquiriesPage";
 import { MilestonesPage } from "./admin/MilestonesPage";
 import { FounderPage } from "./admin/FounderPage";
 import { ProjectsManagerPage } from "./admin/ProjectsManagerPage";
+import { SiteAssessmentsPage } from "./admin/SiteAssessmentsPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ServicesPage } from "./pages/ServicesPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
@@ -79,6 +80,7 @@ import { TestimonialsPage } from "./pages/TestimonialsPage";
 import { ContactPage } from "./pages/ContactPage";
 import { StorePage } from "./pages/StorePage";
 import { StoreEnquiryPage } from "./pages/StoreEnquiryPage";
+import { AssessmentPaymentPage } from "./pages/AssessmentPaymentPage";
 import { Store } from "./sections/Store";
 import { CartProvider } from "./contexts/CartContext";
 
@@ -118,6 +120,7 @@ export default function App() {
       <Route path="/projects/:slug" element={<ProjectDetailPage />} />
       <Route path="/testimonials" element={<TestimonialsPage />} />
       <Route path="/contact" element={<ContactPage />} />
+      <Route path="/assessment/:token" element={<AssessmentPaymentPage />} />
       <Route path="/store" element={<StorePage />} />
       <Route path="/store/enquire" element={<StoreEnquiryPage />} />
 
@@ -134,6 +137,9 @@ export default function App() {
       } />
       <Route path="/admin/quotes" element={
         <ProtectedRoute><QuotesPage /></ProtectedRoute>
+      } />
+      <Route path="/admin/assessments" element={
+        <ProtectedRoute><SiteAssessmentsPage /></ProtectedRoute>
       } />
       <Route path="/admin/socials" element={
         <ProtectedRoute><SocialsPage /></ProtectedRoute>

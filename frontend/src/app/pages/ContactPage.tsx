@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { Phone, Mail, MapPin, Send, CheckCircle, ArrowRight, Clock } from "lucide-react";
+import { Phone, Mail, MapPin, ArrowRight, Clock } from "lucide-react";
 import { motion } from "motion/react";
-import { Link, useSearchParams } from "react-router";
+import { Link } from "react-router";
 import { PageLayout } from "../components/PageLayout";
+import { SiteAssessmentForm } from "../components/SiteAssessmentForm";
 
 const contactInfo = [
   {
@@ -35,38 +35,7 @@ const contactInfo = [
   },
 ];
 
-const services = [
-  "Solar Energy Systems",
-  "Industrial Wiring",
-  "Smart Home Automation",
-  "CCTV & Security",
-  "IT & Tech Services",
-  "General Electrical",
-  "Multiple Services",
-];
-
 export function ContactPage() {
-  const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    service: "",
-    message: "",
-  });
-  const [searchParams] = useSearchParams();
-
-  // Pre-select the service if the link that brought the user here passed ?service=
-  useEffect(() => {
-    const svc = searchParams.get("service") ?? "";
-    if (svc) setForm(f => ({ ...f, service: svc }));
-  }, [searchParams]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitted(true);
-  };
-
   return (
     <PageLayout>
       {/* ── Hero ── */}
@@ -102,7 +71,7 @@ export function ContactPage() {
               className="text-white/45 max-w-xl text-base leading-relaxed"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              Get a free consultation and detailed quote from our team. Site assessment within 48 hours, proposal within 72 hours.
+              For field projects, submit your details and site address. We review the request before sending the assessment charge and payment instructions.
             </p>
           </motion.div>
         </div>
@@ -223,142 +192,7 @@ export function ContactPage() {
               className="lg:col-span-3 p-8 lg:p-10 border border-gray-100"
               style={{ background: "#f9fafb" }}
             >
-              {submitted ? (
-                <div className="h-full flex flex-col items-center justify-center text-center py-16">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 18 }}
-                    className="w-16 h-16 flex items-center justify-center mb-5"
-                    style={{ background: "rgba(240,162,14,0.12)" }}
-                  >
-                    <CheckCircle size={32} style={{ color: "#F0A20E" }} />
-                  </motion.div>
-                  <h3
-                    className="text-[#041627] mb-2"
-                    style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", fontWeight: 700 }}
-                  >
-                    Message Received
-                  </h3>
-                  <p className="text-[#041627]/45 text-sm mb-6 max-w-xs" style={{ fontFamily: "var(--font-body)" }}>
-                    Thank you. Our team will contact you within 24 hours to discuss your project.
-                  </p>
-                  <button
-                    onClick={() => setSubmitted(false)}
-                    className="text-sm font-semibold hover:underline"
-                    style={{ fontFamily: "var(--font-ui)", color: "#C8971A" }}
-                  >
-                    Send another message
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className="mb-6">
-                    <h3
-                      className="text-[#041627] mb-1"
-                      style={{ fontFamily: "var(--font-display)", fontSize: "1.2rem", fontWeight: 700 }}
-                    >
-                      Request a Free Quote
-                    </h3>
-                    <p className="text-[#041627]/40 text-sm" style={{ fontFamily: "var(--font-body)" }}>
-                      Fill in the form and we'll get back to you within 24 hours.
-                    </p>
-                  </div>
-
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    {[
-                      { label: "Full Name", key: "name", type: "text", placeholder: "John Adeyemi", required: true },
-                      { label: "Phone Number", key: "phone", type: "tel", placeholder: "+234 810 126 2814", required: true },
-                    ].map(({ label, key, type, placeholder, required }) => (
-                      <div key={key}>
-                        <label
-                          className="block text-xs font-semibold text-[#041627]/40 mb-2 uppercase tracking-wide"
-                          style={{ fontFamily: "var(--font-ui)" }}
-                        >
-                          {label} {required && <span style={{ color: "#F0A20E" }}>*</span>}
-                        </label>
-                        <input
-                          type={type}
-                          required={required}
-                          value={form[key as keyof typeof form]}
-                          onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                          placeholder={placeholder}
-                          className="w-full px-4 py-3 border border-gray-200 bg-white text-[#041627] placeholder:text-[#041627]/25 focus:outline-none focus:border-[#F0A20E]/60 focus:ring-1 focus:ring-[#F0A20E]/30 transition-all text-sm"
-                          style={{ fontFamily: "var(--font-body)" }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-
-                  <div>
-                    <label
-                      className="block text-xs font-semibold text-[#041627]/40 mb-2 uppercase tracking-wide"
-                      style={{ fontFamily: "var(--font-ui)" }}
-                    >
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      placeholder="john@company.com"
-                      className="w-full px-4 py-3 border border-gray-200 bg-white text-[#041627] placeholder:text-[#041627]/25 focus:outline-none focus:border-[#F0A20E]/60 focus:ring-1 focus:ring-[#F0A20E]/30 transition-all text-sm"
-                      style={{ fontFamily: "var(--font-body)" }}
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      className="block text-xs font-semibold text-[#041627]/40 mb-2 uppercase tracking-wide"
-                      style={{ fontFamily: "var(--font-ui)" }}
-                    >
-                      Service Required <span style={{ color: "#F0A20E" }}>*</span>
-                    </label>
-                    <select
-                      required
-                      value={form.service}
-                      onChange={(e) => setForm({ ...form, service: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 bg-white text-[#041627] focus:outline-none focus:border-[#F0A20E]/60 focus:ring-1 focus:ring-[#F0A20E]/30 transition-all text-sm"
-                      style={{ fontFamily: "var(--font-body)" }}
-                    >
-                      <option value="">Select a service...</option>
-                      {services.map((s) => (
-                        <option key={s}>{s}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label
-                      className="block text-xs font-semibold text-[#041627]/40 mb-2 uppercase tracking-wide"
-                      style={{ fontFamily: "var(--font-ui)" }}
-                    >
-                      Project Details <span style={{ color: "#F0A20E" }}>*</span>
-                    </label>
-                    <textarea
-                      required
-                      rows={5}
-                      value={form.message}
-                      onChange={(e) => setForm({ ...form, message: e.target.value })}
-                      placeholder="Describe your project, location, scale and any specific requirements..."
-                      className="w-full px-4 py-3 border border-gray-200 bg-white text-[#041627] placeholder:text-[#041627]/25 focus:outline-none focus:border-[#F0A20E]/60 focus:ring-1 focus:ring-[#F0A20E]/30 transition-all text-sm resize-none"
-                      style={{ fontFamily: "var(--font-body)" }}
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full py-4 font-bold text-[#041627] flex items-center justify-center gap-2.5 transition-all hover:opacity-90 text-sm tracking-wider"
-                    style={{
-                      background: "linear-gradient(135deg, #F0A20E 0%, #FFB830 100%)",
-                      fontFamily: "var(--font-ui)",
-                      letterSpacing: "0.07em",
-                    }}
-                  >
-                    <Send size={14} strokeWidth={2.5} /> SEND MY REQUEST
-                  </button>
-                </form>
-              )}
+              <SiteAssessmentForm />
             </motion.div>
           </div>
         </div>
@@ -369,9 +203,9 @@ export function ContactPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-3 gap-5">
             {[
-              { title: "48-Hour Site Assessment", body: "Our team will visit your site within 48 hours of your enquiry to take accurate measurements and understand your needs." },
-              { title: "72-Hour Detailed Proposal", body: "You'll receive a fully itemised quote with scope, timeline, materials and cost breakdown — no hidden charges." },
-              { title: "Project Kickoff on Your Schedule", body: "Once approved, we mobilise on your preferred date. Our nationwide team means no location is too far." },
+              { title: "Review Before Scheduling", body: "We review your project scope and location before sending a site-assessment charge and payment instructions." },
+              { title: "Clear Payment Confirmation", body: "Upload your receipt or invoice for manual review. Visits normally proceed after payment is confirmed." },
+              { title: "Project Kickoff on Your Schedule", body: "Once the assessment is confirmed, we agree a practical visit window and keep you updated through your request page." },
             ].map(({ title, body }, i) => (
               <motion.div
                 key={title}

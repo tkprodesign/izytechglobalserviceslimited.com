@@ -54,20 +54,22 @@ All secrets are stored in Replit's secret manager and are automatically availabl
 | `DATABASE_URL` | Neon PostgreSQL connection string |
 | `SESSION_SECRET` | JWT signing secret for admin auth |
 
-### Frontend config (also set as plain env var in `.replit`)
+### Frontend config
 | Secret | Purpose |
 |---|---|
-| `VITE_API_URL` | Backend base URL used by the React frontend (`https://izytech-api.onrender.com`) |
+| `VITE_API_URL` | Production Render API base URL used by the Cloudflare Pages build (`https://izytech-api.onrender.com`). Local Replit development uses the Vite `/api` proxy instead. |
 
-### Email accounts (IMAP + SMTP via Spacemail)
+### Email accounts (Resend Receiving + sending)
 | Secret | Purpose |
 |---|---|
-| `INFO_EMAIL` / `INFO_EMAIL_PASSWORD` | Info mailbox (`info@izytechglobalservices.com`) |
-| `ADMIN_EMAIL` / `ADMIN_EMAIL_PASSWORD` | Admin mailbox |
-| `SALES_EMAIL` / `SALES_EMAIL_PASSWORD` | Sales mailbox |
-| `SUPPORT_EMAIL` / `SUPPORT_EMAIL_PASSWORD` | Support mailbox |
+| `INFO_EMAIL` | Info mailbox (`info@izytechglobalservices.com`) |
+| `ADMIN_EMAIL` | Admin mailbox |
+| `SALES_EMAIL` | Sales mailbox |
+| `SUPPORT_EMAIL` | Support mailbox |
 | `NOREPLY_EMAIL` | No-reply send-only address |
-| `RESEND_API_KEY` | Resend API for transactional email delivery |
+| `RESEND_API_KEY` | Resend API for receiving and delivery from all managed mailboxes |
+
+The Email Manager reads inbound messages from Resend Receiving and sends through Resend over HTTPS. Resend provides one Inbox per managed address; it does not provide IMAP folders or persistent read/unread state. Receiving remains pending until the domain's root MX records are changed to the exact values shown in the Resend Receiving dashboard. The email account registry is defined in `backend/routes/email.js`.
 
 ### Cloudflare (product image uploads)
 | Secret | Purpose |
@@ -79,9 +81,8 @@ All secrets are stored in Replit's secret manager and are automatically availabl
 ### Infrastructure
 | Secret | Purpose |
 |---|---|
-| `RENDER_API_KEY` | Render account API key (manage the production backend) |
-| `RENDER_SERVICE_ID` | Render service ID: `srv-d9hd617avr4c73ebtj9g` |
-| `GITHUB_TOKEN` | GitHub PAT with `repo` + `workflow` scopes — used to push to the repo from Replit |
+| `RENDER_API_KEY` | Render API key used for deployment administration from Replit |
+| `GITHUB_TOKEN` | GitHub token used to push approved changes to the canonical repository from Replit |
 
 ## Database
 
@@ -89,8 +90,8 @@ Initial schema lives in `backend/migrations/001_initial.sql` (tables: `contact_s
 
 ## Production deployment
 
-- **Frontend**: Cloudflare Pages
-- **Backend**: Railway
+- **Frontend**: Cloudflare Pages (built from GitHub)
+- **Backend**: Render (`backend/` root directory)
 - **Database**: Neon PostgreSQL
 
 ## Project structure
