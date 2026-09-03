@@ -22,11 +22,9 @@ function buildEmail({ subject = '', preheader = '', bodyHtml = '', footerNote = 
     body{margin:0;padding:0;background:#f0f3f8;font-family:'Inter',Arial,sans-serif}
     .wrapper{background:#f0f3f8;padding:40px 16px}
     .container{max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(4,22,39,0.08)}
-    .header{background:#041627;padding:32px 40px;text-align:center}
-    .logo-badge{display:inline-flex;align-items:center;gap:12px}
-    .logo-box{width:44px;height:44px;background:#1a56db;border-radius:10px;display:inline-block;line-height:44px;text-align:center;font-weight:700;font-size:14px;color:#ffffff;letter-spacing:0.5px;vertical-align:middle}
-    .logo-text{font-size:18px;font-weight:700;color:#ffffff;vertical-align:middle;letter-spacing:-0.3px}
-    .logo-sub{font-size:11px;color:#8fadc8;letter-spacing:0.5px;text-transform:uppercase;display:block;margin-top:2px}
+    .header{background:#041627;padding:28px 40px;text-align:left}
+    .logo-text{font-size:14px;font-weight:700;color:#ffffff;vertical-align:middle;letter-spacing:0.025em;text-transform:uppercase}
+    .logo-sub{font-size:9px;color:rgba(255,255,255,0.5);letter-spacing:0.18em;text-transform:uppercase;display:block;margin-top:3px}
     .accent-bar{height:4px;background:linear-gradient(90deg,#F0A20E 0%,#f6c24a 50%,#1a56db 100%)}
     .body{padding:40px}
     .greeting{font-size:22px;font-weight:700;color:#041627;margin:0 0 8px 0}
@@ -47,7 +45,7 @@ function buildEmail({ subject = '', preheader = '', bodyHtml = '', footerNote = 
     .social-icons{margin:16px 0 0}
     @media only screen and (max-width:600px){
       .body{padding:28px 24px}
-      .header{padding:24px}
+       .header{padding:24px}
       .footer{padding:24px}
     }
   </style>
@@ -61,17 +59,17 @@ function buildEmail({ subject = '', preheader = '', bodyHtml = '', footerNote = 
         <td class="header">
           <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
             <tr>
-              <td style="text-align:center">
-                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto">
+              <td style="text-align:left">
+                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0">
                   <tr>
                     <td>
                       <table role="presentation" cellpadding="0" cellspacing="0">
                         <tr>
-                          <td><img src="${EMAIL_LOGO_URL}" width="44" height="44" alt="IZY Technologies" style="display:block;width:44px;height:44px;border-radius:10px" /></td>
+                          <td><img src="${EMAIL_LOGO_URL}" width="36" height="36" alt="IZY Technologies" style="display:block;width:36px;height:36px" /></td>
                           <td style="width:12px"></td>
                           <td>
-                            <p style="margin:0;font-size:18px;font-weight:700;color:#ffffff;font-family:'Inter',Arial,sans-serif;letter-spacing:-0.3px">IZY Technologies</p>
-                            <p style="margin:4px 0 0;font-size:11px;color:#8fadc8;font-family:'Inter',Arial,sans-serif;letter-spacing:0.5px;text-transform:uppercase">Global Services Limited</p>
+                            <p style="margin:0;font-size:14px;font-weight:700;color:#ffffff;font-family:'Inter',Arial,sans-serif;letter-spacing:0.025em;text-transform:uppercase">IZY TECHNOLOGIES</p>
+                            <p style="margin:3px 0 0;font-size:9px;color:rgba(255,255,255,0.5);font-family:'Inter',Arial,sans-serif;letter-spacing:0.18em;text-transform:uppercase">Global Services Limited</p>
                           </td>
                         </tr>
                       </table>
