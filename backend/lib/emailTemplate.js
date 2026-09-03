@@ -185,6 +185,79 @@ function quoteAutoReply({ name, service, company }) {
   });
 }
 
+function siteAssessmentNotification({
+  id, name, email, phone, service, propertyType, projectStage,
+  addressLine1, addressLine2, city, state, landmark, preferredVisitDate,
+  preferredVisitTime, details,
+}) {
+  const address = [addressLine1, addressLine2, city, state, landmark ? `Landmark: ${landmark}` : '']
+    .filter(Boolean)
+    .join(', ');
+  return buildEmail({
+    subject: `New site assessment request from ${name}`,
+    preheader: `${name} requested a paid on-site assessment for ${service}.`,
+    bodyHtml: `
+      <h2 class="greeting">New Site Assessment Request</h2>
+      <p class="body-text">A visitor has requested a paid on-site assessment. Review the project and address before sending the assessment charge.</p>
+      <div class="info-box">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Request ID</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">#${escHtml(id)}</span></td></tr>
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Name</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml(name)}</span></td></tr>
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Email</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><a href="mailto:${escHtml(email)}" style="font-size:13px;font-weight:600;color:#1a56db">${escHtml(email)}</a></td></tr>
+          ${phone ? `<tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Phone</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><a href="tel:${escHtml(phone)}" style="font-size:13px;font-weight:600;color:#1a56db">${escHtml(phone)}</a></td></tr>` : ''}
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Service</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml(service)}</span></td></tr>
+          ${propertyType ? `<tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Property</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml(propertyType)}</span></td></tr>` : ''}
+          ${projectStage ? `<tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Project stage</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml(projectStage)}</span></td></tr>` : ''}
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Site address</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml(address)}</span></td></tr>
+          ${preferredVisitDate || preferredVisitTime ? `<tr><td style="padding:8px 0"><span style="font-size:13px;color:#5a6a82;font-weight:500">Preferred visit</span></td><td style="padding:8px 0;text-align:right"><span style="font-size:13px;font-weight:600;color:#041627">${escHtml([preferredVisitDate, preferredVisitTime].filter(Boolean).join(' · '))}</span></td></tr>` : ''}
+        </table>
+      </div>
+      <hr class="divider"/>
+      <p class="body-text" style="white-space:pre-wrap"><strong>Project details</strong><br/>${escHtml(details)}</p>
+    `,
+  });
+}
+
+function siteAssessmentAutoReply({ name, service, publicToken }) {
+  const proofUrl = `https://izytechglobalservices.com/assessment/${encodeURIComponent(publicToken)}`;
+  return buildEmail({
+    subject: `Your site assessment request is received — IZY Technologies`,
+    preheader: `We received your on-site assessment request for ${service}.`,
+    bodyHtml: `
+      <h2 class="greeting">Hello ${escHtml(name)},</h2>
+      <p class="body-text">We have received your request for an on-site assessment for <strong>${escHtml(service)}</strong>. Our team will review your project details and location before sending the assessment charge.</p>
+      <div class="info-box">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Current status</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:12px;font-weight:600;color:#b45309;background:#fff4d6;padding:3px 10px;border-radius:20px">Under review</span></td></tr>
+          <tr><td colspan="2" style="padding-top:12px"><p style="font-size:13px;color:#5a6a82;line-height:1.6;margin:0">Site assessments are chargeable for field projects. We will send payment instructions after review; a visit is scheduled after payment confirmation unless our team approves an exception.</p></td></tr>
+        </table>
+      </div>
+      <p class="body-text" style="font-size:13px">You can use this secure request page later to check the status and submit payment proof:</p>
+      <table role="presentation" cellpadding="0" cellspacing="0"><tr><td><a href="${proofUrl}" class="cta-btn">View Request Status →</a></td></tr></table>
+    `,
+  });
+}
+
+function assessmentChargeEmail({ name, service, fee, currency = 'NGN', instructions, publicToken }) {
+  const proofUrl = `https://izytechglobalservices.com/assessment/${encodeURIComponent(publicToken)}`;
+  return buildEmail({
+    subject: `Site assessment charge — IZY Technologies`,
+    preheader: `Payment instructions for your ${service} site assessment.`,
+    bodyHtml: `
+      <h2 class="greeting">Hello ${escHtml(name)},</h2>
+      <p class="body-text">We have reviewed your request for a site assessment for <strong>${escHtml(service)}</strong>. To arrange the field visit, please settle the assessment charge below.</p>
+      <div class="info-box">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+          <tr><td style="padding:8px 0;border-bottom:1px solid #eef1f6"><span style="font-size:13px;color:#5a6a82;font-weight:500">Assessment fee</span></td><td style="padding:8px 0;border-bottom:1px solid #eef1f6;text-align:right"><span style="font-size:16px;font-weight:700;color:#041627">${escHtml(currency)} ${escHtml(fee)}</span></td></tr>
+          <tr><td colspan="2" style="padding-top:14px"><p style="font-size:13px;color:#5a6a82;font-weight:500;margin:0 0 6px">Payment instructions</p><p style="font-size:13px;color:#041627;line-height:1.6;margin:0;white-space:pre-wrap">${escHtml(instructions)}</p></td></tr>
+        </table>
+      </div>
+      <p class="body-text" style="font-size:13px">After payment, upload your receipt or invoice using the request page below. Our team will manually verify it and confirm your visit.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0"><tr><td><a href="${proofUrl}" class="cta-btn">Submit Payment Proof →</a></td></tr></table>
+    `,
+  });
+}
+
 function customEmail({ subject = '', preheader = '', toName, greeting, bodyHtml: body, ctaLabel, ctaUrl }) {
   return buildEmail({
     subject,
@@ -201,4 +274,14 @@ function plainTextToHtml(text = '') {
   return `<p class="body-text">${escHtml(text).replace(/\r\n?|\n/g, '<br/>')}</p>`;
 }
 
-module.exports = { buildEmail, contactAutoReply, contactNotification, quoteAutoReply, customEmail, plainTextToHtml };
+module.exports = {
+  buildEmail,
+  contactAutoReply,
+  contactNotification,
+  quoteAutoReply,
+  siteAssessmentNotification,
+  siteAssessmentAutoReply,
+  assessmentChargeEmail,
+  customEmail,
+  plainTextToHtml,
+};

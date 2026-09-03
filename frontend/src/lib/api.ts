@@ -62,6 +62,24 @@ export interface QuotePayload {
   details?: string;
 }
 
+export interface SiteAssessmentPayload {
+  name: string;
+  email: string;
+  phone: string;
+  service: string;
+  propertyType: string;
+  projectStage: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  landmark?: string;
+  preferredVisitDate?: string;
+  preferredVisitTime?: string;
+  details: string;
+  attachments?: { url: string; name: string; type: string }[];
+}
+
 export interface SocialPlatform {
   key: string;
   enabled: boolean;
@@ -115,6 +133,9 @@ export const api = {
 
   quote: (data: QuotePayload) =>
     post<{ success: boolean }>('/api/quote', data),
+
+  siteAssessment: (data: SiteAssessmentPayload) =>
+    post<{ success: boolean; requestId: number; token: string }>('/api/site-assessments', data),
 
   testimonials: () =>
     get<{ data: Testimonial[] }>('/api/testimonials'),

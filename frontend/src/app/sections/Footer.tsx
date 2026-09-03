@@ -88,7 +88,7 @@ export function Footer() {
               Ready to Power Your Future?
             </h3>
             <p className="text-white/40 text-sm" style={{ fontFamily: "var(--font-body)" }}>
-              Join 1000+ satisfied clients across Nigeria. Get your free consultation today.
+              Join 1000+ satisfied clients across Nigeria. Tell us what your project needs.
             </p>
           </div>
           <a
@@ -100,7 +100,7 @@ export function Footer() {
               letterSpacing: "0.08em",
             }}
           >
-            GET A FREE QUOTE <ArrowRight size={15} strokeWidth={2.5} />
+            START A PROJECT ENQUIRY <ArrowRight size={15} strokeWidth={2.5} />
           </a>
         </div>
       </div>

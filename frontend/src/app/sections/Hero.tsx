@@ -179,7 +179,7 @@ export function Hero() {
                   letterSpacing: "0.08em",
                 }}
               >
-                GET A FREE QUOTE
+                START A PROJECT ENQUIRY
                 <ArrowRight size={15} strokeWidth={2.5} />
               </a>
               <a

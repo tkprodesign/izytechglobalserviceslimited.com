@@ -357,7 +357,7 @@ export function ProjectsPage() {
             Ready to start your project?
           </h2>
           <p className="mb-8 text-sm text-white/40" style={{ fontFamily: "var(--font-body)" }}>
-            Get a free site assessment and detailed quote from our team — usually within 24 hours.
+            Need us to visit your site? Submit an assessment request and we'll review the scope before sending payment instructions.
           </p>
           <Link
             to="/#contact"
@@ -368,7 +368,7 @@ export function ProjectsPage() {
               fontFamily: "var(--font-ui)",
             }}
           >
-            GET A FREE QUOTE <ArrowRight size={15} />
+            REQUEST A SITE ASSESSMENT <ArrowRight size={15} />
           </Link>
         </div>
       </div>
