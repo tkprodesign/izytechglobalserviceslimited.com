@@ -117,7 +117,7 @@ export function AboutPage() {
               className="text-white mb-6"
               style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2.4rem, 5.5vw, 4.5rem)", fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.05 }}
             >
-              About Izy Tech Services<br />Global Services Limited
+              About Izy Tech Services
             </h1>
             <p className="text-white/50 max-w-lg text-base leading-relaxed mb-8" style={{ fontFamily: "var(--font-body)" }}>
               Illuminating the future of solar energy. Established March 8, 2018 — powering homes, businesses and industries across Nigeria.

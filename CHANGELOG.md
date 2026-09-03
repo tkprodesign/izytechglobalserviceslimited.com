@@ -5,6 +5,18 @@ Format: newest first. Dates are UTC.
 
 ---
 
+## 2026-09-03
+
+### Fixed — Restored branding changes to their requested scope
+
+- Restored the original `IZY TECHNOLOGIES / Global Services Limited` navbar and footer branding.
+- Restored the original admin control-panel initials and unrelated About/Services/testimonial wording.
+- Kept only the requested `Izy Tech Services` alias replacements where copy previously used standalone `IZY` or `IZY's`, including the finance hero and store-enquiry email subject.
+- Removed the unrequested decorative watermark text from the footer and statement sections.
+- Checked the current source against the pre-naming commit so biography/email changes from separate work were not overwritten.
+
+---
+
 ## 2026-07-24
 
 ### Added — Projects feature (full implementation)
