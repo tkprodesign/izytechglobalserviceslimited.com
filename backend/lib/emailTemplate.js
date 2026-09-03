@@ -101,8 +101,8 @@ function buildEmail({ subject = '', preheader = '', bodyHtml = '', footerNote = 
           </p>
           <div class="footer-links">
             <a href="https://izytechglobalservices.com">Website</a>
-            <a href="https://izytechglobalservices.com/#contact">Contact</a>
-            <a href="https://izytechglobalservices.com/#services">Services</a>
+            <a href="https://izytechglobalservices.com/contact">Contact</a>
+            <a href="https://izytechglobalservices.com/services">Services</a>
           </div>
           ${footerNote ? `<p class="footer-fine">${escHtml(footerNote)}</p>` : ''}
           <p class="footer-fine" style="margin-top:8px">© ${new Date().getFullYear()} IZY Technologies Global Services Limited. All rights reserved.</p>
