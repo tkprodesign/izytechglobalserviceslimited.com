@@ -11,8 +11,10 @@ const stats = [
   { value: 24,   suffix: "/7", label: "Support Available" },
 ];
 
-const SLIDE_DURATION_MS = 5000;
-const SLIDE_DURATION_SECONDS = SLIDE_DURATION_MS / 1000;
+// Seven and a half seconds gives visitors enough time to read the richer
+// AltPower message without making the hero feel static.
+const SLIDE_DURATION_MS = 7500;
+const SLIDE_DURATION_SECONDS = Math.ceil(SLIDE_DURATION_MS / 1000);
 
 const slides = [
   {
@@ -203,14 +205,14 @@ export function Hero() {
       {/* Content */}
       <motion.div className="relative flex-1 flex flex-col" style={{ opacity }}>
         <div className="flex-1 max-w-7xl mx-auto w-full px-6 flex items-center">
-          <AnimatePresence mode="wait" initial={false}>
+          <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
               key={slide.id}
-              initial={{ opacity: 0, y: reducedMotion ? 0 : 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: reducedMotion ? 0 : -16 }}
-              transition={{ duration: reducedMotion ? 0 : 0.55, ease: [0.16, 1, 0.3, 1] }}
-              className="max-w-3xl pt-36 pb-24 lg:pt-20 lg:pb-8"
+              initial={{ opacity: 0, x: reducedMotion ? 0 : 30, y: reducedMotion ? 0 : 16, filter: reducedMotion ? "blur(0px)" : "blur(8px)" }}
+              animate={{ opacity: 1, x: 0, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, x: reducedMotion ? 0 : -30, y: reducedMotion ? 0 : -12, filter: reducedMotion ? "blur(0px)" : "blur(8px)" }}
+              transition={{ duration: reducedMotion ? 0 : 0.7, ease: [0.16, 1, 0.3, 1] }}
+              className="max-w-3xl w-full pt-36 pb-24 lg:pt-20 lg:pb-8"
               role="tabpanel"
               aria-label={slide.id === "finance" ? "AltPower partnership" : "Energy solutions"}
             >
@@ -224,16 +226,23 @@ export function Hero() {
                 </span>
               </div>
 
-              {slide.id === "finance" && (
-                <div className="mb-5 inline-flex items-center gap-3 border border-[#4BC47A]/35 bg-[#0b5d3a]/30 px-3 py-2">
-                  <span className="text-lg font-semibold tracking-[-0.04em] text-[#68D58E]" style={{ fontFamily: "var(--font-display)" }}>
-                    alt<span className="text-white">power</span>
-                  </span>
-                  <span className="text-white/35">×</span>
-                  <span className="text-xs font-bold tracking-[0.12em] text-white/85" style={{ fontFamily: "var(--font-ui)" }}>Izy Tech Services</span>
-                  <span className="hidden text-[10px] uppercase tracking-wider text-white/45 sm:inline">Powering access</span>
-                </div>
-              )}
+              {/* Keep both slides on the same vertical rhythm. The finance
+                  slide uses this row for its partnership badge; the energy
+                  slide reserves the space so its heading does not jump. */}
+              <div className="mb-5 flex min-h-[44px] items-center">
+                {slide.id === "finance" ? (
+                  <div className="inline-flex items-center gap-3 border border-[#4BC47A]/35 bg-[#0b5d3a]/30 px-3 py-2">
+                    <span className="text-lg font-semibold tracking-[-0.04em] text-[#68D58E]" style={{ fontFamily: "var(--font-display)" }}>
+                      alt<span className="text-white">power</span>
+                    </span>
+                    <span className="text-white/35">×</span>
+                    <span className="text-xs font-bold tracking-[0.12em] text-white/85" style={{ fontFamily: "var(--font-ui)" }}>Izy Tech Services</span>
+                    <span className="hidden text-[10px] uppercase tracking-wider text-white/45 sm:inline">Powering access</span>
+                  </div>
+                ) : (
+                  <span aria-hidden="true" className="invisible h-11" />
+                )}
+              </div>
 
               <h1
                 className="text-white mb-4 leading-[1.04]"
@@ -251,7 +260,7 @@ export function Hero() {
                         key={word}
                         initial={{ opacity: 0, y: reducedMotion ? 0 : 34, skewY: reducedMotion ? 0 : 4 }}
                         animate={{ opacity: 1, y: 0, skewY: 0 }}
-                        transition={{ duration: reducedMotion ? 0 : 0.6, delay: reducedMotion ? 0 : 0.08 + wordIndex * 0.07, ease: [0.16, 1, 0.3, 1] }}
+                        transition={{ duration: reducedMotion ? 0 : 0.6, delay: reducedMotion ? 0 : 0.08 + lineIndex * 0.12 + wordIndex * 0.06, ease: [0.16, 1, 0.3, 1] }}
                         className="inline-block mr-[0.2em]"
                         style={{ color: word === slide.accent ? "#F0A20E" : undefined }}
                       >
