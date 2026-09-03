@@ -40,7 +40,7 @@ export function LoginPage() {
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 mb-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--izy-blue)' }}>
-              <span className="text-white font-bold text-lg">IZY</span>
+              <span className="text-white font-bold text-lg">ITS</span>
             </div>
             <span className="text-white font-semibold text-xl">Control Panel</span>
           </div>

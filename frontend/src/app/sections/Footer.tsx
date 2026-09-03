@@ -65,7 +65,7 @@ export function Footer() {
             lineHeight: 1,
           }}
         >
-          IZY
+          <span className="whitespace-nowrap">Izy Tech Services</span>
         </div>
 
         <div className="relative max-w-7xl mx-auto px-6 py-16 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-10">
@@ -112,7 +112,7 @@ export function Footer() {
           <div className="flex items-center gap-2.5 mb-5">
             <img src={logoIcon} alt="Izy Tech Services" className="h-9 w-auto" />
             <div style={{ fontFamily: "var(--font-ui)" }}>
-              <div className="whitespace-nowrap text-white font-bold text-sm leading-tight tracking-wide">IZY TECHNOLOGIES</div>
+              <div className="whitespace-nowrap text-white font-bold text-sm leading-tight tracking-wide">Izy Tech Services</div>
               <div className="text-white/30 text-[9px] tracking-[0.18em] uppercase leading-tight">Global Services Limited</div>
             </div>
           </div>

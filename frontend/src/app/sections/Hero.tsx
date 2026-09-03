@@ -29,7 +29,7 @@ const slides = [
   },
   {
     id: "finance",
-    eyebrow: "IZY TECH SERVICES × ALTPOWER BY THE ALTERNATIVE BANK",
+    eyebrow: "Izy Tech Services × AltPower by The Alternative Bank",
     titleLines: [["Pay", "Small", "Small."], ["Power", "Big."]],
     accent: "Big.",
     description: "Our partnership gives eligible Izy Tech Services customers a smarter way to fund approved power projects: apply through AltPower for deferred-payment financing, then repay in manageable instalments.",

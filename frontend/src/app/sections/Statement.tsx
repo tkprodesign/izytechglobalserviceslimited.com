@@ -29,7 +29,7 @@ export function Statement() {
           letterSpacing: "-0.05em",
         }}
       >
-        IZY
+        <span className="whitespace-nowrap">Izy Tech Services</span>
       </div>
 
       <div className="relative max-w-7xl mx-auto px-6 py-28 lg:py-40">

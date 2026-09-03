@@ -205,7 +205,7 @@ export function StoreEnquiriesPage() {
 
                 {/* Actions */}
                 <a
-                  href={`mailto:${selected.email}?subject=Re: Your IZY Store Enquiry&body=Dear ${encodeURIComponent(selected.name)},%0A%0AThank you for your interest in our products.`}
+                  href={`mailto:${selected.email}?subject=Re: Your Izy Tech Services Store Enquiry&body=Dear ${encodeURIComponent(selected.name)},%0A%0AThank you for your interest in our products.`}
                   className="w-full flex items-center justify-center py-2.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
                   style={{ background: 'var(--izy-blue)' }}
                 >
