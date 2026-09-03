@@ -142,7 +142,7 @@ export function DashboardLayout({ children }: Props) {
               className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white"
               style={{ background: 'var(--izy-blue)' }}
             >
-              ITS
+              IZY
             </div>
             <div className="admin-sidebar-label min-w-0">
               <p className="truncate text-sm font-semibold leading-none text-white">Control Panel</p>

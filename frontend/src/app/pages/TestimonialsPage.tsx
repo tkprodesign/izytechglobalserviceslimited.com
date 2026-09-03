@@ -11,7 +11,7 @@ const FALLBACK: Testimonial[] = [
     name: "Emeka Okafor",
     role: "Managing Director",
     company: "TransAmadi Manufacturing Ltd",
-    text: "Izy Tech Services installed our 150kW solar system and the results have been extraordinary. Our electricity bills dropped by 78% in the first month alone. The team was professional, punctual and the installation quality is exceptional.",
+    text: "IZY Technologies installed our 150kW solar system and the results have been extraordinary. Our electricity bills dropped by 78% in the first month alone. The team was professional, punctual and the installation quality is exceptional.",
     rating: 5,
     avatar: "EO",
     metric: "78% bill reduction",

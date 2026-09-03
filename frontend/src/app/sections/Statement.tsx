@@ -19,19 +19,6 @@ export function Statement() {
         <div className="absolute inset-0" style={{ background: "rgba(4,22,39,0.90)" }} />
       </motion.div>
 
-      {/* Large decorative text */}
-      <div
-        className="absolute top-0 right-0 text-white/[0.025] select-none pointer-events-none leading-none"
-        style={{
-          fontFamily: "var(--font-display)",
-          fontSize: "clamp(8rem, 20vw, 20rem)",
-          fontWeight: 900,
-          letterSpacing: "-0.05em",
-        }}
-      >
-        <span className="whitespace-nowrap">Izy Tech Services</span>
-      </div>
-
       <div className="relative max-w-7xl mx-auto px-6 py-28 lg:py-40">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left */}

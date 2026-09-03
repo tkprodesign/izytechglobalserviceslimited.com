@@ -54,20 +54,6 @@ export function Footer() {
         className="relative overflow-hidden border-b border-white/6"
         style={{ background: "#041627" }}
       >
-        {/* Decorative large text */}
-        <div
-          className="absolute inset-y-0 right-0 text-white/[0.025] select-none pointer-events-none flex items-center"
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "clamp(5rem, 14vw, 14rem)",
-            fontWeight: 900,
-            letterSpacing: "-0.05em",
-            lineHeight: 1,
-          }}
-        >
-          <span className="whitespace-nowrap">Izy Tech Services</span>
-        </div>
-
         <div className="relative max-w-7xl mx-auto px-6 py-16 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-10">
           <div>
             <div className="flex items-center gap-3 mb-4">
@@ -112,7 +98,7 @@ export function Footer() {
           <div className="flex items-center gap-2.5 mb-5">
             <img src={logoIcon} alt="Izy Tech Services" className="h-9 w-auto" />
             <div style={{ fontFamily: "var(--font-ui)" }}>
-              <div className="whitespace-nowrap text-white font-bold text-sm leading-tight tracking-wide">Izy Tech Services</div>
+              <div className="whitespace-nowrap text-white font-bold text-sm leading-tight tracking-wide">IZY TECHNOLOGIES</div>
               <div className="text-white/30 text-[9px] tracking-[0.18em] uppercase leading-tight">Global Services Limited</div>
             </div>
           </div>
