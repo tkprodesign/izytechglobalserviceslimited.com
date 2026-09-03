@@ -5,6 +5,20 @@ const router = express.Router();
 const { customEmail, plainTextToHtml } = require('../lib/emailTemplate');
 const { resendRequest } = require('../lib/resend');
 
+let archiveStore = {
+  async list() { return []; },
+  async set() {},
+  async remove() {},
+};
+
+function setArchiveStore(store) {
+  archiveStore = store;
+}
+
+async function archivedIds(source) {
+  return new Set(await archiveStore.list(source));
+}
+
 // ── Account registry ──────────────────────────────────────────────────────────
 function getAccounts() {
   return [
@@ -69,7 +83,7 @@ function headerValue(headers, name) {
   return key ? headers[key] : undefined;
 }
 
-function messageSummary(message, source) {
+function messageSummary(message, source, archiveSet) {
   return {
     uid: String(message.id),
     source,
@@ -78,36 +92,51 @@ function messageSummary(message, source) {
     to: normalizeMailbox(message.to),
     date: message.created_at || message.date || null,
     status: message.last_event || undefined,
+    archived: archiveSet.has(String(message.id)),
     // Resend does not expose a persistent read/unread flag.
     seen: true,
     messageId: message.message_id || headerValue(message.headers, 'message-id') || undefined,
   };
 }
 
-async function receivedMessages(account) {
+async function receivedMessages(account, includeArchived = false) {
   const result = await resendRequest('/emails/receiving?limit=100');
   const data = Array.isArray(result?.data) ? result.data : [];
+  const archiveSet = await archivedIds('received');
   return data
     .filter(message => emailBelongsToAccount(message, account?.email))
-    .map(message => messageSummary(message, 'received'))
+    .map(message => messageSummary(message, 'received', archiveSet))
+    .filter(message => includeArchived || !message.archived)
     .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 }
 
-async function sentMessages(account) {
+async function sentMessages(account, includeArchived = false) {
   const result = await resendRequest('/emails?limit=100');
   const data = Array.isArray(result?.data) ? result.data : [];
+  const archiveSet = await archivedIds('sent');
   return data
     .filter(message => sentEmailBelongsToAccount(message, account?.email))
-    .map(message => messageSummary(message, 'sent'))
+    .map(message => messageSummary(message, 'sent', archiveSet))
+    .filter(message => includeArchived || !message.archived)
     .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 }
 
 async function allMessages(account) {
   const [received, sent] = await Promise.all([
-    receivedMessages(account),
-    sentMessages(account),
+    receivedMessages(account, true),
+    sentMessages(account, true),
   ]);
   return [...received, ...sent]
+    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+}
+
+async function archivedMessages(account) {
+  const [received, sent] = await Promise.all([
+    receivedMessages(account, true),
+    sentMessages(account, true),
+  ]);
+  return [...received, ...sent]
+    .filter(message => message.archived)
     .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 }
 
@@ -130,10 +159,10 @@ router.get('/inbox/:accountId', async (req, res) => {
     const messages = await receivedMessages(acct);
     res.json({
       messages,
-      source: 'resend-receiving',
+      source: 'resend',
       note: messages.length === 0
         ? 'No received messages yet. Resend will show inbound mail after the domain MX records point to Resend.'
-        : 'Resend Receiving provides inbound messages in one Inbox; folders and read status are not available.',
+        : 'Showing the latest 100 unarchived received messages.',
     });
   } catch (err) {
     console.error(`Resend receiving error for ${acct.email}:`, err.message);
@@ -181,6 +210,39 @@ router.get('/message/:accountId/:uid', async (req, res) => {
   }
 });
 
+// ── Archive state ──────────────────────────────────────────────────────────────
+router.patch('/archive/:accountId/:uid', async (req, res) => {
+  const source = String(req.body?.source || '').toLowerCase();
+  const archived = req.body?.archived === true;
+  if (!['received', 'sent'].includes(source)) {
+    return res.status(400).json({ error: 'source must be received or sent' });
+  }
+
+  const accounts = getAccounts();
+  const isAllMail = req.params.accountId === 'all';
+  const acct = accounts.find(a => a.id === req.params.accountId);
+  if (!acct && !isAllMail) return res.status(404).json({ error: 'Account not found' });
+  if (source === 'received' && acct?.sendOnly) {
+    return res.status(400).json({ error: 'This account cannot receive messages' });
+  }
+
+  try {
+    if (archived) {
+      await archiveStore.set({
+        source,
+        providerId: String(req.params.uid),
+        archivedBy: req.user?.email,
+      });
+    } else {
+      await archiveStore.remove(source, String(req.params.uid));
+    }
+    res.json({ success: true, archived });
+  } catch (err) {
+    console.error('Email archive update error:', err.message);
+    res.status(500).json({ error: 'Could not update archive status' });
+  }
+});
+
 // ── Send (all accounts via Resend HTTPS API; no SMTP dependency) ──────────────
 router.post('/send', async (req, res) => {
   const { accountId, to, subject, bodyHtml, bodyText, replyTo, headers: replyHeaders } = req.body || {};
@@ -223,7 +285,7 @@ router.post('/send', async (req, res) => {
 });
 
 // ── Messages by folder ────────────────────────────────────────────────────────
-// Resend Receiving is inbound-only, so INBOX is the only supported folder.
+// Resend provides separate inbound and sent catalogs; archive state is stored locally.
 router.get('/messages/:accountId/*', async (req, res) => {
   const accounts = getAccounts();
   const isAllMail = req.params.accountId === 'all';
@@ -231,7 +293,7 @@ router.get('/messages/:accountId/*', async (req, res) => {
   if (!acct && !isAllMail) return res.status(404).json({ error: 'Account not found' });
   if (acct?.sendOnly) {
     const folder = String(req.params[0] || 'SENT').toUpperCase();
-    if (folder !== 'SENT') {
+    if (!['SENT', 'ARCHIVED'].includes(folder)) {
       return res.json({
         messages: [],
         source: 'resend',
@@ -251,6 +313,8 @@ router.get('/messages/:accountId/*', async (req, res) => {
       messages = await sentMessages(isAllMail ? null : acct);
     } else if (folderKey === 'INBOX') {
       messages = await receivedMessages(isAllMail ? null : acct);
+    } else if (folderKey === 'ARCHIVED') {
+      messages = await archivedMessages(isAllMail ? null : acct);
     } else {
       return res.json({
         messages: [],
@@ -278,9 +342,10 @@ router.get('/folders/:accountId', async (req, res) => {
   const acct = accounts.find(a => a.id === req.params.accountId);
   if (!acct && req.params.accountId !== 'all') return res.status(404).json({ error: 'Account not found' });
   res.json({
-    folders: acct?.sendOnly ? ['SENT'] : ['ALL', 'INBOX', 'SENT'],
+    folders: acct?.sendOnly ? ['SENT', 'ARCHIVED'] : ['ALL', 'INBOX', 'SENT', 'ARCHIVED'],
     source: 'resend',
   });
 });
 
 module.exports = router;
+module.exports.setArchiveStore = setArchiveStore;

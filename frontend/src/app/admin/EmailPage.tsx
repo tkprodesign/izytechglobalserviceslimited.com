@@ -4,7 +4,7 @@ import { DashboardLayout } from './DashboardLayout';
 import { getToken, removeToken } from '../../lib/auth';
 import {
   Mail, Send, RefreshCw, PenSquare, X, ChevronRight,
-  Inbox, AlertCircle, Loader2, Reply,
+  Inbox, Archive, ArchiveRestore, AlertCircle, Loader2, Reply,
 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
@@ -26,6 +26,7 @@ interface EmailMeta {
   to: { name?: string; address?: string } | null;
   date: string | null;
   status?: string;
+  archived: boolean;
   seen: boolean;
   messageId?: string;
 }
@@ -55,6 +56,7 @@ const FOLDERS: Folder[] = [
   { name: 'All Mail', key: 'ALL', icon: <Mail size={14} /> },
   { name: 'Inbox', key: 'INBOX', icon: <Inbox size={14} /> },
   { name: 'Sent', key: 'SENT', icon: <Send size={14} /> },
+  { name: 'Archived', key: 'ARCHIVED', icon: <Archive size={14} /> },
 ];
 
 const ALL_MAIL_ACCOUNT: Account = {
@@ -268,6 +270,8 @@ export function EmailPage() {
   const [selected, setSelected] = useState<EmailBody | null>(null);
   const [selectedMeta, setSelectedMeta] = useState<EmailMeta | null>(null);
   const [bodyView, setBodyView] = useState<'rendered' | 'text'>('rendered');
+  const [archiving, setArchiving] = useState(false);
+  const [archiveError, setArchiveError] = useState('');
   const [loadingInbox, setLoadingInbox] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState(false);
   const [inboxError, setInboxError] = useState('');
@@ -361,13 +365,48 @@ export function EmailPage() {
     setCompose(true);
   }
 
+  async function toggleArchive() {
+    if (!activeAccount || !selectedMeta) return;
+    const nextArchived = !selectedMeta.archived;
+    setArchiving(true);
+    setArchiveError('');
+    try {
+      const res = await fetch(
+        `${API}/api/dev/email/archive/${activeAccount.id}/${encodeURIComponent(selectedMeta.uid)}`,
+        {
+          method: 'PATCH',
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source: selectedMeta.source, archived: nextArchived }),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not update archive status');
+
+      const leavesCurrentFolder = activeFolder.key === 'INBOX'
+        || activeFolder.key === 'SENT'
+        || (activeFolder.key === 'ARCHIVED' && !nextArchived);
+      if (leavesCurrentFolder) {
+        await loadFolder(activeAccount, activeFolder);
+      } else {
+        setSelectedMeta(prev => prev ? { ...prev, archived: nextArchived } : prev);
+        setMessages(prev => prev.map(message => (
+          message.uid === selectedMeta.uid ? { ...message, archived: nextArchived } : message
+        )));
+      }
+    } catch (err: unknown) {
+      setArchiveError(err instanceof Error ? err.message : 'Could not update archive status');
+    } finally {
+      setArchiving(false);
+    }
+  }
+
   function composeAccountId() {
     return activeAccount?.isVirtual
       ? accounts.find(acct => !acct.sendOnly)?.id || accounts[0]?.id || ''
       : activeAccount?.id || '';
   }
 
-  const visibleFolders = activeAccount?.sendOnly ? [FOLDERS[2]] : FOLDERS;
+  const visibleFolders = activeAccount?.sendOnly ? [FOLDERS[2], FOLDERS[3]] : FOLDERS;
 
   return (
     <DashboardLayout>
@@ -603,6 +642,15 @@ export function EmailPage() {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button
+                      onClick={toggleArchive}
+                      disabled={archiving || loadingMsg || !selected}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-amber-50 disabled:opacity-50"
+                      style={{ color: '#b45309' }}
+                    >
+                      {selectedMeta.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+                      {archiving ? 'Updating…' : selectedMeta.archived ? 'Unarchive' : 'Archive'}
+                    </button>
+                    <button
                       onClick={handleReply}
                       disabled={loadingMsg || !selected}
                       className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-blue-50"
@@ -616,6 +664,11 @@ export function EmailPage() {
 
               {/* Message body */}
               <div className="flex-1 overflow-y-auto p-8">
+                {archiveError && (
+                  <p role="alert" className="mb-4 flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm" style={{ background: 'rgba(220,38,38,0.08)', color: '#dc2626' }}>
+                    <AlertCircle size={14} /> {archiveError}
+                  </p>
+                )}
                 {loadingMsg ? (
                   <div className="flex items-center justify-center h-40">
                     <Loader2 size={24} className="animate-spin" style={{ color: '#1a56db' }} />

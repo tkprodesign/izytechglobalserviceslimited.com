@@ -21,12 +21,37 @@ const db = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
+emailRoutes.setArchiveStore({
+  async list(source) {
+    const { rows } = await db.query(
+      'SELECT provider_id FROM email_archives WHERE source = $1',
+      [source],
+    );
+    return rows.map(row => row.provider_id);
+  },
+  async set({ source, providerId, archivedBy }) {
+    await db.query(`
+      INSERT INTO email_archives (source, provider_id, archived_by)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (source, provider_id) DO UPDATE
+        SET archived_at = NOW(), archived_by = EXCLUDED.archived_by
+    `, [source, providerId, archivedBy || null]);
+  },
+  async remove(source, providerId) {
+    await db.query(
+      'DELETE FROM email_archives WHERE source = $1 AND provider_id = $2',
+      [source, providerId],
+    );
+  },
+});
+
 db.connect()
   .then(() => {
     console.log('Connected to Neon PostgreSQL');
     return initTestimonialsTable();
   })
   .then(() => initSiteSettingsTable())
+  .then(() => initEmailArchiveTable())
   .then(() => initStoreTable())
   .then(() => initMilestonesTable())
   .then(() => initFounderTable())
@@ -99,6 +124,18 @@ async function initSiteSettingsTable() {
       ON CONFLICT (key) DO NOTHING
     `, [key, val]);
   }
+}
+
+async function initEmailArchiveTable() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS email_archives (
+      source      TEXT        NOT NULL CHECK (source IN ('received', 'sent')),
+      provider_id TEXT        NOT NULL,
+      archived_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      archived_by TEXT,
+      PRIMARY KEY (source, provider_id)
+    )
+  `);
 }
 
 // Prevent dropped connections from crashing the process — pg Pool will reconnect automatically
