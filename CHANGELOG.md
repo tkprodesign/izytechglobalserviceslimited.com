@@ -7,6 +7,17 @@ Format: newest first. Dates are UTC.
 
 ## 2026-09-03
 
+### Changed — Updated testimonial identities and locations
+
+- Updated the five database-backed testimonials to use the requested customer names.
+- Updated their displayed location labels with a mix of `Port Harcourt` and `Nigeria`.
+- Kept the existing testimonial copy, ratings, result metrics, and display ordering unchanged.
+- Updated the public-page fallback data to match the same identities and locations.
+
+---
+
+## 2026-09-03
+
 ### Added — Testimonials management for admin and developer panels
 
 - Added authenticated `GET/POST/PUT/DELETE /api/admin/testimonials` endpoints.
