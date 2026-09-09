@@ -43,12 +43,14 @@ function formatWatts(watts: number) {
 
 export function InverterCalculator({ open, onOpenChange }: InverterCalculatorProps) {
   const [quantities, setQuantities] = useState<Record<string, number>>(defaultQuantities);
+  const [customWatts, setCustomWatts] = useState("");
   const [backupHours, setBackupHours] = useState(4);
   const [hasCalculated, setHasCalculated] = useState(false);
 
+  const customLoadWatts = Math.max(0, Number(customWatts) || 0);
   const totalWatts = useMemo(
-    () => appliances.reduce((total, appliance) => total + appliance.watts * (quantities[appliance.id] ?? 0), 0),
-    [quantities],
+    () => appliances.reduce((total, appliance) => total + appliance.watts * (quantities[appliance.id] ?? 0), 0) + customLoadWatts,
+    [quantities, customLoadWatts],
   );
   const peakWatts = Math.ceil(totalWatts * 1.25);
   const recommendedKva = inverterSizes.find(size => size * 1_000 * 0.8 >= peakWatts) ?? inverterSizes[inverterSizes.length - 1];
@@ -65,6 +67,7 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
 
   const reset = () => {
     setQuantities(defaultQuantities);
+    setCustomWatts("");
     setBackupHours(4);
     setHasCalculated(false);
   };
@@ -150,6 +153,37 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
                   </div>
                 );
               })}
+            </div>
+
+            <div className="mt-4 border border-[#dfe7ee] bg-white p-4 sm:p-5">
+              <label htmlFor="custom-wattage" className="block text-sm font-bold uppercase tracking-[0.04em] text-[#173047]" style={{ fontFamily: "var(--font-ui)" }}>
+                Other appliance or custom load
+              </label>
+              <p className="mt-1 text-xs text-[#8a9aaa]">
+                Enter the wattage of an appliance not listed above.
+              </p>
+              <div className="mt-3 flex items-center gap-2">
+                <input
+                  id="custom-wattage"
+                  type="number"
+                  min="0"
+                  max="50000"
+                  step="1"
+                  inputMode="numeric"
+                  value={customWatts}
+                  onChange={event => {
+                    setCustomWatts(event.target.value);
+                    setHasCalculated(false);
+                  }}
+                  placeholder="e.g. 750"
+                  className="w-full border border-[#d8e0e7] bg-[#fbfcfd] px-3 py-2.5 text-sm text-[#173047] outline-none transition-colors placeholder:text-[#a7b4bf] focus:border-[#35A96B]"
+                  aria-describedby="custom-wattage-help"
+                />
+                <span className="shrink-0 text-sm font-bold text-[#60758a]">watts</span>
+              </div>
+              <p id="custom-wattage-help" className="mt-2 text-xs text-[#8a9aaa]">
+                This load is added once to your estimated demand.
+              </p>
             </div>
 
             <div className="mt-5 border border-[#dfe7ee] bg-white p-4 sm:p-5">
