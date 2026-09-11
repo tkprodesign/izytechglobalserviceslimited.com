@@ -10,3 +10,4 @@
 - [Hero carousel autoplay](hero-carousel-autoplay.md) — The full-screen hero carousel must not pause on pointer hover or disable autoplay when reduced motion is enabled
 - [Backend dependency resolution](backend-dependency-resolution.md) — Backend workflows may resolve runtime packages from the workspace root when backend-local installs are incomplete
 - [Render R2 production configuration](render-r2-production-config.md) — Render needs its own R2 variables and a redeploy after production configuration changes
+- [Render environment update safety](render-env-update-safety.md) — Update Render variables individually or verify the complete inventory after bulk changes
