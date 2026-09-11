@@ -449,7 +449,7 @@ export function AboutPage() {
             className="mt-14 lg:mt-0"
           >
             <div
-              className="p-8 border"
+              className="p-5 sm:p-8 border"
               style={{ borderColor: "rgba(240,162,14,0.2)", background: "rgba(240,162,14,0.04)" }}
             >
               <div className="text-xs font-semibold tracking-widest uppercase mb-6" style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}>
@@ -458,18 +458,18 @@ export function AboutPage() {
               {[
                 { label: "Email",     value: "info@izytechglobalservices.com", href: "mailto:info@izytechglobalservices.com" },
                 { label: "Phone",     value: "0810 126 2814",                  href: "tel:08101262814" },
-                { label: "Facebook",  value: "Izy Technologies Global Services Limited", href: "https://facebook.com" },
+                { label: "Facebook",  value: "IZY Technologies",               href: "https://facebook.com/izytechglobalservices" },
                 { label: "Instagram", value: "@izytechservices",               href: "https://instagram.com/izytechservices" },
                 { label: "Location",  value: "Port Harcourt, Rivers State, Nigeria", href: null },
               ].map(({ label, value, href }) => (
                 <div key={label} className="flex gap-4 mb-5 last:mb-0">
-                  <div className="text-xs font-semibold w-24 shrink-0 pt-0.5" style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}>
+                  <div className="text-xs font-semibold w-20 shrink-0 pt-0.5" style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}>
                     {label}
                   </div>
                   {href ? (
                     <a
                       href={href}
-                      className="text-white/60 text-sm hover:text-white/90 transition-colors"
+                      className="text-white/60 text-sm hover:text-white/90 transition-colors min-w-0 break-all"
                       style={{ fontFamily: "var(--font-body)" }}
                       target={href.startsWith("http") ? "_blank" : undefined}
                       rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
@@ -477,7 +477,7 @@ export function AboutPage() {
                       {value}
                     </a>
                   ) : (
-                    <span className="text-white/60 text-sm" style={{ fontFamily: "var(--font-body)" }}>{value}</span>
+                    <span className="text-white/60 text-sm min-w-0 break-words" style={{ fontFamily: "var(--font-body)" }}>{value}</span>
                   )}
                 </div>
               ))}
