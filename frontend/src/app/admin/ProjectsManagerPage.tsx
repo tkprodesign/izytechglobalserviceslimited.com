@@ -253,7 +253,11 @@ export function ProjectsManagerPage() {
       const du = await res.json();
       if (!res.ok || du.error) throw new Error(du.error || 'Could not start upload');
       const up = await fetch(du.uploadURL, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
-      if (!up.ok) throw new Error('R2 upload failed');
+      if (!up.ok) {
+        const responseText = await up.text().catch(() => '');
+        const detail = responseText.trim().replace(/\s+/g, ' ').slice(0, 180);
+        throw new Error(`R2 upload failed (${up.status})${detail ? `: ${detail}` : ''}`);
+      }
       setForm(f => ({ ...f, images: [...f.images, du.url] }));
     } catch (err: unknown) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed');

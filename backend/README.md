@@ -20,7 +20,7 @@ Express + TypeScript API for IZY Technologies platform, deployed on Render.
 | GET | `/api/projects` | List published projects, optionally filtered by category |
 | GET | `/api/projects/:slug` | Get one published project |
 | GET/POST/PUT/DELETE | `/api/admin/projects` | Manage projects (authenticated admin/developer) |
-| POST | `/api/admin/projects/images/direct-upload` | Create a Cloudflare Images direct-upload URL |
+| POST | `/api/admin/projects/images/direct-upload` | Create a signed Cloudflare R2 upload URL |
 | GET/POST/PUT/DELETE | `/api/admin/testimonials` | Manage testimonials (authenticated admin/developer) |
 
 ## Local development
@@ -46,14 +46,18 @@ Set these in your Render service → Environment tab:
 | `ALLOWED_ORIGINS` | Comma-separated Cloudflare Pages URLs, e.g. `https://izytech.pages.dev,https://izytechgsl.com` |
 | `NODE_ENV` | `production` |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID |
-| `CLOUDFLARE_API_TOKEN` | API token allowed to create Cloudflare Images direct uploads |
-| `CLOUDFLARE_IMAGE_HASH` | Cloudflare Images delivery hash |
+| `CLOUDFLARE_S3_API_ENDPOINT` | Cloudflare R2 S3-compatible endpoint |
+| `CLOUDFLARE_ACCESS_KEY_ID` | R2 access key ID |
+| `CLOUDFLARE_SECRET_ACCESS_KEY` | R2 secret access key |
+| `CLOUDFLARE_PUBLIC_BUCKET` | Public R2 bucket name, defaults to `izy-public-images` |
+| `CLOUDFLARE_PRIVATE_BUCKET` | Private R2 bucket name, defaults to `izy-private-assessments` |
+| `CLOUDFLARE_R2_PUBLIC_URL` | Public R2 delivery base URL |
 
 Render automatically sets `PORT` — do not override it.
 
-Store product images are uploaded directly from the admin browser to Cloudflare
-Images using a short-lived URL issued by the API. Render only handles the
-small URL-creation request and never stores the image bytes.
+Public project and store images are uploaded directly from the admin browser to
+Cloudflare R2 using short-lived signed PUT URLs issued by the API. Render only
+handles the small URL-creation request and never stores the image bytes.
 
 ## Cloudflare Pages environment variable
 
