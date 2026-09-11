@@ -12,6 +12,15 @@ const {
   assessmentChargeEmail,
 } = require('./lib/emailTemplate');
 const { sendResendEmail } = require('./lib/resend');
+const {
+  PUBLIC_BUCKET,
+  PRIVATE_BUCKET,
+  publicUrl,
+  createKey,
+  createUpload,
+  createPrivateDownload,
+  isPrivateKey,
+} = require('./lib/r2');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -316,17 +325,6 @@ app.use(cors({
 
 app.use(express.json());
 
-function cloudflareDirectUploadError(response, data, fallback) {
-  const errors = Array.isArray(data?.errors) ? data.errors : [];
-  const isAuthError = response.status === 401
-    || response.status === 403
-    || errors.some(error => error?.code === 10000 || /authentication|unauthorized|permission/i.test(error?.message || ''));
-  if (isAuthError) {
-    return 'Cloudflare Images rejected the server token. Update CLOUDFLARE_API_TOKEN with Account > Cloudflare Images > Edit permission for this account.';
-  }
-  return errors[0]?.message || fallback;
-}
-
 // ── Auth middleware ───────────────────────────────────────────────────────────
 function requireAuth(req, res, next) {
   const header = req.headers.authorization;
@@ -505,41 +503,37 @@ app.delete('/api/admin/store/products/:id', requireAuth, async (req, res) => {
   }
 });
 
-// ── Admin: Store image upload → Cloudflare Images ────────────────────────────
-// The backend only creates a short-lived upload URL. Image bytes go directly
-// from the admin browser to Cloudflare, so the backend host never stores the file.
-app.post('/api/admin/store/images/direct-upload', requireAuth, async (_req, res) => {
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const apiToken  = process.env.CLOUDFLARE_API_TOKEN;
-  const imagesHash = process.env.CLOUDFLARE_IMAGE_HASH || process.env.CLOUDFLARE_IMAGES_HASH;
-  if (!accountId || !apiToken || !imagesHash)
-    return res.status(500).json({ error: 'Cloudflare credentials not configured on server' });
+// ── Admin: public image upload → Cloudflare R2 ───────────────────────────────
+// The browser uploads directly to R2 with a short-lived signed PUT URL. The
+// backend stores only the public delivery URL in the project/store record.
+async function createPublicUpload(req, res, scope) {
+  const MAX_BYTES = 10 * 1024 * 1024;
+  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+  const { contentType, fileSize, fileName } = req.body || {};
+  const normalizedType = String(contentType || '').toLowerCase().split(';')[0].trim();
+  const size = Number(fileSize);
+
+  if (!ALLOWED_TYPES.includes(normalizedType)) {
+    return res.status(400).json({ error: 'Please upload a JPEG, PNG, WebP, GIF, or SVG image.' });
+  }
+  if (!Number.isFinite(size) || size <= 0 || size > MAX_BYTES) {
+    return res.status(400).json({ error: 'Images must be larger than 0 bytes and no larger than 10 MB.' });
+  }
 
   try {
-    const cfRes = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v2/direct_upload`,
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${apiToken}` },
-      }
-    );
-    const data = await cfRes.json();
-    if (!data.success)
-      return res.status(502).json({ error: cloudflareDirectUploadError(cfRes, data, 'Cloudflare upload failed') });
-
-    const imageId = data.result?.id;
-    const uploadURL = data.result?.uploadURL;
-    if (!imageId || !uploadURL) {
-      return res.status(502).json({ error: 'Cloudflare did not return an upload URL' });
-    }
-    res.json({
-      uploadURL,
-      url: `https://imagedelivery.net/${imagesHash}/${imageId}/public`,
+    const key = createKey(scope, fileName, normalizedType);
+    const uploadURL = await createUpload({
+      bucket: PUBLIC_BUCKET,
+      key,
+      contentType: normalizedType,
     });
+    res.json({ uploadURL, key, url: publicUrl(key) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
+}
+
+app.post('/api/admin/store/images/direct-upload', requireAuth, (req, res) => createPublicUpload(req, res, 'products'));
 
 // ── Testimonials (public) ─────────────────────────────────────────────────────
 app.get('/api/testimonials', async (_req, res) => {
@@ -876,12 +870,12 @@ app.post('/api/contact', async (req, res) => {
 });
 
 // ── Public: Site assessment uploads ───────────────────────────────────────────
-// Images go directly from the visitor's browser to Cloudflare Images. This keeps
-// file bytes out of the API process and lets the request store only safe URLs.
+// Assessment files are private R2 objects. The browser uploads directly with a
+// short-lived signed URL; only the object key is saved in PostgreSQL.
 app.post('/api/site-assessments/uploads/direct-upload', async (req, res) => {
   const MAX_BYTES = 10 * 1024 * 1024;
   const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-  const { contentType, fileSize } = req.body || {};
+  const { contentType, fileSize, fileName } = req.body || {};
   const normalizedType = String(contentType || '').toLowerCase().split(';')[0].trim();
   const size = Number(fileSize);
 
@@ -892,48 +886,61 @@ app.post('/api/site-assessments/uploads/direct-upload', async (req, res) => {
     return res.status(400).json({ error: 'Images must be larger than 0 bytes and no larger than 10 MB.' });
   }
 
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
-  const imagesHash = process.env.CLOUDFLARE_IMAGE_HASH || process.env.CLOUDFLARE_IMAGES_HASH;
-  if (!accountId || !apiToken || !imagesHash) {
-    return res.status(500).json({ error: 'Image uploads are not configured on the server.' });
-  }
-
   try {
-    const cfRes = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v2/direct_upload`,
-      { method: 'POST', headers: { Authorization: `Bearer ${apiToken}` } },
-    );
-    const data = await cfRes.json();
-    if (!data.success) {
-      return res.status(502).json({ error: cloudflareDirectUploadError(cfRes, data, 'Could not start image upload.') });
-    }
-    const imageId = data.result?.id;
-    const uploadURL = data.result?.uploadURL;
-    if (!imageId || !uploadURL) {
-      return res.status(502).json({ error: 'Cloudflare did not return an upload URL.' });
-    }
-    res.json({ uploadURL, url: `https://imagedelivery.net/${imagesHash}/${imageId}/public` });
+    const key = createKey('assessments', fileName, normalizedType);
+    const uploadURL = await createUpload({
+      bucket: PRIVATE_BUCKET,
+      key,
+      contentType: normalizedType,
+    });
+    res.json({ uploadURL, key });
   } catch (err) {
     res.status(502).json({ error: err.message });
   }
 });
 
-function isAllowedAssessmentImage(url) {
+function isLegacyAssessmentImage(url) {
   return typeof url === 'string'
     && /^https:\/\/imagedelivery\.net\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+\/public(?:$|[?#])/.test(url);
+}
+
+function isAllowedAssessmentFile(value) {
+  return isPrivateKey(value) || isLegacyAssessmentImage(value);
 }
 
 function normalizeAssessmentAttachments(value) {
   if (!Array.isArray(value)) return [];
   return value
-    .filter(item => item && isAllowedAssessmentImage(item.url))
+    .filter(item => item && isAllowedAssessmentFile(item.key || item.url))
     .slice(0, 5)
     .map(item => ({
-      url: item.url,
+      ...(isPrivateKey(item.key || item.url)
+        ? { key: item.key || item.url }
+        : { url: item.url }),
       name: String(item.name || 'Site image').slice(0, 120),
       type: String(item.type || 'image/*').slice(0, 80),
     }));
+}
+
+async function signedAssessmentValue(value) {
+  return isPrivateKey(value) ? createPrivateDownload(value) : value;
+}
+
+async function adminAssessmentRow(row) {
+  const attachments = Array.isArray(row.attachments)
+    ? await Promise.all(row.attachments.map(async item => {
+      if (!item || typeof item !== 'object') return item;
+      const key = item.key || item.url;
+      return isPrivateKey(key)
+        ? { ...item, url: await createPrivateDownload(key) }
+        : item;
+    }))
+    : [];
+  return {
+    ...row,
+    attachments,
+    payment_proof_url: await signedAssessmentValue(row.payment_proof_url),
+  };
 }
 
 // ── Public: Request a paid site assessment ─────────────────────────────────────
@@ -1057,8 +1064,9 @@ app.get('/api/site-assessments/:token', async (req, res) => {
 });
 
 app.post('/api/site-assessments/:token/payment-proof', async (req, res) => {
-  const { url, name, reference } = req.body || {};
-  if (!isAllowedAssessmentImage(url)) {
+  const { key, url, name, reference } = req.body || {};
+  const fileKey = key || url;
+  if (!isAllowedAssessmentFile(fileKey)) {
     return res.status(400).json({ error: 'Please upload a valid receipt or invoice image.' });
   }
   try {
@@ -1070,7 +1078,7 @@ app.post('/api/site-assessments/:token/payment-proof', async (req, res) => {
          AND payment_status IN ('pending', 'rejected')
          AND payment_status NOT IN ('confirmed') AND status NOT IN ('cancelled', 'completed')
        RETURNING id`,
-      [url, String(reference || name || '').trim().slice(0, 160) || null, req.params.token],
+       [fileKey, String(reference || name || '').trim().slice(0, 160) || null, req.params.token],
     );
     if (!rows.length) return res.status(404).json({ error: 'This request cannot accept payment proof.' });
     res.json({ success: true, status: 'payment_proof_submitted' });
@@ -1108,7 +1116,7 @@ app.get('/api/admin/site-assessments/:id', requireAuth, async (req, res) => {
       [req.params.id],
     );
     if (!rows.length) return res.status(404).json({ error: 'Site assessment not found.' });
-    res.json({ data: rows[0] });
+    res.json({ data: await adminAssessmentRow(rows[0]) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1159,7 +1167,7 @@ app.patch('/api/admin/site-assessments/:id', requireAuth, async (req, res) => {
       req.params.id,
     ]);
     if (!rows.length) return res.status(404).json({ error: 'Site assessment not found.' });
-    res.json({ data: rows[0] });
+    res.json({ data: await adminAssessmentRow(rows[0]) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1205,7 +1213,7 @@ app.post('/api/admin/site-assessments/:id/send-charge', requireAuth, async (req,
       WHERE id = $3 AND request_type = 'site_assessment'
       RETURNING *
     `, [fee, String(paymentInstructions).trim(), req.params.id]);
-    res.json({ success: true, data: updated[0] });
+    res.json({ success: true, data: await adminAssessmentRow(updated[0]) });
   } catch (err) {
     console.error('Site assessment charge error:', err.message);
     res.status(err.status || 502).json({ error: err.message });
@@ -1559,49 +1567,7 @@ app.delete('/api/admin/projects/:id', requireAuth, async (req, res) => {
 });
 
 app.post('/api/admin/projects/images/direct-upload', requireAuth, async (req, res) => {
-  // ── Server-side pre-flight validation ────────────────────────────────────────
-  // The file never passes through this server (direct upload to Cloudflare), so
-  // we validate the declared metadata the client must send before we issue a URL.
-  const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
-  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
-
-  const { contentType, fileSize } = req.body || {};
-
-  if (!contentType || typeof contentType !== 'string') {
-    return res.status(400).json({ error: 'contentType is required.' });
-  }
-  if (!ALLOWED_TYPES.includes(contentType.toLowerCase().split(';')[0].trim())) {
-    return res.status(400).json({ error: `File type "${contentType}" is not allowed. Please upload a JPEG, PNG, WebP, GIF, or SVG.` });
-  }
-  const size = Number(fileSize);
-  if (!fileSize || isNaN(size) || size <= 0) {
-    return res.status(400).json({ error: 'fileSize is required.' });
-  }
-  if (size > MAX_BYTES) {
-    return res.status(400).json({ error: `File is too large (${(size / 1024 / 1024).toFixed(1)} MB). Maximum allowed size is 10 MB.` });
-  }
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
-  const imagesHash = process.env.CLOUDFLARE_IMAGE_HASH || process.env.CLOUDFLARE_IMAGES_HASH;
-  if (!accountId || !apiToken || !imagesHash) {
-    return res.status(500).json({ error: 'Cloudflare credentials not configured on server' });
-  }
-  try {
-    const cfRes = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v2/direct_upload`,
-      { method: 'POST', headers: { Authorization: `Bearer ${apiToken}` } }
-    );
-    const data = await cfRes.json();
-     if (!data.success) return res.status(502).json({ error: cloudflareDirectUploadError(cfRes, data, 'Cloudflare upload failed') });
-    const imageId = data.result?.id;
-    const uploadURL = data.result?.uploadURL;
-    if (!imageId || !uploadURL) return res.status(502).json({ error: 'Cloudflare did not return an upload URL' });
-    res.json({ uploadURL, url: `https://imagedelivery.net/${imagesHash}/${imageId}/public` });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  return createPublicUpload(req, res, 'projects');
 });
 
 // ── Public: Milestones ────────────────────────────────────────────────────────

@@ -94,7 +94,7 @@ export function AssessmentPaymentPage() {
       const response = await fetch(`${API}/api/site-assessments/${encodeURIComponent(token)}/payment-proof`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: attachment.url, name: attachment.name, reference }),
+        body: JSON.stringify({ key: attachment.key, name: attachment.name, reference }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Could not submit payment proof.");

@@ -147,22 +147,21 @@ export function StoreProductsPage() {
       const token = getToken();
       const directUploadResponse = await fetch(`${API}/api/admin/store/images/direct-upload`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contentType: file.type, fileSize: file.size, fileName: file.name }),
       });
       const directUpload = await directUploadResponse.json();
       if (!directUploadResponse.ok || directUpload.error) {
-        throw new Error(directUpload.error || 'Unable to start Cloudflare upload');
+        throw new Error(directUpload.error || 'Unable to start R2 upload');
       }
 
-      const data = new FormData();
-      data.append('file', file);
       const uploadResponse = await fetch(directUpload.uploadURL, {
-        method: 'POST',
-        body: data,
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
       });
-      const uploadResult = await uploadResponse.json().catch(() => ({}));
-      if (!uploadResponse.ok || uploadResult.success === false) {
-        throw new Error(uploadResult.errors?.[0]?.message || 'Cloudflare upload failed');
+      if (!uploadResponse.ok) {
+        throw new Error('R2 upload failed');
       }
       setForm(f => ({ ...f, images: [...f.images, directUpload.url] }));
     } catch (err: unknown) {

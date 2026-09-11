@@ -77,7 +77,7 @@ export interface SiteAssessmentPayload {
   preferredVisitDate?: string;
   preferredVisitTime?: string;
   details: string;
-  attachments?: { url: string; name: string; type: string }[];
+  attachments?: { key: string; name: string; type: string }[];
 }
 
 export interface SocialPlatform {

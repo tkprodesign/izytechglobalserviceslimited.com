@@ -1,7 +1,7 @@
 - [Project Constitution](project-constitution.md) — IZY Technologies repo charter: GitHub is source of truth, deployment stack, dev rules
 - [Company Bio Decisions](company-bio-decisions.md) — Founding date (2018), tagline, install count, milestones/founder in DB, SEO still noindex
 - [Bio Update Plan](bio-update-plan.md) — Wrong email domain + "since 2012" fixes + full AboutPage.tsx rewrite — NOT YET DONE, for new agent
-- [Store image storage](cloudflare-image-uploads.md) — Product image bytes bypass Railway and upload directly to Cloudflare Images
+- [R2 image storage](cloudflare-image-uploads.md) — Public media uploads directly to R2; assessment attachments stay private and use signed admin URLs
 - [Schema rollout safety](schema-rollout-safety.md) — Additive Neon schema changes need idempotent startup initialization and conflict-safe seed inserts
 - [Service portfolio alignment](service-portfolio-alignment.md) — Service-page claims and imagery should be grounded in matching published project records
 - [Replit config replacement](replit-config-replacement.md) — `.replit` changes require schema-validated replacement rather than direct edits

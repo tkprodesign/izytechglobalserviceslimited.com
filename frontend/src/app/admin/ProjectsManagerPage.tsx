@@ -248,15 +248,12 @@ export function ProjectsManagerPage() {
       const res = await fetch(`${API}/api/admin/projects/images/direct-upload`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contentType: file.type, fileSize: file.size }),
+        body: JSON.stringify({ contentType: file.type, fileSize: file.size, fileName: file.name }),
       });
       const du = await res.json();
       if (!res.ok || du.error) throw new Error(du.error || 'Could not start upload');
-      const fd = new FormData();
-      fd.append('file', file);
-      const up = await fetch(du.uploadURL, { method: 'POST', body: fd });
-      const ur = await up.json().catch(() => ({}));
-      if (!up.ok || ur.success === false) throw new Error(ur.errors?.[0]?.message || 'Cloudflare upload failed');
+      const up = await fetch(du.uploadURL, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+      if (!up.ok) throw new Error('R2 upload failed');
       setForm(f => ({ ...f, images: [...f.images, du.url] }));
     } catch (err: unknown) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed');
@@ -701,7 +698,7 @@ export function ProjectsManagerPage() {
                       value={newImageUrl}
                       onChange={e => setNewImageUrl(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addImageUrl())}
-                      placeholder="https://imagedelivery.net/…"
+                      placeholder="https://pub-…r2.dev/…"
                       className="flex-1 text-sm focus:outline-none bg-transparent"
                       style={{ color: 'var(--izy-navy)' }}
                     />

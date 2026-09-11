@@ -18,7 +18,7 @@ const services = [
 const propertyTypes = ["Residential", "Commercial", "Industrial", "Estate / Multi-unit", "Institutional", "Other"];
 const projectStages = ["Planning / budgeting", "New construction", "Renovation / upgrade", "Existing fault or assessment", "Ready to start"];
 
-export type AssessmentAttachment = { url: string; name: string; type: string };
+export type AssessmentAttachment = { key: string; url?: string; name: string; type: string };
 
 export async function uploadAssessmentImage(file: File): Promise<AssessmentAttachment> {
   const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -28,19 +28,22 @@ export async function uploadAssessmentImage(file: File): Promise<AssessmentAttac
   const start = await fetch(`${API}/api/site-assessments/uploads/direct-upload`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ contentType: file.type, fileSize: file.size }),
+    body: JSON.stringify({ contentType: file.type, fileSize: file.size, fileName: file.name }),
   });
   const upload = await start.json();
   if (!start.ok) throw new Error(upload.error || "Could not start upload.");
 
   const formData = new FormData();
   formData.append("file", file);
-  const result = await fetch(upload.uploadURL, { method: "POST", body: formData });
-  const resultBody = await result.json().catch(() => ({}));
-  if (!result.ok || resultBody.success === false) {
-    throw new Error(resultBody.errors?.[0]?.message || "Image upload failed.");
+  const result = await fetch(upload.uploadURL, {
+    method: "PUT",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+  if (!result.ok) {
+    throw new Error("Image upload failed.");
   }
-  return { url: upload.url, name: file.name, type: file.type };
+  return { key: upload.key, name: file.name, type: file.type };
 }
 
 function today() {
@@ -115,8 +118,8 @@ export function SiteAssessmentForm({ dark = false }: { dark?: boolean }) {
     }
   }
 
-  function removeAttachment(url: string) {
-    setAttachments(current => current.filter(item => item.url !== url));
+  function removeAttachment(key: string) {
+    setAttachments(current => current.filter(item => item.key !== key));
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -294,7 +297,7 @@ export function SiteAssessmentForm({ dark = false }: { dark?: boolean }) {
         {attachments.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3">
             {attachments.map(file => (
-              <button type="button" key={file.url} onClick={() => removeAttachment(file.url)} className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs ${dark ? "bg-white/8 text-white/70" : "bg-gray-100 text-[#041627]/70"}`}>
+              <button type="button" key={file.key} onClick={() => removeAttachment(file.key)} className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs ${dark ? "bg-white/8 text-white/70" : "bg-gray-100 text-[#041627]/70"}`}>
                 <FileImage size={13} /> <span className="max-w-32 truncate">{file.name}</span> <span aria-label="Remove">×</span>
               </button>
             ))}
