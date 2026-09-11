@@ -1669,6 +1669,7 @@ app.get('/api/dev/system', requireDev, (_req, res) => {
     'NOREPLY_EMAIL', 'INFO_EMAIL', 'INFO_EMAIL_PASSWORD',
     'SALES_EMAIL', 'SALES_EMAIL_PASSWORD',
     'SUPPORT_EMAIL', 'SUPPORT_EMAIL_PASSWORD',
+    'INVOICE_EMAIL', 'INVOICE_EMAIL_PASSWORD',
     'ADMIN_EMAIL', 'ADMIN_EMAIL_PASSWORD',
     'ALLOWED_ORIGINS',
     // Note: VITE_API_URL is a Cloudflare Pages frontend variable — not present on the backend

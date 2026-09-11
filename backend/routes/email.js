@@ -26,6 +26,7 @@ function getAccounts() {
     { id: 'admin',    label: 'Admin',    email: process.env.ADMIN_EMAIL,   color: '#7c3aed' },
     { id: 'sales',    label: 'Sales',   email: process.env.SALES_EMAIL,   color: '#d97706' },
     { id: 'support',  label: 'Support', email: process.env.SUPPORT_EMAIL, color: '#dc2626' },
+    { id: 'invoice',  label: 'Invoice', email: process.env.INVOICE_EMAIL, color: '#0f766e' },
     { id: 'noreply',  label: 'No-Reply', email: process.env.NOREPLY_EMAIL, sendOnly: true, color: '#6b7280' },
   ].filter(a => a.email);
 }
