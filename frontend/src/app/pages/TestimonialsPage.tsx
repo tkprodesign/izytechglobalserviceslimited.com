@@ -51,7 +51,7 @@ const FALLBACK: Testimonial[] = [
     name: "Mr Kingsley Anyanwu",
     role: "CEO",
     company: "Port Harcourt",
-    text: "Our hotel security was a headache before IZY took over. After their complete CCTV and access control overhaul, we can monitor the entire property from one screen, on our phones, anywhere. Outstanding work.",
+    text: "Our hotel security was a headache before Izy Tech Services took over. After their complete CCTV and access control overhaul, we can monitor the entire property from one screen, on our phones, anywhere. Outstanding work.",
     rating: 5,
     avatar: "KA",
     metric: "Full property remote access",
