@@ -5,7 +5,7 @@ import { Link } from "react-router";
 import { PageLayout } from "../components/PageLayout";
 
 const stats = [
-  { value: 1000, suffix: "+", label: "Installations Completed" },
+  { value: 1000, suffix: "+", label: "Jobs Delivered" },
   { value: 8,    suffix: "+", label: "Years of Excellence" },
   { value: 4,    suffix: "",  label: "Service Divisions" },
   { value: 98,   suffix: "%", label: "Client Satisfaction" },
@@ -48,7 +48,7 @@ const achievements = [
   {
     icon: Users,
     title: "Extensive Client Base",
-    detail: "Izy Tech Services has successfully completed thousands of solar installations, serving a diverse range of clients from homeowners to large enterprises across Nigeria.",
+    detail: "Izy Tech Services has completed more than 1,000 jobs across solar energy, electrical systems, security, smart home and IT services — serving clients from homeowners to large enterprises across Nigeria.",
   },
   {
     icon: Leaf,

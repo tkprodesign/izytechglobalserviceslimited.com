@@ -289,7 +289,7 @@ export function About() {
           className="mb-20 grid grid-cols-2 lg:grid-cols-4 gap-0 border border-[#e8edf3] divide-x divide-[#e8edf3]"
         >
           {[
-            { to: 1000, suffix: "+", label: "Installations" },
+            { to: 1000, suffix: "+", label: "Jobs Delivered" },
             { to: 8,    suffix: "+", label: "Years of Excellence" },
             { to: 36,   suffix: "",  label: "States Covered" },
             { to: 98,   suffix: "%", label: "Client Satisfaction" },

@@ -5,7 +5,7 @@ import { useSearchParams } from "react-router";
 import { InverterCalculator } from "../components/InverterCalculator";
 
 const stats = [
-  { value: 1000, suffix: "+", label: "Installations" },
+  { value: 1000, suffix: "+", label: "Jobs Delivered" },
   { value: 8,    suffix: "+", label: "Years of Excellence" },
   { value: 98,   suffix: "%", label: "Client Satisfaction" },
   { value: 24,   suffix: "/7", label: "Support Available" },
