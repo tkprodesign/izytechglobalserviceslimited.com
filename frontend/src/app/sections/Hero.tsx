@@ -81,7 +81,6 @@ export function Hero() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
-  const [secondsRemaining, setSecondsRemaining] = useState(SLIDE_DURATION_SECONDS);
   const reducedMotion = useReducedMotion();
   const slide = slides[activeSlide];
 
@@ -94,23 +93,16 @@ export function Hero() {
   };
 
   const goToSlide = (index: number) => {
-    setSecondsRemaining(SLIDE_DURATION_SECONDS);
     setActiveSlide((index + slides.length) % slides.length);
   };
 
   useEffect(() => {
     if (isPaused) return;
-    setSecondsRemaining(SLIDE_DURATION_SECONDS);
     const slideTimer = window.setInterval(() => {
       setActiveSlide(current => (current + 1) % slides.length);
-      setSecondsRemaining(SLIDE_DURATION_SECONDS);
     }, SLIDE_DURATION_MS);
-    const countdownTimer = window.setInterval(() => {
-      setSecondsRemaining(current => Math.max(1, current - 1));
-    }, 1000);
     return () => {
       window.clearInterval(slideTimer);
-      window.clearInterval(countdownTimer);
     };
   }, [isPaused]);
 
@@ -162,7 +154,7 @@ export function Hero() {
       </AnimatePresence>
 
       {/* Slide controls */}
-      <div className="absolute right-6 top-28 z-20 flex items-center gap-2 sm:right-10">
+      <div className="absolute right-4 top-20 z-20 flex items-center gap-1.5 sm:right-10 sm:top-28 sm:gap-2">
         <button
           type="button"
           onClick={() => setIsPaused(current => !current)}
@@ -172,9 +164,6 @@ export function Hero() {
           {isPaused ? <Play size={13} fill="currentColor" /> : <Pause size={13} />}
         </button>
         <div className="flex items-center gap-2" role="tablist" aria-label="Hero slides">
-          <span className="hidden text-[10px] font-semibold uppercase tracking-[0.12em] text-white/45 sm:inline" aria-live="polite">
-            {isPaused ? "Paused" : `Next in ${secondsRemaining}s`}
-          </span>
           <div className="flex items-center gap-1.5">
           {slides.map((item, index) => (
             <button
