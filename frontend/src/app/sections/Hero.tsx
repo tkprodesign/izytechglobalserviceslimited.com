@@ -243,9 +243,9 @@ export function Hero() {
                     <span className="text-lg font-semibold tracking-[-0.04em] text-[#F0A20E]" style={{ fontFamily: "var(--font-display)" }}>
                       izy<span className="text-white">tech</span>
                     </span>
-                    <span className="text-white/35">×</span>
-                    <span className="text-xs font-bold tracking-[0.12em] text-white/85" style={{ fontFamily: "var(--font-ui)" }}>Energy Solutions</span>
-                    <span className="hidden text-[10px] uppercase tracking-wider text-white/45 sm:inline">Built for Nigeria</span>
+                    <span className="text-white/35">•</span>
+                    <span className="text-xs font-bold tracking-[0.12em] text-white/85" style={{ fontFamily: "var(--font-ui)" }}>Powering Nigeria</span>
+                    <span className="hidden text-[10px] uppercase tracking-wider text-white/45 sm:inline">Energy for every ambition</span>
                   </div>
                 )}
               </div>
