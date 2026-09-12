@@ -13,3 +13,4 @@
 - [Backend dependency resolution](backend-dependency-resolution.md) — Backend workflows may resolve runtime packages from the workspace root when backend-local installs are incomplete
 - [Render R2 production configuration](render-r2-production-config.md) — Render needs its own R2 variables and a redeploy after production configuration changes
 - [Render environment update safety](render-env-update-safety.md) — Update Render variables individually or verify the complete inventory after bulk changes
+- [LFS deployment blocker](lfs-deployment-blocker.md) — Unused Git LFS upload archives can exhaust quota and prevent Render/Cloudflare from cloning the repository

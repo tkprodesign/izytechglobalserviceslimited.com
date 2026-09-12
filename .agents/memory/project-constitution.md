@@ -26,9 +26,9 @@ Custom domain: purchased, to be connected. Until then use Cloudflare Pages domai
 - ✓ Cloudflare Pages configured
 - ✓ Render service configured
 - ✓ Neon database created
-- ⏳ Render backend deployment — verify the current GitHub-connected build
-- ⏳ Backend ↔ Neon connection — pending
-- ⏳ Frontend ↔ Backend API — pending
+- ✓ Render backend deployment — live from the GitHub `main` branch
+- ✓ Backend ↔ Neon connection — configured
+- ✓ Frontend ↔ Backend API — configured through Render
 - ⏳ Custom domain — pending
 
 ## Deployment Architecture (Authoritative)
