@@ -8,7 +8,6 @@ import {
   Terminal,
   LogOut,
   Activity,
-  Inbox,
   Share2,
   ShoppingBag,
   ClipboardList,
@@ -82,13 +81,13 @@ export function DashboardLayout({ children }: Props) {
     { to: '/admin/testimonials', label: 'Testimonials', icon: MessageSquare },
     { to: '/admin/milestones', label: 'Milestones', icon: Milestone },
     { to: '/admin/founder', label: 'Founder Profile', icon: UserCircle },
-    { to: '/dev/email', label: 'Email Manager', icon: Inbox },
   ];
 
   const developerItems: NavigationItem[] = [
     { to: '/dev/dashboard', label: 'System Status', icon: Activity },
     { to: '/dev/logs', label: 'System Info', icon: Terminal },
     { to: '/dev/services', label: 'Services Content', icon: Wrench },
+    { to: '/dev/email', label: 'Email Manager', icon: Mail },
   ];
 
   const navBase = 'flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all';

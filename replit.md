@@ -8,18 +8,17 @@ Official digital platform — React/Vite frontend + Node.js/Express backend + Ne
 
 > ## ⚠️ AGENT RULE — READ BEFORE ANY WORK ⚠️
 >
-> **The admin panel and dev panel share ALL features.**
-> The Email Manager (`EmailPage.tsx`) is under `/dev/email` but is used by **both** admin and developer roles through `DashboardLayout.tsx`.
+> **The admin panel and dev panel share business/content management features.**
+> Technical tools are developer-only. The Email Manager (`EmailPage.tsx`) is under `/dev/email` and is available only to the developer role.
 >
-> **Any change requested for "admin" MUST also apply to "dev", and vice versa.**
+> Changes to shared business/content features apply to both roles. Changes to technical tools must remain developer-only unless explicitly requested otherwise.
 >
-> This applies to every feature in the control panel:
-> - Email Manager (`frontend/src/app/admin/EmailPage.tsx`)
+> Shared control-panel features include:
 > - Dashboard, Contacts, Quotes, Social Media, Store Products, Store Enquiries
 > - Sidebar navigation (`frontend/src/app/admin/DashboardLayout.tsx`)
 >
-> If the user says "update admin email", update the shared component — it automatically covers dev.
-> Do NOT create separate admin and dev versions of any feature unless explicitly told to.
+> The developer sidebar also includes system status, system info, services content, and Email Manager. Admins must be redirected away from developer routes and receive a `403` from developer-only API endpoints.
+> Do NOT create separate admin and dev versions of shared features unless explicitly told to.
 
 ---
 
