@@ -204,7 +204,7 @@ export function Hero() {
 
       {/* Content */}
       <motion.div className="relative flex-1 flex flex-col" style={{ opacity }}>
-        <div className="flex-1 max-w-7xl mx-auto w-full px-6 flex items-center">
+        <div className="flex-1 max-w-7xl mx-auto w-full px-6 flex items-start">
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
               key={slide.id}
@@ -212,11 +212,11 @@ export function Hero() {
               animate={{ opacity: 1, x: 0, y: 0, filter: "blur(0px)" }}
               exit={{ opacity: 0, x: reducedMotion ? 0 : -30, y: reducedMotion ? 0 : -12, filter: reducedMotion ? "blur(0px)" : "blur(8px)" }}
               transition={{ duration: reducedMotion ? 0 : 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="max-w-3xl w-full pt-36 pb-24 lg:pt-20 lg:pb-8"
+              className="max-w-3xl w-full pt-32 pb-24 sm:pt-36 md:pt-40 lg:pt-32 xl:pt-36 lg:pb-8"
               role="tabpanel"
               aria-label={slide.id === "finance" ? "AltPower partnership" : "Energy solutions"}
             >
-              <div className="flex items-center gap-3 mb-7">
+              <div className="flex h-14 items-center gap-3 mb-7 sm:h-10">
                 <div className="w-10 h-px" style={{ background: slide.id === "finance" ? "#4BC47A" : "#F0A20E" }} />
                 <span
                   className="text-xs font-semibold tracking-[0.2em] uppercase"
