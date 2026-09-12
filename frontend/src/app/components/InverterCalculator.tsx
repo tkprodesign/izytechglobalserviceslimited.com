@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { BatteryCharging, Calculator, Gauge, Info, Minus, Plus, RotateCcw, SunMedium, Zap } from "lucide-react";
+import { ArrowRight, BatteryCharging, Calculator, Gauge, Info, Minus, Plus, RotateCcw, SunMedium, Zap } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,7 @@ type Appliance = {
   id: string;
   name: string;
   watts: number;
+  description: string;
 };
 
 type InverterCalculatorProps = {
@@ -20,22 +21,23 @@ type InverterCalculatorProps = {
 };
 
 const appliances: Appliance[] = [
-  { id: "light-bulbs", name: "Light bulbs", watts: 10 },
-  { id: "television", name: "Television", watts: 120 },
-  { id: "phones", name: "Phones", watts: 10 },
-  { id: "laptops", name: "Laptops", watts: 65 },
-  { id: "decoder", name: "Decoder", watts: 25 },
-  { id: "freezer", name: "Freezer", watts: 180 },
-  { id: "blender", name: "Blender", watts: 500 },
-  { id: "iron-microwave", name: "Iron or microwave", watts: 1_000 },
-  { id: "juice-mixer", name: "Juice mixer / grinder", watts: 500 },
-  { id: "air-conditioner", name: "Air conditioner", watts: 1_200 },
-  { id: "gaming-console", name: "Gaming console", watts: 200 },
-  { id: "music-system", name: "Music system", watts: 150 },
+  { id: "light-bulbs", name: "Light bulbs", watts: 10, description: "LED bulb" },
+  { id: "television", name: "Television", watts: 120, description: "LED TV" },
+  { id: "phones", name: "Phones", watts: 10, description: "Charging phones" },
+  { id: "laptops", name: "Laptops", watts: 65, description: "Laptop charger" },
+  { id: "decoder", name: "Decoder", watts: 25, description: "Cable / TV decoder" },
+  { id: "freezer", name: "Freezer", watts: 180, description: "Chest freezer" },
+  { id: "blender", name: "Blender", watts: 500, description: "Kitchen blender" },
+  { id: "iron-microwave", name: "Iron or microwave", watts: 1_000, description: "High-load appliance" },
+  { id: "juice-mixer", name: "Juice mixer / grinder", watts: 500, description: "Kitchen grinder" },
+  { id: "air-conditioner", name: "Air conditioner", watts: 1_200, description: "Small split unit" },
+  { id: "gaming-console", name: "Gaming console", watts: 200, description: "Console and screen" },
+  { id: "music-system", name: "Music system", watts: 150, description: "Home audio system" },
 ];
 
 const inverterSizes = [1, 1.5, 2, 3, 5, 8, 10];
 const defaultQuantities = Object.fromEntries(appliances.map(appliance => [appliance.id, 0]));
+const defaultWattages = Object.fromEntries(appliances.map(appliance => [appliance.id, ""]));
 
 function formatWatts(watts: number) {
   return watts >= 1_000 ? `${(watts / 1_000).toFixed(watts % 1_000 === 0 ? 0 : 1)}kW` : `${watts}W`;
@@ -43,14 +45,19 @@ function formatWatts(watts: number) {
 
 export function InverterCalculator({ open, onOpenChange }: InverterCalculatorProps) {
   const [quantities, setQuantities] = useState<Record<string, number>>(defaultQuantities);
+  const [wattages, setWattages] = useState<Record<string, string>>(defaultWattages);
   const [customWatts, setCustomWatts] = useState("");
   const [backupHours, setBackupHours] = useState(4);
   const [hasCalculated, setHasCalculated] = useState(false);
 
   const customLoadWatts = Math.max(0, Number(customWatts) || 0);
   const totalWatts = useMemo(
-    () => appliances.reduce((total, appliance) => total + appliance.watts * (quantities[appliance.id] ?? 0), 0) + customLoadWatts,
-    [quantities, customLoadWatts],
+    () => appliances.reduce((total, appliance) => {
+      const enteredWatts = Number(wattages[appliance.id]);
+      const wattsPerItem = Number.isFinite(enteredWatts) && enteredWatts > 0 ? enteredWatts : appliance.watts;
+      return total + wattsPerItem * (quantities[appliance.id] ?? 0);
+    }, 0) + customLoadWatts,
+    [quantities, wattages, customLoadWatts],
   );
   const peakWatts = Math.ceil(totalWatts * 1.25);
   const recommendedKva = inverterSizes.find(size => size * 1_000 * 0.8 >= peakWatts) ?? inverterSizes[inverterSizes.length - 1];
@@ -65,8 +72,14 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
     setHasCalculated(false);
   };
 
+  const updateWattage = (id: string, value: string) => {
+    setWattages(current => ({ ...current, [id]: value }));
+    setHasCalculated(false);
+  };
+
   const reset = () => {
     setQuantities(defaultQuantities);
+    setWattages(defaultWattages);
     setCustomWatts("");
     setBackupHours(4);
     setHasCalculated(false);
@@ -75,13 +88,14 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-h-[92vh] max-w-4xl overflow-y-auto border-[#15334b] bg-[#f8fafc] p-0 text-[#041627] sm:rounded-none"
+        side="right"
+        className="max-h-screen overflow-hidden border-[#15334b] bg-[#f8fafc] text-[#041627]"
         aria-describedby="inverter-calculator-description"
       >
-        <DialogHeader className="border-b border-[#dfe7ee] bg-[#041627] px-6 pb-6 pt-7 text-left sm:px-8">
-          <div className="flex items-center gap-3 pr-8">
-            <div className="flex h-11 w-11 items-center justify-center bg-[#4BC47A]/15 text-[#63D58D]">
-              <Calculator size={21} strokeWidth={1.8} />
+        <DialogHeader className="shrink-0 border-b border-white/10 bg-[#041627] px-6 pb-7 pt-8 text-left sm:px-10">
+          <div className="flex items-start gap-4 pr-8">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center bg-[#4BC47A]/15 text-[#63D58D]">
+              <Calculator size={22} strokeWidth={1.8} />
             </div>
             <div>
               <DialogTitle
@@ -90,50 +104,72 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
               >
                 Inverter Calculator
               </DialogTitle>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#71D897]" style={{ fontFamily: "var(--font-ui)" }}>
+              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#71D897]" style={{ fontFamily: "var(--font-ui)" }}>
                 Find a starting point for your backup system
               </p>
             </div>
           </div>
-          <DialogDescription id="inverter-calculator-description" className="mt-5 max-w-2xl text-sm leading-relaxed text-white/60">
-            Select the appliances you want to power at the same time. We’ll estimate the load and suggest an inverter size for your consultation.
+          <DialogDescription id="inverter-calculator-description" className="mt-6 max-w-xl text-sm leading-relaxed text-white/60">
+            Select the appliances you want to run at the same time. Enter the wattage for each item when you know it, then we’ll estimate a starting inverter and battery size.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6 p-5 sm:p-8 lg:grid-cols-[1.35fr_0.85fr]">
-          <div>
-            <div className="mb-4 flex items-end justify-between gap-4">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#60758a]" style={{ fontFamily: "var(--font-ui)" }}>
-                  Step 1
-                </p>
-                <h3 className="mt-1 text-xl font-bold tracking-[-0.025em]" style={{ fontFamily: "var(--font-display)" }}>
-                  What do you need to power?
-                </h3>
-              </div>
-              <span className="hidden text-right text-xs text-[#60758a] sm:block">
-                Rated load per appliance
-              </span>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="px-6 py-8 sm:px-10 sm:py-10">
+            <div className="mb-7">
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#60758a]" style={{ fontFamily: "var(--font-ui)" }}>
+                Step 1
+              </p>
+              <h3 className="mt-2 text-2xl font-bold tracking-[-0.025em]" style={{ fontFamily: "var(--font-display)" }}>
+                What do you need to power?
+              </h3>
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#60758a]">
+                Add the quantity for each appliance. The grey number inside each wattage field is a common starting point, not a fixed value — replace it with the rating on your equipment when available.
+              </p>
+            </div>
+
+            <div className="mb-3 grid gap-2 px-5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8a9aaa] sm:grid-cols-[minmax(0,1fr)_150px_108px]">
+              <span>Equipment</span>
+              <span className="sm:text-center">Wattage per item</span>
+              <span className="sm:text-center">Quantity</span>
             </div>
 
             <div className="divide-y divide-[#e2e8ee] border border-[#dfe7ee] bg-white">
               {appliances.map(appliance => {
                 const quantity = quantities[appliance.id] ?? 0;
                 return (
-                  <div key={appliance.id} className="flex items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
+                  <div key={appliance.id} className="grid items-center gap-4 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_150px_108px]">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-bold uppercase tracking-[0.04em] text-[#173047]" style={{ fontFamily: "var(--font-ui)" }}>
+                      <p className="text-sm font-bold uppercase tracking-[0.04em] text-[#173047]" style={{ fontFamily: "var(--font-ui)" }}>
                         {appliance.name}
                       </p>
-                      <p className="mt-0.5 text-xs text-[#8a9aaa]">{formatWatts(appliance.watts)} each</p>
+                      <p className="mt-1 text-xs text-[#8a9aaa]">{appliance.description} · common rating {formatWatts(appliance.watts)}</p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
+
+                    <label className="flex items-center border border-[#cbd7e0] bg-[#fbfcfd] transition-colors focus-within:border-[#35A96B] focus-within:ring-2 focus-within:ring-[#35A96B]/15">
+                      <span className="sr-only">Wattage per {appliance.name}</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="50000"
+                        step="1"
+                        inputMode="numeric"
+                        value={wattages[appliance.id]}
+                        onChange={event => updateWattage(appliance.id, event.target.value)}
+                        placeholder={String(appliance.watts)}
+                        className="min-w-0 w-full bg-transparent px-3 py-2.5 text-sm font-semibold text-[#173047] outline-none placeholder:text-[#9aa9b5]"
+                        aria-label={`Wattage per ${appliance.name}`}
+                      />
+                      <span className="pr-3 text-xs font-bold text-[#60758a]">W</span>
+                    </label>
+
+                    <div className="flex items-center justify-start gap-2 sm:justify-center">
                       <button
                         type="button"
                         onClick={() => updateQuantity(appliance.id, -1)}
                         disabled={quantity === 0}
                         aria-label={`Remove one ${appliance.name}`}
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-[#35A96B] text-white transition-colors hover:bg-[#278d58] disabled:cursor-not-allowed disabled:opacity-35"
+                        className="flex h-9 w-9 items-center justify-center rounded-full bg-[#35A96B] text-white transition-colors hover:bg-[#278d58] disabled:cursor-not-allowed disabled:opacity-35"
                       >
                         <Minus size={14} strokeWidth={2.5} />
                       </button>
@@ -145,7 +181,7 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
                         onClick={() => updateQuantity(appliance.id, 1)}
                         disabled={quantity === 20}
                         aria-label={`Add one ${appliance.name}`}
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-[#35A96B] text-white transition-colors hover:bg-[#278d58] disabled:cursor-not-allowed disabled:opacity-35"
+                        className="flex h-9 w-9 items-center justify-center rounded-full bg-[#35A96B] text-white transition-colors hover:bg-[#278d58] disabled:cursor-not-allowed disabled:opacity-35"
                       >
                         <Plus size={14} strokeWidth={2.5} />
                       </button>
@@ -155,14 +191,14 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
               })}
             </div>
 
-            <div className="mt-4 border border-[#dfe7ee] bg-white p-4 sm:p-5">
+            <div className="mt-6 border border-[#dfe7ee] bg-white p-5 sm:p-6">
               <label htmlFor="custom-wattage" className="block text-sm font-bold uppercase tracking-[0.04em] text-[#173047]" style={{ fontFamily: "var(--font-ui)" }}>
-                Other appliance or custom load
+                Other equipment or custom load
               </label>
-              <p className="mt-1 text-xs text-[#8a9aaa]">
-                Enter the wattage of an appliance not listed above.
+              <p className="mt-1 text-xs leading-relaxed text-[#8a9aaa]">
+                Add one extra wattage for equipment that is not listed above.
               </p>
-              <div className="mt-3 flex items-center gap-2">
+              <div className="mt-4 flex items-center gap-2">
                 <input
                   id="custom-wattage"
                   type="number"
@@ -176,27 +212,27 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
                     setHasCalculated(false);
                   }}
                   placeholder="e.g. 750"
-                  className="w-full border border-[#d8e0e7] bg-[#fbfcfd] px-3 py-2.5 text-sm text-[#173047] outline-none transition-colors placeholder:text-[#a7b4bf] focus:border-[#35A96B]"
+                  className="w-full border border-[#cbd7e0] bg-[#fbfcfd] px-3 py-3 text-sm text-[#173047] outline-none transition-colors placeholder:text-[#9aa9b5] focus:border-[#35A96B] focus:ring-2 focus:ring-[#35A96B]/15"
                   aria-describedby="custom-wattage-help"
                 />
                 <span className="shrink-0 text-sm font-bold text-[#60758a]">watts</span>
               </div>
               <p id="custom-wattage-help" className="mt-2 text-xs text-[#8a9aaa]">
-                This load is added once to your estimated demand.
+                This extra load is added once to the estimated demand.
               </p>
             </div>
 
-            <div className="mt-5 border border-[#dfe7ee] bg-white p-4 sm:p-5">
-              <div className="flex items-center justify-between gap-4">
+            <div className="mt-8 border border-[#dfe7ee] bg-white p-5 sm:p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#60758a]" style={{ fontFamily: "var(--font-ui)" }}>
                     Step 2
                   </p>
-                  <h3 className="mt-1 text-base font-bold text-[#173047]" style={{ fontFamily: "var(--font-display)" }}>
+                  <h3 className="mt-2 text-lg font-bold text-[#173047]" style={{ fontFamily: "var(--font-display)" }}>
                     Desired backup time
                   </h3>
                 </div>
-                <div className="flex items-center gap-1 rounded-full bg-[#edf7f1] p-1" role="group" aria-label="Desired backup time">
+                <div className="flex w-fit items-center gap-1 rounded-full bg-[#edf7f1] p-1" role="group" aria-label="Desired backup time">
                   {[2, 4, 6].map(hours => (
                     <button
                       key={hours}
@@ -206,7 +242,7 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
                         setHasCalculated(false);
                       }}
                       aria-pressed={backupHours === hours}
-                      className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${backupHours === hours ? "bg-[#35A96B] text-white" : "text-[#298054] hover:bg-white"}`}
+                      className={`rounded-full px-4 py-2 text-xs font-bold transition-colors ${backupHours === hours ? "bg-[#35A96B] text-white" : "text-[#298054] hover:bg-white"}`}
                     >
                       {hours}h
                     </button>
@@ -215,11 +251,11 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
               </div>
             </div>
 
-            <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={reset}
-                className="inline-flex items-center justify-center gap-2 border border-[#cbd7e0] px-5 py-3 text-sm font-bold text-[#4c6477] transition-colors hover:border-[#35A96B] hover:text-[#278d58]"
+                className="inline-flex items-center justify-center gap-2 border border-[#cbd7e0] px-5 py-3.5 text-sm font-bold text-[#4c6477] transition-colors hover:border-[#35A96B] hover:text-[#278d58]"
                 style={{ fontFamily: "var(--font-ui)" }}
               >
                 <RotateCcw size={14} /> Reset
@@ -227,65 +263,81 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
               <button
                 type="button"
                 onClick={() => setHasCalculated(true)}
-                className="inline-flex items-center justify-center gap-2 bg-[#35A96B] px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-[#278d58] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 bg-[#35A96B] px-6 py-3.5 text-sm font-bold text-white transition-colors hover:bg-[#278d58] disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ fontFamily: "var(--font-ui)" }}
                 disabled={totalWatts === 0}
               >
                 <Calculator size={15} /> Calculate my system
               </button>
             </div>
-          </div>
 
-          <aside className="self-start border border-[#dfe7ee] bg-[#eef8f2] p-5 sm:p-6" aria-live="polite">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#298054]" style={{ fontFamily: "var(--font-ui)" }}>
-              Your estimate
-            </p>
-            {!hasCalculated ? (
-              <div className="py-10 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#35A96B]">
-                  <Gauge size={25} strokeWidth={1.6} />
-                </div>
-                <h3 className="mt-5 text-lg font-bold text-[#173047]" style={{ fontFamily: "var(--font-display)" }}>
-                  Your recommendation will appear here
-                </h3>
-                <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-[#607d6b]">
-                  Add at least one appliance, then select “Calculate my system”.
-                </p>
-              </div>
-            ) : (
-              <div className="mt-5 space-y-3">
-                <div className="border border-[#cce8d6] bg-white p-4">
-                  <div className="flex items-center gap-3 text-[#35A96B]">
-                    <Zap size={18} />
-                    <span className="text-xs font-bold uppercase tracking-[0.1em]">Recommended inverter</span>
+            <div className="mt-8 border border-[#cce8d6] bg-[#eef8f2] p-5 sm:p-6" aria-live="polite">
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#298054]" style={{ fontFamily: "var(--font-ui)" }}>
+                Your estimate
+              </p>
+              {!hasCalculated ? (
+                <div className="flex items-center gap-4 py-7">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white text-[#35A96B]">
+                    <Gauge size={25} strokeWidth={1.6} />
                   </div>
-                  <p className="mt-2 text-3xl font-extrabold tracking-[-0.04em] text-[#173047]" style={{ fontFamily: "var(--font-display)" }}>
-                    {recommendedKva} kVA
-                  </p>
-                  <p className="mt-1 text-xs text-[#60758a]">For an estimated {formatWatts(peakWatts)} peak demand</p>
-                </div>
-                <div className="border border-[#cce8d6] bg-white p-4">
-                  <div className="flex items-center gap-3 text-[#35A96B]">
-                    <BatteryCharging size={18} />
-                    <span className="text-xs font-bold uppercase tracking-[0.1em]">Battery starting point</span>
+                  <div>
+                    <h3 className="text-lg font-bold text-[#173047]" style={{ fontFamily: "var(--font-display)" }}>
+                      Your recommendation will appear here
+                    </h3>
+                    <p className="mt-1 max-w-xl text-sm leading-relaxed text-[#607d6b]">
+                      Add at least one appliance, then select “Calculate my system”.
+                    </p>
                   </div>
-                  <p className="mt-2 text-xl font-extrabold tracking-[-0.03em] text-[#173047]" style={{ fontFamily: "var(--font-display)" }}>
-                    48V · {batteryModules * 100}Ah
-                  </p>
-                  <p className="mt-1 text-xs text-[#60758a]">Approx. for {backupHours} hours of backup</p>
                 </div>
-                <div className="flex gap-2 border-t border-[#cce8d6] pt-4 text-xs leading-relaxed text-[#607d6b]">
-                  <Info size={15} className="mt-0.5 shrink-0 text-[#35A96B]" />
-                  <p>This is an initial estimate. Our team will confirm appliance ratings, startup loads, solar input, and your usage pattern before installation.</p>
+              ) : (
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                  <div className="border border-[#cce8d6] bg-white p-5">
+                    <div className="flex items-center gap-3 text-[#35A96B]">
+                      <Zap size={18} />
+                      <span className="text-xs font-bold uppercase tracking-[0.1em]">Recommended inverter</span>
+                    </div>
+                    <p className="mt-3 text-3xl font-extrabold tracking-[-0.04em] text-[#173047]" style={{ fontFamily: "var(--font-display)" }}>
+                      {recommendedKva} kVA
+                    </p>
+                    <p className="mt-1 text-xs text-[#60758a]">For an estimated {formatWatts(peakWatts)} peak demand</p>
+                  </div>
+                  <div className="border border-[#cce8d6] bg-white p-5">
+                    <div className="flex items-center gap-3 text-[#35A96B]">
+                      <BatteryCharging size={18} />
+                      <span className="text-xs font-bold uppercase tracking-[0.1em]">Battery starting point</span>
+                    </div>
+                    <p className="mt-3 text-xl font-extrabold tracking-[-0.03em] text-[#173047]" style={{ fontFamily: "var(--font-display)" }}>
+                      48V · {batteryModules * 100}Ah
+                    </p>
+                    <p className="mt-1 text-xs text-[#60758a]">Approx. for {backupHours} hours of backup</p>
+                  </div>
+                  <div className="flex gap-2 border-t border-[#cce8d6] pt-4 text-xs leading-relaxed text-[#607d6b] sm:col-span-2">
+                    <Info size={15} className="mt-0.5 shrink-0 text-[#35A96B]" />
+                    <p>This is an initial estimate. Our team will confirm appliance ratings, startup loads, solar input, and your usage pattern before installation.</p>
+                  </div>
                 </div>
-              </div>
-            )}
-          </aside>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 border-t border-[#dfe7ee] bg-white px-5 py-4 text-xs leading-relaxed text-[#60758a] sm:px-8">
-          <SunMedium size={16} className="shrink-0 text-[#F0A20E]" />
-          <p>Need a precise quote? <a href="#contact" onClick={() => onOpenChange(false)} className="font-bold text-[#298054] underline decoration-[#298054]/35 underline-offset-2 hover:text-[#1f6b46]">Talk to an Izy Tech Services energy specialist.</a></p>
+        <div className="shrink-0 border-t border-[#dfe7ee] bg-white px-6 py-5 sm:px-10">
+          <div className="flex items-center gap-3 text-sm leading-relaxed text-[#60758a]">
+            <SunMedium size={18} className="shrink-0 text-[#F0A20E]" />
+            <p>
+              Need a precise quote?{" "}
+              <a
+                href="/?service=Solar%20Energy%20Systems#contact"
+                onClick={() => onOpenChange(false)}
+                className="inline-flex items-center gap-1 font-bold text-[#298054] underline decoration-[#298054]/35 underline-offset-2 hover:text-[#1f6b46]"
+              >
+                Request a paid site assessment <ArrowRight size={14} />
+              </a>
+            </p>
+          </div>
+          <p className="mt-2 pl-7 text-xs leading-relaxed text-[#8a9aaa]">
+            Submit your site details first. We’ll review the request and send the assessment charge and payment instructions before scheduling the visit.
+          </p>
         </div>
       </DialogContent>
     </Dialog>
