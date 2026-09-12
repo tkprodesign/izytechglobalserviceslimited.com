@@ -182,10 +182,10 @@ export function About() {
                 className="relative h-56 overflow-hidden"
               >
                 <img
-                  src="/site-images/about-team.jpg"
-                  alt="Izy Tech Services team on site"
+                  src="/site-images/project-site-team.jpg"
+                  alt="Izy Tech Services team conducting an on-site inspection"
                   className="w-full h-full object-cover"
-                  style={{ objectPosition: "center 35%" }}
+                  style={{ objectPosition: "center 50%" }}
                 />
                 <div
                   className="absolute inset-0"
