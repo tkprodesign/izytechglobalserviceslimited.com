@@ -192,8 +192,8 @@ export function Hero() {
       </div>
 
       {/* Content */}
-      <motion.div className="relative flex-1 flex flex-col" style={{ opacity }}>
-        <div className="flex-1 max-w-7xl mx-auto w-full px-6 flex items-start">
+      <motion.div className="absolute inset-0 min-h-0 flex flex-col" style={{ opacity }}>
+        <div className="flex-1 min-h-0 max-w-7xl mx-auto w-full px-6 flex items-start overflow-hidden">
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
               key={slide.id}
@@ -201,7 +201,7 @@ export function Hero() {
               animate={{ opacity: 1, x: 0, y: 0, filter: "blur(0px)" }}
               exit={{ opacity: 0, x: reducedMotion ? 0 : -30, y: reducedMotion ? 0 : -12, filter: reducedMotion ? "blur(0px)" : "blur(8px)" }}
               transition={{ duration: reducedMotion ? 0 : 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="max-w-3xl w-full pt-32 pb-24 sm:pt-36 md:pt-40 lg:pt-32 xl:pt-36 lg:pb-8"
+              className="max-w-3xl w-full pt-32 pb-24 sm:pt-36 md:pt-32 lg:pt-24 xl:pt-24 lg:pb-8"
               role="tabpanel"
               aria-label={slide.id === "finance" ? "AltPower partnership" : "Energy solutions"}
             >
@@ -243,7 +243,7 @@ export function Hero() {
                 className="text-white mb-4 leading-[1.04]"
                 style={{
                   fontFamily: "var(--font-display)",
-                  fontSize: "clamp(2.7rem, 6.5vw, 5.5rem)",
+                  fontSize: "clamp(2.7rem, 6.5vw, 5rem)",
                   fontWeight: 800,
                   letterSpacing: "-0.03em",
                 }}
@@ -270,7 +270,7 @@ export function Hero() {
                 initial={{ opacity: 0, y: reducedMotion ? 0 : 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: reducedMotion ? 0 : 0.6, delay: reducedMotion ? 0 : 0.45 }}
-                className="text-white/60 text-lg leading-relaxed max-w-2xl mb-8"
+                className="text-white/60 text-lg leading-relaxed max-w-2xl mb-4"
                 style={{ fontFamily: "var(--font-body)" }}
               >
                 {slide.description}
@@ -328,7 +328,7 @@ export function Hero() {
 
         {/* Stats bar */}
         <div
-          className="relative border-t border-white/10"
+          className="relative z-10 shrink-0 border-t border-white/10"
           style={{ background: "rgba(4,22,39,0.72)", backdropFilter: "blur(16px)" }}
         >
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 lg:grid-cols-4 divide-x divide-white/10">
