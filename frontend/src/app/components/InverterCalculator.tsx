@@ -48,6 +48,7 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
   const [wattages, setWattages] = useState<Record<string, string>>(defaultWattages);
   const [customWatts, setCustomWatts] = useState("");
   const [backupHours, setBackupHours] = useState(4);
+  const [showBackupHelp, setShowBackupHelp] = useState(false);
   const [hasCalculated, setHasCalculated] = useState(false);
 
   const customLoadWatts = Math.max(0, Number(customWatts) || 0);
@@ -82,6 +83,7 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
     setWattages(defaultWattages);
     setCustomWatts("");
     setBackupHours(4);
+    setShowBackupHelp(false);
     setHasCalculated(false);
   };
 
@@ -232,9 +234,21 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
                   <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#60758a]" style={{ fontFamily: "var(--font-ui)" }}>
                     Step 2
                   </p>
-                  <h3 className="mt-2 text-lg font-bold text-[#173047]" style={{ fontFamily: "var(--font-display)" }}>
-                    Desired backup time
-                  </h3>
+                  <div className="mt-2 flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-[#173047]" style={{ fontFamily: "var(--font-display)" }}>
+                      Desired backup time
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setShowBackupHelp(current => !current)}
+                      aria-expanded={showBackupHelp}
+                      aria-controls="backup-time-help"
+                      aria-label="What does backup time mean?"
+                      className="flex h-5 w-5 items-center justify-center rounded-full border border-[#35A96B] text-[11px] font-extrabold text-[#298054] transition-colors hover:bg-[#35A96B] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#35A96B]/25"
+                    >
+                      ?
+                    </button>
+                  </div>
                 </div>
                 <div className="flex w-fit items-center gap-1 rounded-full bg-[#edf7f1] p-1" role="group" aria-label="Desired backup time">
                   {[2, 4, 6].map(hours => (
@@ -253,6 +267,18 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
                   ))}
                 </div>
               </div>
+              {showBackupHelp && (
+                <div
+                  id="backup-time-help"
+                  role="note"
+                  className="mt-4 flex gap-3 border-l-2 border-[#35A96B] bg-[#f5fbf7] px-4 py-3 text-xs leading-relaxed text-[#4d6c5a]"
+                >
+                  <Info size={15} className="mt-0.5 shrink-0 text-[#35A96B]" />
+                  <p>
+                    Backup time is how long your batteries should power the appliances you selected when grid or generator power is unavailable. Choosing more hours usually means a larger battery bank and a higher system cost.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
