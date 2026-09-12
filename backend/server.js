@@ -1,3 +1,9 @@
+// Load environment variables from the repo-root .env file (Freebuff workspace).
+// Replit injected secrets automatically; here we read them from the file instead.
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
+// Also honour a backend-local .env if one exists.
+require('dotenv').config({ path: require('path').resolve(__dirname, '.env') });
+
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');

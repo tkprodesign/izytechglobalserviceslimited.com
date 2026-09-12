@@ -7,6 +7,10 @@
     "doc": "docs"
   },
   "scripts": {
+    "dev": "sh ./scripts/dev.sh",
+    "dev:backend": "npm start --prefix backend",
+    "dev:frontend": "pnpm run dev --dir frontend",
+    "build": "pnpm run build --dir frontend",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
