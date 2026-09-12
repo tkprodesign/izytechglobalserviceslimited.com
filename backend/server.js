@@ -804,13 +804,13 @@ app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
-  const INFO_EMAIL = process.env.INFO_EMAIL;
-  const INFO_PASS  = process.env.INFO_EMAIL_PASSWORD;
+  const DEVELOPER_EMAIL = process.env.DEVELOPER_EMAIL || 'developer@izytechglobalservices.com';
+  const DEVELOPER_PASS  = process.env.DEVELOPER_EMAIL_PASSWORD;
   const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
   const ADMIN_PASS  = process.env.ADMIN_EMAIL_PASSWORD;
 
   let role = null;
-  if (email === INFO_EMAIL && password === INFO_PASS)   role = 'developer';
+  if (email === DEVELOPER_EMAIL && password === DEVELOPER_PASS) role = 'developer';
   if (email === ADMIN_EMAIL && password === ADMIN_PASS) role = 'admin';
 
   if (!role) return res.status(401).json({ error: 'Invalid email or password' });
