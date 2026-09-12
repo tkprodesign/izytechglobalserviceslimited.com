@@ -1431,6 +1431,133 @@ async function initProjectsTable() {
     }
     console.log('Projects table seeded with existing portfolio entries');
   }
+
+  // ── Additive migration: upgrade lazily-input project records ──────────
+  // Updates existing rows by slug only when their content is minimal.
+  const upgrades = [
+    {
+      slug: 'cctv-project',
+      title: 'CCTV Surveillance Complex — Trans Amadi',
+      category: 'Security',
+      categories: ['CCTV & Security'],
+      location: 'Trans Amadi, Port Harcourt',
+      shortDescription: 'A full-scale CCTV surveillance deployment for an industrial complex in Trans Amadi — delivering high-definition coverage, remote monitoring and 30-day encrypted storage across every zone.',
+      fullDescription: 'Izy Tech Services designed and deployed a comprehensive high-definition CCTV surveillance system for an industrial complex in Trans Amadi, Port Harcourt. The project covered all production areas, warehouses, access roads and perimeter zones with weatherproof HD cameras, night-vision capability and a centralised monitoring station. Footage is stored on encrypted servers with 30-day retention, and the entire system is accessible remotely via desktop and mobile — giving the facility manager complete visibility around the clock.',
+      metric: 'Full-site HD coverage',
+      services: ['CCTV installation', 'Remote monitoring', 'Encrypted storage', 'Night-vision cameras'],
+    },
+    {
+      slug: 'solar-project',
+      title: 'Commercial Solar Installation — Eleme',
+      category: 'Solar Energy',
+      categories: ['Solar Energy Systems'],
+      location: 'Eleme, Port Harcourt',
+      shortDescription: 'A grid-tie solar power system designed and installed for a commercial facility in Eleme — reducing grid dependency and delivering significant electricity savings.',
+      fullDescription: 'Izy Tech Services designed, supplied and installed a grid-tie solar power system for a commercial facility in Eleme, Port Harcourt. The installation comprises high-efficiency monocrystalline panels, industrial-grade string inverters and battery storage for load shifting. The system was commissioned with minimal disruption to daily operations, and the client has seen a measurable reduction in monthly electricity expenditure since activation.',
+      metric: 'Significant bill reduction',
+      services: ['Solar panel installation', 'Inverter systems', 'Battery storage', 'Grid-tie design'],
+    },
+    {
+      slug: 'wiring-project',
+      title: 'Industrial Wiring Overhaul — Trans Amadi',
+      category: 'Industrial Wiring',
+      categories: ['Industrial Wiring'],
+      location: 'Trans Amadi, Port Harcourt',
+      shortDescription: 'A complete electrical wiring overhaul for an industrial facility in Trans Amadi — replacing aging infrastructure with modern, code-compliant distribution systems.',
+      fullDescription: 'Izy Tech Services carried out a complete electrical wiring overhaul for a manufacturing facility in Trans Amadi, Port Harcourt. The project involved replacing aging cables, distribution boards and switchgear with modern, code-compliant components rated for industrial loads. New dedicated circuits were installed for heavy machinery, and the entire facility was brought up to current Nigerian electrical safety standards. The upgrade has improved energy efficiency and eliminated the recurring faults that previously caused production downtime.',
+      metric: 'Zero faults since upgrade',
+      services: ['Electrical rewiring', 'Distribution board upgrade', 'Industrial switchgear', 'Safety compliance'],
+    },
+    {
+      slug: 'home-automation-project',
+      title: 'Smart Home Automation — GRA Phase 1',
+      category: 'Smart Home',
+      categories: ['Smart Home Automation'],
+      location: 'GRA Phase 1, Port Harcourt',
+      shortDescription: 'Smart home automation for a modern residence in GRA Phase 1 — integrating lighting, climate, security and entertainment into a single intelligent control system.',
+      fullDescription: 'Izy Tech Services delivered a smart home automation solution for a modern residence in GRA Phase 1, Port Harcourt. The system integrates automated lighting scenes, intelligent climate scheduling, a multi-zone audio setup, motorised blinds and a biometric access-controlled front door — all managed through a central touchscreen panel and companion mobile app. The homeowner can monitor and control every subsystem remotely, ensuring comfort and security whether at home or abroad.',
+      metric: 'Single-app control',
+      services: ['Lighting automation', 'Climate control', 'Security integration', 'Audio distribution'],
+    },
+    {
+      slug: 'electrical-project',
+      title: 'General Electrical Installation — Okporokpo',
+      category: 'General Electrical',
+      categories: ['General Electrical'],
+      location: 'Okporokpo, Port Harcourt',
+      shortDescription: 'A general electrical installation for a commercial property in Okporokpo — complete wiring, lighting design, earthing systems and distribution board setup.',
+      fullDescription: 'Izy Tech Services handled the complete electrical installation for a new commercial property in Okporokpo, Port Harcourt. The project included full internal and external wiring, a custom lighting design tailored to the client\'s operational needs, earth-leakage protection systems, and a main distribution board with labelled sub-circuits. All work was carried out to Nigerian electrical standards and certified upon completion, giving the client a safe, reliable and future-ready electrical infrastructure.',
+      metric: 'Standards-certified',
+      services: ['Full electrical wiring', 'Lighting design', 'Earthing systems', 'Distribution boards'],
+    },
+    {
+      slug: 'it-infrastructure-project',
+      title: 'IT & Network Infrastructure — Diobu',
+      category: 'IT & Tech',
+      categories: ['IT & Tech Services'],
+      location: 'Diobu, Port Harcourt',
+      shortDescription: 'Complete IT infrastructure deployment for a business centre in Diobu — structured cabling, network switching, server room setup and campus-wide Wi-Fi.',
+      fullDescription: 'Izy Tech Services designed and deployed a complete IT infrastructure for a business centre in Diobu, Port Harcourt. The project encompassed structured cabling throughout the building, managed network switches, a climate-controlled server room with UPS backup, and enterprise-grade Wi-Fi access points providing seamless coverage across all floors. The result is a reliable, high-speed network environment that supports the centre\'s day-to-day operations without interruption.',
+      metric: 'Campus-wide connectivity',
+      services: ['Structured cabling', 'Network switching', 'Server room setup', 'Wi-Fi deployment'],
+    },
+    {
+      slug: 'solar-installer',
+      title: 'Residential Solar System — Woji',
+      category: 'Solar Energy',
+      categories: ['Solar Energy Systems'],
+      location: 'Woji, Port Harcourt',
+      shortDescription: 'A residential solar power system installed in Woji — reducing electricity bills and providing reliable backup power for a family home.',
+      fullDescription: 'Izy Tech Services designed and installed a residential solar power system for a family home in Woji, Port Harcourt. The system features high-efficiency monocrystalline panels mounted on the rooftop, a hybrid inverter, and a lithium iron phosphate battery bank for overnight and cloudy-day backup. Since commissioning, the household has seen a significant reduction in electricity bills and no longer relies on the national grid during daytime hours. The installation was completed within three days with no disruption to the household.',
+      metric: 'Daytime energy independence',
+      services: ['Solar panel installation', 'Hybrid inverter setup', 'Battery backup', 'Roof mounting'],
+    },
+    {
+      slug: 'cctv-installer',
+      title: 'CCTV & Access Control — Okocha Road',
+      category: 'Security',
+      categories: ['CCTV & Security'],
+      location: 'Okocha Road, Port Harcourt',
+      shortDescription: 'CCTV cameras and biometric access control for a commercial property on Okocha Road — delivering real-time surveillance and secure entry management.',
+      fullDescription: 'Izy Tech Services installed a network of high-definition CCTV cameras and biometric access control systems for a commercial property on Okocha Road, Port Harcourt. The deployment covers all entry points, corridors, car parks and perimeter areas with day-night capable cameras linked to a centralised recording system. Biometric readers at main entrances ensure only authorised personnel gain access, with full audit logs available to the property manager. Remote viewing is supported on both mobile and desktop platforms.',
+      metric: 'Secure entry + full surveillance',
+      services: ['CCTV installation', 'Biometric access control', 'Centralised recording', 'Remote monitoring'],
+    },
+    {
+      slug: 'solar-power-system',
+      title: 'Hospital Solar Power System — Trans Amadi',
+      category: 'Solar Energy',
+      categories: ['Solar Energy Systems'],
+      location: 'Trans Amadi, Port Harcourt',
+      shortDescription: 'A solar power system installed for a hospital in Trans Amadi — ensuring uninterrupted power for critical medical equipment and patient wards.',
+      fullDescription: 'Izy Tech Services designed and installed a solar power system for a hospital in Trans Amadi, Port Harcourt. The system was engineered to provide uninterrupted power for critical medical equipment including operating theatres, diagnostic imaging machines and intensive care units. It features rooftop solar panels, industrial-grade inverters and a lithium iron phosphate battery bank sized for overnight operation. Since installation, the hospital has experienced consistent power availability with no unplanned downtime, directly supporting patient safety and clinical operations.',
+      metric: 'Zero unplanned downtime',
+      services: ['Solar power system', 'Battery storage', 'Hospital-grade power', 'Load management'],
+    },
+  ];
+
+  for (const u of upgrades) {
+    try {
+      const { rows } = await db.query(
+        'SELECT id, short_description FROM projects WHERE slug = $1 LIMIT 1',
+        [u.slug]
+      );
+      if (rows.length && rows[0].short_description.length < 120) {
+        await db.query(
+          `UPDATE projects SET
+            title = $1, category = $2, categories = $3, location = $4,
+            short_description = $5, full_description = $6,
+            result_metric = $7, services = $8, updated_at = NOW()
+           WHERE slug = $9`,
+          [u.title, u.category, u.categories, u.location,
+           u.shortDescription, u.fullDescription, u.metric, u.services, u.slug]
+        );
+        console.log(`Upgraded project: ${u.slug}`);
+      }
+    } catch (err) {
+      // If the slug doesn't exist yet, skip silently
+    }
+  }
 }
 
 function slugify(value) {
