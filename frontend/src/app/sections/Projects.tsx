@@ -18,7 +18,7 @@ function FeaturedSkeleton() {
   return (
     <div className="mb-5 overflow-hidden bg-[#041627]">
       <div className="grid lg:grid-cols-2">
-        <Skeleton className="h-64 lg:min-h-[440px] rounded-none" />
+        <Skeleton className="h-64 lg:h-[360px] rounded-none" />
         <div className="p-8 lg:p-14 flex flex-col justify-center gap-4">
           <Skeleton className="h-3 w-24" />
           <Skeleton className="h-8 w-3/4" />
@@ -123,7 +123,7 @@ export function Projects() {
           >
             <Link to={`/projects/${featured.slug}`} className="grid lg:grid-cols-2" data-testid="link-featured-project">
               {/* Image */}
-              <div className="relative h-64 lg:h-auto lg:min-h-[440px] overflow-hidden">
+              <div className="relative h-64 lg:h-[360px] overflow-hidden">
                 {featuredImage ? (
                   <img
                     src={featuredImage}
