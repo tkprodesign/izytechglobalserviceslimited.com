@@ -1,7 +1,22 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import { DashboardLayout } from './DashboardLayout';
 import { getToken } from '../../lib/auth';
-import { Mail, FileText, TrendingUp, Clock } from 'lucide-react';
+import {
+  Mail,
+  FileText,
+  TrendingUp,
+  Clock,
+  ClipboardCheck,
+  ShoppingBag,
+  ClipboardList,
+  FolderOpen,
+  Share2,
+  MapPin,
+  Milestone,
+  UserCircle,
+  ArrowUpRight,
+} from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
 
@@ -54,6 +69,19 @@ function fmt(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+const quickAccessItems = [
+  { to: '/admin/contacts', label: 'Contacts', description: 'Review incoming messages', icon: Mail, color: '#1d70c9' },
+  { to: '/admin/quotes', label: 'Quote Requests', description: 'Follow up on new opportunities', icon: FileText, color: '#f26522' },
+  { to: '/admin/assessments', label: 'Site Assessments', description: 'Track paid assessments', icon: ClipboardCheck, color: '#16a34a' },
+  { to: '/admin/enquiries', label: 'Store Enquiries', description: 'Respond to product interest', icon: ClipboardList, color: '#8b5cf6' },
+  { to: '/admin/products', label: 'Store Products', description: 'Manage the product catalogue', icon: ShoppingBag, color: '#0f766e' },
+  { to: '/admin/projects', label: 'Projects', description: 'Update published work', icon: FolderOpen, color: '#2563eb' },
+  { to: '/admin/socials', label: 'Social Media', description: 'Manage public social links', icon: Share2, color: '#db2777' },
+  { to: '/admin/company-contact', label: 'Company Address', description: 'Update contact details', icon: MapPin, color: '#d97706' },
+  { to: '/admin/milestones', label: 'Milestones', description: 'Manage company milestones', icon: Milestone, color: '#0891b2' },
+  { to: '/admin/founder', label: 'Founder Profile', description: 'Update the leadership profile', icon: UserCircle, color: '#7c3aed' },
+];
+
 export function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -95,6 +123,44 @@ export function AdminDashboard() {
               <StatCard icon={TrendingUp} label="Contacts This Week" value={stats?.contactsThisWeek ?? 0} sub="Last 7 days" color="var(--izy-green)" />
               <StatCard icon={Clock} label="Quotes This Week" value={stats?.quotesThisWeek ?? 0} sub="Last 7 days" color="var(--izy-yellow)" />
             </div>
+
+            {/* CEO shortcuts */}
+            <section className="mb-8">
+              <div className="mb-4 flex items-end justify-between gap-4">
+                <div>
+                  <h2 className="text-base font-semibold" style={{ color: 'var(--izy-navy)' }}>Quick access</h2>
+                  <p className="mt-1 text-sm" style={{ color: '#5a6a82' }}>
+                    Go straight to the areas you manage most.
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {quickAccessItems.map(({ to, label, description, icon: Icon, color }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    className="group flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2"
+                    style={{ '--tw-ring-color': color } as React.CSSProperties}
+                  >
+                    <span
+                      className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
+                      style={{ background: `${color}16`, color }}
+                    >
+                      <Icon size={19} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold" style={{ color: 'var(--izy-navy)' }}>{label}</span>
+                      <span className="mt-0.5 block truncate text-xs" style={{ color: '#8fadc8' }}>{description}</span>
+                    </span>
+                    <ArrowUpRight
+                      size={16}
+                      className="flex-shrink-0 opacity-40 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100"
+                      style={{ color }}
+                    />
+                  </Link>
+                ))}
+              </div>
+            </section>
 
             {/* Recent contacts */}
             <div className="bg-white rounded-2xl shadow-sm mb-6">
