@@ -94,31 +94,31 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
         className="max-h-screen overflow-hidden border-[#15334b] bg-[#f8fafc] text-[#041627] sm:!max-w-[780px]"
         aria-describedby="inverter-calculator-description"
       >
-        <DialogHeader className="shrink-0 border-b border-white/10 bg-[#041627] px-6 pb-7 pt-8 text-left sm:px-10">
+        <DialogHeader className="shrink-0 border-b border-white/10 bg-[#041627] px-5 pb-6 pt-6 text-left sm:px-10 sm:pb-7 sm:pt-8">
           <div className="flex items-start gap-4 pr-8">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center bg-[#4BC47A]/15 text-[#63D58D]">
-              <Calculator size={22} strokeWidth={1.8} />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#4BC47A]/15 text-[#63D58D] sm:h-12 sm:w-12">
+              <Calculator size={19} strokeWidth={1.8} className="sm:h-[22px] sm:w-[22px]" />
             </div>
             <div>
               <DialogTitle
-                className="text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl"
+                className="text-xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 Inverter Calculator
               </DialogTitle>
-              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#71D897]" style={{ fontFamily: "var(--font-ui)" }}>
+              <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#71D897] sm:mt-2 sm:text-xs sm:tracking-[0.16em]" style={{ fontFamily: "var(--font-ui)" }}>
                 Find a starting point for your backup system
               </p>
             </div>
           </div>
-          <DialogDescription id="inverter-calculator-description" className="mt-6 max-w-xl text-sm leading-relaxed text-white/60">
+          <DialogDescription id="inverter-calculator-description" className="mt-4 max-w-2xl text-[13px] leading-relaxed text-white/60 sm:mt-6 sm:text-sm">
             Select the appliances you want to run at the same time. Enter the wattage for each item when you know it, then we’ll estimate a starting inverter and battery size.
           </DialogDescription>
         </DialogHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="px-6 py-8 sm:px-10 sm:py-10">
-            <div className="mb-7">
+          <div className="px-5 py-6 sm:px-10 sm:py-10">
+            <div className="mb-6 sm:mb-7">
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#60758a]" style={{ fontFamily: "var(--font-ui)" }}>
                 Step 1
               </p>
@@ -130,18 +130,18 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
               </p>
             </div>
 
-            <div className="mb-3 grid gap-2 px-5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8a9aaa] sm:grid-cols-[minmax(0,1fr)_150px_108px]">
-              <span>Equipment</span>
-              <span className="sm:text-center">Wattage per item</span>
-              <span className="sm:text-center">Quantity</span>
+            <div className="mb-3 grid grid-cols-2 gap-x-4 gap-y-1 px-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8a9aaa] sm:grid-cols-[minmax(0,1fr)_150px_108px] sm:px-5">
+              <span className="col-span-2 sm:col-span-1">Equipment</span>
+              <span className="text-left sm:text-center">Wattage per item</span>
+              <span className="text-left sm:text-center">Quantity</span>
             </div>
 
             <div className="divide-y divide-[#e2e8ee] border border-[#dfe7ee] bg-white">
               {appliances.map(appliance => {
                 const quantity = quantities[appliance.id] ?? 0;
                 return (
-                  <div key={appliance.id} className="grid items-center gap-4 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_150px_108px]">
-                    <div className="min-w-0">
+                  <div key={appliance.id} className="grid grid-cols-2 items-end gap-x-4 gap-y-3 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_150px_108px] sm:items-center sm:gap-4 sm:px-5 sm:py-5">
+                    <div className="col-span-2 min-w-0 sm:col-span-1">
                       <p className="text-sm font-bold uppercase tracking-[0.04em] text-[#173047]" style={{ fontFamily: "var(--font-ui)" }}>
                         {appliance.name}
                       </p>
@@ -149,7 +149,7 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
                       <p className="mt-1 text-[11px] font-semibold text-[#35A96B]">Typical rating: {formatWatts(appliance.watts)}</p>
                     </div>
 
-                    <label className="block">
+                    <label className="col-span-1 block sm:col-span-1">
                       <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#60758a]">Enter watts</span>
                       <span className="flex items-center border-2 border-[#aebfca] bg-white shadow-sm transition-colors focus-within:border-[#35A96B] focus-within:ring-2 focus-within:ring-[#35A96B]/15">
                         <span className="sr-only">Wattage per {appliance.name}</span>
@@ -169,7 +169,7 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
                       </span>
                     </label>
 
-                    <div className="flex items-center justify-start gap-2 sm:justify-center">
+                    <div className="col-span-1 flex items-center justify-start gap-2 sm:col-span-1 sm:justify-center">
                       <button
                         type="button"
                         onClick={() => updateQuantity(appliance.id, -1)}
@@ -351,15 +351,15 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
           </div>
         </div>
 
-        <div className="shrink-0 border-t border-[#dfe7ee] bg-white px-6 py-5 sm:px-10">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="shrink-0 border-t border-[#dfe7ee] bg-white px-5 py-4 sm:px-10 sm:py-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <div className="flex items-start gap-3">
               <SunMedium size={18} className="mt-0.5 shrink-0 text-[#F0A20E]" />
               <div>
                 <p className="text-sm font-bold text-[#173047]" style={{ fontFamily: "var(--font-ui)" }}>
                   Need a precise quote?
                 </p>
-                <p className="mt-1 max-w-md text-xs leading-relaxed text-[#60758a]">
+                <p className="mt-1 max-w-md text-[11px] leading-relaxed text-[#60758a] sm:text-xs">
                   Request a paid site assessment. Submit your site details and we’ll send the assessment charge and payment instructions before scheduling.
                 </p>
               </div>
@@ -367,7 +367,7 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
             <a
               href="/?service=Solar%20Energy%20Systems#contact"
               onClick={() => onOpenChange(false)}
-              className="inline-flex shrink-0 items-center justify-center gap-2 bg-[#041627] px-5 py-3 text-xs font-bold tracking-wider text-white transition-colors hover:bg-[#173047]"
+              className="inline-flex w-full shrink-0 items-center justify-center gap-2 bg-[#041627] px-5 py-3 text-xs font-bold tracking-wider text-white transition-colors hover:bg-[#173047] sm:w-auto"
               style={{ fontFamily: "var(--font-ui)" }}
             >
               REQUEST ASSESSMENT <ArrowRight size={14} />
