@@ -287,13 +287,13 @@ router.post('/send', async (req, res) => {
 
 // ── Messages by folder ────────────────────────────────────────────────────────
 // Resend provides separate inbound and sent catalogs; archive state is stored locally.
-router.get('/messages/:accountId/*', async (req, res) => {
+router.get('/messages/:accountId/:folder', async (req, res) => {
   const accounts = getAccounts();
   const isAllMail = req.params.accountId === 'all';
   const acct = accounts.find(a => a.id === req.params.accountId);
   if (!acct && !isAllMail) return res.status(404).json({ error: 'Account not found' });
   if (acct?.sendOnly) {
-    const folder = String(req.params[0] || 'SENT').toUpperCase();
+    const folder = String(req.params.folder || 'SENT').toUpperCase();
     if (!['SENT', 'ARCHIVED'].includes(folder)) {
       return res.json({
         messages: [],
@@ -303,7 +303,7 @@ router.get('/messages/:accountId/*', async (req, res) => {
     }
   }
 
-  const folder = String(req.params[0] || 'INBOX');
+  const folder = String(req.params.folder || 'INBOX');
 
   try {
     const folderKey = folder.toUpperCase();

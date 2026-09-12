@@ -89,7 +89,7 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         side="right"
-        className="max-h-screen overflow-hidden border-[#15334b] bg-[#f8fafc] text-[#041627]"
+        className="max-h-screen overflow-hidden border-[#15334b] bg-[#f8fafc] text-[#041627] sm:!max-w-[780px]"
         aria-describedby="inverter-calculator-description"
       >
         <DialogHeader className="shrink-0 border-b border-white/10 bg-[#041627] px-6 pb-7 pt-8 text-left sm:px-10">
@@ -123,8 +123,8 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
               <h3 className="mt-2 text-2xl font-bold tracking-[-0.025em]" style={{ fontFamily: "var(--font-display)" }}>
                 What do you need to power?
               </h3>
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#60758a]">
-                Add the quantity for each appliance. The grey number inside each wattage field is a common starting point, not a fixed value — replace it with the rating on your equipment when available.
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#60758a]">
+                Add the quantity for each appliance, then type the actual wattage from its label when you know it. The typical rating shown below each item is only a guide.
               </p>
             </div>
 
@@ -143,11 +143,14 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
                       <p className="text-sm font-bold uppercase tracking-[0.04em] text-[#173047]" style={{ fontFamily: "var(--font-ui)" }}>
                         {appliance.name}
                       </p>
-                      <p className="mt-1 text-xs text-[#8a9aaa]">{appliance.description} · common rating {formatWatts(appliance.watts)}</p>
+                      <p className="mt-1 text-xs text-[#8a9aaa]">{appliance.description}</p>
+                      <p className="mt-1 text-[11px] font-semibold text-[#35A96B]">Typical rating: {formatWatts(appliance.watts)}</p>
                     </div>
 
-                    <label className="flex items-center border border-[#cbd7e0] bg-[#fbfcfd] transition-colors focus-within:border-[#35A96B] focus-within:ring-2 focus-within:ring-[#35A96B]/15">
-                      <span className="sr-only">Wattage per {appliance.name}</span>
+                    <label className="block">
+                      <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#60758a]">Enter watts</span>
+                      <span className="flex items-center border-2 border-[#aebfca] bg-white shadow-sm transition-colors focus-within:border-[#35A96B] focus-within:ring-2 focus-within:ring-[#35A96B]/15">
+                        <span className="sr-only">Wattage per {appliance.name}</span>
                       <input
                         type="number"
                         min="1"
@@ -156,11 +159,12 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
                         inputMode="numeric"
                         value={wattages[appliance.id]}
                         onChange={event => updateWattage(appliance.id, event.target.value)}
-                        placeholder={String(appliance.watts)}
-                        className="min-w-0 w-full bg-transparent px-3 py-2.5 text-sm font-semibold text-[#173047] outline-none placeholder:text-[#9aa9b5]"
+                        placeholder={`e.g. ${appliance.watts}`}
+                        className="min-w-0 w-full bg-transparent px-3 py-3 text-sm font-semibold text-[#173047] outline-none placeholder:text-[#aebbc5]"
                         aria-label={`Wattage per ${appliance.name}`}
                       />
                       <span className="pr-3 text-xs font-bold text-[#60758a]">W</span>
+                      </span>
                     </label>
 
                     <div className="flex items-center justify-start gap-2 sm:justify-center">
@@ -322,22 +326,27 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
         </div>
 
         <div className="shrink-0 border-t border-[#dfe7ee] bg-white px-6 py-5 sm:px-10">
-          <div className="flex items-center gap-3 text-sm leading-relaxed text-[#60758a]">
-            <SunMedium size={18} className="shrink-0 text-[#F0A20E]" />
-            <p>
-              Need a precise quote?{" "}
-              <a
-                href="/?service=Solar%20Energy%20Systems#contact"
-                onClick={() => onOpenChange(false)}
-                className="inline-flex items-center gap-1 font-bold text-[#298054] underline decoration-[#298054]/35 underline-offset-2 hover:text-[#1f6b46]"
-              >
-                Request a paid site assessment <ArrowRight size={14} />
-              </a>
-            </p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <SunMedium size={18} className="mt-0.5 shrink-0 text-[#F0A20E]" />
+              <div>
+                <p className="text-sm font-bold text-[#173047]" style={{ fontFamily: "var(--font-ui)" }}>
+                  Need a precise quote?
+                </p>
+                <p className="mt-1 max-w-md text-xs leading-relaxed text-[#60758a]">
+                  Request a paid site assessment. Submit your site details and we’ll send the assessment charge and payment instructions before scheduling.
+                </p>
+              </div>
+            </div>
+            <a
+              href="/?service=Solar%20Energy%20Systems#contact"
+              onClick={() => onOpenChange(false)}
+              className="inline-flex shrink-0 items-center justify-center gap-2 bg-[#041627] px-5 py-3 text-xs font-bold tracking-wider text-white transition-colors hover:bg-[#173047]"
+              style={{ fontFamily: "var(--font-ui)" }}
+            >
+              REQUEST ASSESSMENT <ArrowRight size={14} />
+            </a>
           </div>
-          <p className="mt-2 pl-7 text-xs leading-relaxed text-[#8a9aaa]">
-            Submit your site details first. We’ll review the request and send the assessment charge and payment instructions before scheduling the visit.
-          </p>
         </div>
       </DialogContent>
     </Dialog>
