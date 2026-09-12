@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router';
-import { DashboardLayout } from './DashboardLayout';
+import { DevDashboardLayout } from './DevDashboardLayout';
 import { getToken, removeToken } from '../../lib/auth';
 import {
   Mail, Send, RefreshCw, PenSquare, X, ChevronRight,
@@ -409,7 +409,7 @@ export function EmailPage() {
   const visibleFolders = activeAccount?.sendOnly ? [FOLDERS[2], FOLDERS[3]] : FOLDERS;
 
   return (
-    <DashboardLayout>
+    <DevDashboardLayout>
       <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden md:h-screen" style={{ background: '#f0f3f8' }}>
 
         {/* Left sidebar: Mailboxes + Folders */}
@@ -745,6 +745,6 @@ export function EmailPage() {
           onClose={() => setCompose(false)}
         />
       )}
-    </DashboardLayout>
+    </DevDashboardLayout>
   );
 }

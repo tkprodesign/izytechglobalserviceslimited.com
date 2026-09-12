@@ -62,6 +62,7 @@ import { AdminDashboard } from "./admin/AdminDashboard";
 import { ContactsPage } from "./admin/ContactsPage";
 import { QuotesPage } from "./admin/QuotesPage";
 import { DevSystemPage } from "./admin/DevSystemPage";
+import { DevDashboard } from "./admin/DevDashboard";
 import { ServicesContentPage } from "./admin/ServicesContentPage";
 import { EmailPage } from "./admin/EmailPage";
 import { SocialsPage } from "./admin/SocialsPage";
@@ -176,7 +177,7 @@ export default function App() {
 
       {/* Developer-only */}
       <Route path="/dev/dashboard" element={
-        <ProtectedRoute requiredRole="developer"><DevSystemPage /></ProtectedRoute>
+        <ProtectedRoute requiredRole="developer"><DevDashboard /></ProtectedRoute>
       } />
       <Route path="/dev/logs" element={
         <ProtectedRoute requiredRole="developer"><DevSystemPage /></ProtectedRoute>
@@ -193,7 +194,7 @@ export default function App() {
 
       {/* Fallback */}
       <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
-      <Route path="/dev" element={<Navigate to="/admin/login" replace />} />
+      <Route path="/dev" element={<Navigate to="/dev/login" replace />} />
     </Routes>
     </CartProvider>
   );

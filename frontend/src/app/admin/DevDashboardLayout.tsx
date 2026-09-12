@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router';
-import { getUser, removeToken, isDeveloper } from '../../lib/auth';
+import { getUser, removeToken } from '../../lib/auth';
 import {
   LayoutDashboard,
   Mail,
   FileText,
+  Terminal,
   LogOut,
+  Activity,
   Share2,
   ShoppingBag,
   ClipboardList,
@@ -17,9 +19,13 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   FolderOpen,
+  Wrench,
   MessageSquare,
   MapPin,
   Eye,
+  Server,
+  Database,
+  Cog,
 } from 'lucide-react';
 
 interface Props {
@@ -31,17 +37,15 @@ interface NavigationItem {
   label: string;
   icon: React.ElementType;
   end?: boolean;
-  developer?: boolean;
 }
 
-export function DashboardLayout({ children }: Props) {
+export function DevDashboardLayout({ children }: Props) {
   const user = getUser();
   const navigate = useNavigate();
-  const dev = isDeveloper();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return window.localStorage.getItem('admin-sidebar-collapsed') === 'true';
+    return window.localStorage.getItem('dev-sidebar-collapsed') === 'true';
   });
 
   useEffect(() => {
@@ -63,30 +67,35 @@ export function DashboardLayout({ children }: Props) {
 
   function logout() {
     removeToken();
-    navigate('/admin/login');
+    navigate('/dev/login');
   }
 
+  const systemItems: NavigationItem[] = [
+    { to: '/dev/dashboard', label: 'Command Centre', icon: Eye, end: true },
+    { to: '/dev/logs', label: 'System Info', icon: Server },
+    { to: '/dev/services', label: 'Services Content', icon: Wrench },
+    { to: '/dev/email', label: 'Email Manager', icon: Mail },
+  ];
+
   const managementItems: NavigationItem[] = [
-    { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/admin/contacts', label: 'Contacts', icon: Mail },
-    { to: '/admin/quotes', label: 'Quote Requests', icon: FileText },
+    { to: '/admin/contacts', label: 'Contacts', icon: FileText },
+    { to: '/admin/quotes', label: 'Quote Requests', icon: ClipboardList },
     { to: '/admin/assessments', label: 'Site Assessments', icon: ClipboardCheck },
-    { to: '/admin/socials', label: 'Social Media', icon: Share2 },
-    { to: '/admin/company-contact', label: 'Company Address', icon: MapPin },
-    { to: '/admin/products', label: 'Store Products', icon: ShoppingBag },
-    { to: '/admin/enquiries', label: 'Store Enquiries', icon: ClipboardList },
     { to: '/admin/projects', label: 'Projects', icon: FolderOpen },
     { to: '/admin/testimonials', label: 'Testimonials', icon: MessageSquare },
+    { to: '/admin/socials', label: 'Social Media', icon: Share2 },
+    { to: '/admin/products', label: 'Store Products', icon: ShoppingBag },
+    { to: '/admin/enquiries', label: 'Store Enquiries', icon: ClipboardList },
+    { to: '/admin/company-contact', label: 'Company Address', icon: MapPin },
     { to: '/admin/milestones', label: 'Milestones', icon: Milestone },
     { to: '/admin/founder', label: 'Founder Profile', icon: UserCircle },
   ];
 
-
-
   const navBase = 'flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all';
 
-  function renderNavItem(item: NavigationItem, developer = false) {
+  function renderNavItem(item: NavigationItem, variant: 'system' | 'management' = 'management') {
     const Icon = item.icon;
+    const activeBg = variant === 'system' ? 'rgba(242,101,34,0.8)' : 'rgba(242,101,34,0.25)';
     return (
       <NavLink
         key={item.to}
@@ -98,18 +107,18 @@ export function DashboardLayout({ children }: Props) {
           `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:bg-white/5 hover:text-white'}`
         }
         style={({ isActive }) =>
-          isActive ? { background: developer ? 'rgba(242,101,34,0.8)' : 'var(--izy-blue)' } : {}
+          isActive ? { background: activeBg } : {}
         }
       >
         <Icon size={17} className="flex-shrink-0" />
-        <span className="admin-sidebar-label">{item.label}</span>
+        <span className="dev-sidebar-label">{item.label}</span>
       </NavLink>
     );
   }
 
   return (
     <div
-      className="admin-shell flex min-h-screen"
+      className="dev-shell flex min-h-screen"
       data-sidebar-collapsed={sidebarCollapsed}
       style={{ background: '#f0f3f8' }}
     >
@@ -118,30 +127,33 @@ export function DashboardLayout({ children }: Props) {
         aria-label="Close navigation"
         aria-hidden={!sidebarOpen}
         tabIndex={sidebarOpen ? 0 : -1}
-        className={`admin-sidebar-backdrop fixed inset-0 z-40 bg-[#041627]/55 md:hidden ${
+        className={`dev-sidebar-backdrop fixed inset-0 z-40 bg-[#1a1a2e]/60 md:hidden ${
           sidebarOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         }`}
         onClick={() => setSidebarOpen(false)}
       />
 
       <aside
-        className={`admin-sidebar fixed inset-y-0 left-0 z-50 flex w-[min(16rem,calc(100vw-1rem))] flex-shrink-0 flex-col transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] md:relative md:z-auto md:w-64 md:translate-x-0 ${
+        className={`dev-sidebar fixed inset-y-0 left-0 z-50 flex w-[min(16rem,calc(100vw-1rem))] flex-shrink-0 flex-col transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] md:relative md:z-auto md:w-64 md:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } ${
           sidebarCollapsed ? 'md:w-[72px]' : 'md:w-64'
         }`}
-        style={{ background: 'var(--izy-navy)', minHeight: '100vh' }}
+        style={{ background: 'linear-gradient(180deg, #1a1a2e 0%, #16213e 100%)', minHeight: '100vh' }}
       >
+        {/* Header */}
         <div className="flex items-center justify-between border-b px-4 py-5 md:px-5 md:py-6" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-          <div className="flex min-w-0 items-center gap-2.5">          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white"
-              style={{ background: 'linear-gradient(135deg, #1a5fab 0%, #2d7dd2 100%)' }}
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white"
+              style={{ background: 'linear-gradient(135deg, #f26522 0%, #ff8a50 100%)' }}
             >
-              IZY
+              <Eye size={18} />
             </div>
-            <div className="admin-sidebar-label min-w-0">
-              <p className="truncate text-sm font-semibold leading-none text-white">Admin Panel</p>
-              <p className="mt-0.5 truncate text-xs" style={{ color: '#8fadc8' }}>
-                CEO Access
+            <div className="dev-sidebar-label min-w-0">
+              <p className="truncate text-sm font-semibold leading-none text-white">Command Centre</p>
+              <p className="mt-0.5 truncate text-xs" style={{ color: '#f26522' }}>
+                Developer Access
               </p>
             </div>
           </div>
@@ -149,11 +161,11 @@ export function DashboardLayout({ children }: Props) {
             type="button"
             aria-label={sidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}
             title={sidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}
-            className="admin-sidebar-toggle hidden rounded-lg p-2 text-[#8fadc8] transition-colors hover:bg-white/10 hover:text-white md:block"
+            className="dev-sidebar-toggle hidden rounded-lg p-2 text-[#8fadc8] transition-colors hover:bg-white/10 hover:text-white md:block"
             onClick={() => {
               const next = !sidebarCollapsed;
               setSidebarCollapsed(next);
-              window.localStorage.setItem('admin-sidebar-collapsed', String(next));
+              window.localStorage.setItem('dev-sidebar-collapsed', String(next));
             }}
           >
             {sidebarCollapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
@@ -168,45 +180,51 @@ export function DashboardLayout({ children }: Props) {
           </button>
         </div>
 
+        {/* Navigation */}
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-          <p className="admin-sidebar-label mb-2 px-4 text-xs font-semibold uppercase tracking-wider" style={{ color: '#4a6a85' }}>
-            Business
+          <p className="dev-sidebar-label mb-2 px-4 text-xs font-semibold uppercase tracking-wider" style={{ color: '#f26522' }}>
+            System
           </p>
-          {managementItems.map(item => renderNavItem(item))}
+          {systemItems.map(item => renderNavItem(item, 'system'))}
 
-          {dev && (
-            <>
-              <div className="mt-5 border-t pt-4" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                <p className="admin-sidebar-label mb-2 px-4 text-xs font-semibold uppercase tracking-wider" style={{ color: '#4a6a85' }}>
-                  Developer
-                </p>
-                <NavLink
-                  to="/dev/dashboard"
-                  title="Developer Panel"
-                  onClick={() => setSidebarOpen(false)}
-                  className={`${navBase} text-[#8fadc8] hover:bg-white/5 hover:text-white`}
-                >
-                  <Eye size={17} className="flex-shrink-0" />
-                  <span className="admin-sidebar-label">Developer Panel</span>
-                </NavLink>
-              </div>
-            </>
-          )}
+          <p className="dev-sidebar-label mb-2 mt-5 px-4 text-xs font-semibold uppercase tracking-wider" style={{ color: '#4a6a85' }}>
+            Management
+          </p>
+          {managementItems.map(item => renderNavItem(item, 'management'))}
 
-
+          <div className="mt-5 border-t pt-4" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <p className="dev-sidebar-label mb-2 px-4 text-xs font-semibold uppercase tracking-wider" style={{ color: '#4a6a85' }}>
+              Admin Panel
+            </p>
+            <NavLink
+              to="/admin/dashboard"
+              title="Switch to Admin Panel"
+              onClick={() => setSidebarOpen(false)}
+              className={({ isActive }) =>
+                `${navBase} ${isActive ? 'text-white' : 'text-[#8fadc8] hover:bg-white/5 hover:text-white'}`
+              }
+              style={({ isActive }) =>
+                isActive ? { background: 'var(--izy-blue)' } : {}
+              }
+            >
+              <Cog size={17} className="flex-shrink-0" />
+              <span className="dev-sidebar-label">Admin Panel</span>
+            </NavLink>
+          </div>
         </nav>
 
+        {/* User */}
         <div className="border-t px-3 py-4" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <div className="mb-1 flex items-center gap-3 px-4 py-2">
             <div
               className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-              style={{ background: dev ? 'var(--izy-orange)' : 'var(--izy-blue)' }}
+              style={{ background: 'linear-gradient(135deg, #f26522 0%, #ff8a50 100%)' }}
             >
               {user?.email?.[0]?.toUpperCase()}
             </div>
-            <div className="admin-sidebar-label min-w-0">
+            <div className="dev-sidebar-label min-w-0">
               <p className="truncate text-xs font-medium text-white">{user?.email}</p>
-              <p className="text-xs capitalize" style={{ color: '#8fadc8' }}>{user?.role}</p>
+              <p className="text-xs capitalize" style={{ color: '#f26522' }}>{user?.role}</p>
             </div>
           </div>
           <button
@@ -215,13 +233,14 @@ export function DashboardLayout({ children }: Props) {
             className={`${navBase} w-full text-[#8fadc8] hover:bg-white/5 hover:text-white`}
           >
             <LogOut size={17} className="flex-shrink-0" />
-            <span className="admin-sidebar-label">Sign out</span>
+            <span className="dev-sidebar-label">Sign out</span>
           </button>
         </div>
       </aside>
 
+      {/* Main content */}
       <main className="min-w-0 flex-1 overflow-auto">
-        <header className="admin-mobile-header sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-white px-4 md:hidden" style={{ borderColor: '#eef1f6' }}>
+        <header className="dev-mobile-header sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-white px-4 md:hidden" style={{ borderColor: '#eef1f6' }}>
           <button
             type="button"
             aria-label="Open navigation"
@@ -230,8 +249,9 @@ export function DashboardLayout({ children }: Props) {
           >
             <Menu size={21} />
           </button>
-          <div>              <p className="text-sm font-semibold" style={{ color: 'var(--izy-navy)' }}>Admin Panel</p>
-            <p className="text-[11px]" style={{ color: '#8fadc8' }}>CEO Access</p>
+          <div>
+            <p className="text-sm font-semibold" style={{ color: '#1a1a2e' }}>Command Centre</p>
+            <p className="text-[11px]" style={{ color: '#f26522' }}>Developer Access</p>
           </div>
         </header>
         {children}

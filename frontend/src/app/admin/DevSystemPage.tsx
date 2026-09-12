@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { DashboardLayout } from './DashboardLayout';
+import { DevDashboardLayout } from './DevDashboardLayout';
 import { getToken, removeToken } from '../../lib/auth';
 import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
@@ -82,10 +82,10 @@ export function DevSystemPage() {
     : <XCircle size={16} style={{ color: 'var(--destructive)' }} />;
 
   return (
-    <DashboardLayout>
+    <DevDashboardLayout>
       <div className="mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--izy-navy)' }}>System Status</h1>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--izy-navy)' }}>System Info</h1>
           <p className="text-sm mt-1" style={{ color: '#5a6a82' }}>Developer-only view — live infrastructure health</p>
         </div>
 
@@ -149,6 +149,6 @@ export function DevSystemPage() {
           )}
         </div>
       </div>
-    </DashboardLayout>
+    </DevDashboardLayout>
   );
 }

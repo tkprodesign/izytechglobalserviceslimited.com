@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle, Image, Palette, Save, Wrench } from 'lucide-react';
-import { DashboardLayout } from './DashboardLayout';
+import { DevDashboardLayout } from './DevDashboardLayout';
 import { api, type ServiceContent } from '../../lib/api';
 import { serviceContent } from '../data/services';
 
@@ -49,7 +49,7 @@ export function ServicesContentPage() {
   }
 
   return (
-    <DashboardLayout>
+    <DevDashboardLayout>
       <div className="mx-auto max-w-5xl p-5 sm:p-8">
         <div className="mb-8">
           <div className="mb-1 flex items-center gap-3">
@@ -183,6 +183,6 @@ export function ServicesContentPage() {
           </form>
         )}
       </div>
-    </DashboardLayout>
+    </DevDashboardLayout>
   );
 }
