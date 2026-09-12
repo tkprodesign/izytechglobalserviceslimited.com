@@ -125,7 +125,7 @@ export function AboutPage() {
             </p>
             <div className="flex items-center gap-2 text-white/30 text-sm" style={{ fontFamily: "var(--font-ui)" }}>
               <MapPin size={13} style={{ color: "#F0A20E" }} />
-              Port Harcourt, Rivers State &nbsp;·&nbsp; Nationwide Coverage
+              No 1 Pathfinder close, Sandfield, Borikiri, Port Harcourt, Rivers State &nbsp;·&nbsp; Nationwide Coverage
             </div>
           </motion.div>
         </div>
@@ -461,7 +461,7 @@ export function AboutPage() {
                 { label: "Phone",     value: "0810 126 2814",                  href: "tel:08101262814" },
                 { label: "Facebook",  value: "IZY Technologies",               href: "https://facebook.com/izytechglobalservices" },
                 { label: "Instagram", value: "@izytechservices",               href: "https://instagram.com/izytechservices" },
-                { label: "Location",  value: "Port Harcourt, Rivers State, Nigeria", href: null },
+                { label: "Location",  value: "No 1 Pathfinder close, Sandfield, Borikiri, Port Harcourt, Rivers State", href: null },
               ].map(({ label, value, href }) => (
                 <div key={label} className="flex gap-4 mb-5 last:mb-0">
                   <div className="text-xs font-semibold w-20 shrink-0 pt-0.5" style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}>

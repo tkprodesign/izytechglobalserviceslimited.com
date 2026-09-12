@@ -6,6 +6,7 @@ import logoHorizontal from "../../imports/izy-technologies_logo-variation-horizo
 import { api, type SocialLinks } from "../../lib/api";
 import { PhoneActions } from "../components/PhoneActions";
 import { COMPANY_PHONE_DISPLAY, COMPANY_PHONE_TEL } from "../data/contactChannels";
+import { formatCompanyAddress, useCompanyContact } from "../hooks/useCompanyContact";
 
 const services = [
   { label: "Solar Energy Systems",  slug: "service-solar" },
@@ -38,6 +39,7 @@ const SOCIAL_ICONS: Record<string, { Icon: React.ElementType; label: string }> =
 
 export function Footer() {
   const [socials, setSocials] = useState<{ Icon: React.ElementType; href: string; label: string }[]>([]);
+  const companyContact = useCompanyContact();
 
   useEffect(() => {
     api.socials().then(({ platforms }) => {
@@ -191,7 +193,9 @@ export function Footer() {
               <div className="flex items-start gap-3 text-white/35">
                 <MapPin size={14} className="mt-0.5 flex-shrink-0" />
                 <span className="text-sm" style={{ fontFamily: "var(--font-body)" }}>
-                  Port Harcourt, Rivers State<br />Nationwide Coverage
+                  {formatCompanyAddress(companyContact)}
+                  <br />
+                  Nationwide Coverage
                 </span>
               </div>
             </li>
