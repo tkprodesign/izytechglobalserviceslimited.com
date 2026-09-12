@@ -84,7 +84,9 @@ export function SiteAssessmentForm({ dark = false }: { dark?: boolean }) {
 
   useEffect(() => {
     const service = searchParams.get("service") ?? "";
-    if (service) setForm(current => ({ ...current, service }));
+    // Only preselect when the URL value matches a known service option, so a
+    // renamed service in the CMS can never leave the dropdown blank.
+    if (service && services.includes(service)) setForm(current => ({ ...current, service }));
   }, [searchParams]);
 
   const labelClass = dark

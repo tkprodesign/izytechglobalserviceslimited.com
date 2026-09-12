@@ -201,6 +201,7 @@ export function ContactPage() {
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
+              id="quote-form"
               className="lg:col-span-3 p-8 lg:p-10 border border-gray-100"
               style={{ background: "#f9fafb" }}
             >

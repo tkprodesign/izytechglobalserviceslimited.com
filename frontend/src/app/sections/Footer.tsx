@@ -81,7 +81,7 @@ export function Footer() {
             </p>
           </div>
           <a
-            href="#contact"
+            href="#quote-form"
             className="btn-shimmer flex-shrink-0 inline-flex items-center gap-3 px-9 py-4 font-bold text-[#041627] text-sm tracking-wider transition-all hover:shadow-[0_8px_32px_rgba(240,162,14,0.5)] hover:scale-[1.03]"
             style={{
               background: "linear-gradient(135deg, #F0A20E 0%, #FFB830 100%)",

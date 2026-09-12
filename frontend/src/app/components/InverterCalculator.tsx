@@ -365,7 +365,7 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
               </div>
             </div>
             <a
-              href="/?service=Solar%20Energy%20Systems#contact"
+              href="/?service=Solar%20Energy%20Systems#quote-form"
               onClick={() => onOpenChange(false)}
               className="inline-flex w-full shrink-0 items-center justify-center gap-2 bg-[#041627] px-5 py-3 text-xs font-bold tracking-wider text-white transition-colors hover:bg-[#173047] sm:w-auto"
               style={{ fontFamily: "var(--font-ui)" }}

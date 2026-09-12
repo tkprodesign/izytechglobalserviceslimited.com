@@ -106,7 +106,7 @@ export function ServicesPage() {
                   </ul>
 
                   <Link
-                    to={`/?service=${encodeURIComponent(s.title)}#contact`}
+                    to={`/?service=${encodeURIComponent(s.title)}#quote-form`}
                     className="self-start flex items-center gap-2 text-xs font-bold tracking-widest uppercase transition-opacity hover:opacity-70"
                     style={{ fontFamily: "var(--font-ui)", color: s.color }}
                   >
@@ -129,7 +129,7 @@ export function ServicesPage() {
             Our team will assess your site, understand your goals and recommend the right solution — at no cost.
           </p>
           <Link
-            to="/#contact"
+            to="/#quote-form"
             className="inline-flex items-center gap-3 px-9 py-4 font-bold text-[#041627] text-sm tracking-wider transition-all hover:opacity-90"
             style={{ background: "linear-gradient(135deg,#F0A20E 0%,#FFB830 100%)", fontFamily: "var(--font-ui)", letterSpacing: "0.08em" }}
           >

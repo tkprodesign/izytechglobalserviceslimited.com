@@ -227,7 +227,7 @@ export function Navbar() {
             <MessageCircle size={15} />
           </a>
           <a
-            href="/#contact"
+            href="/#quote-form"
             className="px-5 py-2.5 text-sm font-semibold transition-all hover:opacity-90 text-[#041627]"
             style={{
               background: "linear-gradient(135deg, #F0A20E 0%, #FFB830 100%)",
@@ -345,7 +345,7 @@ export function Navbar() {
               </a>
             </div>
             <a
-              href="/#contact"
+              href="/#quote-form"
               className="block text-center px-5 py-3 text-sm font-semibold text-[#041627]"
               style={{
                 background: "linear-gradient(135deg, #F0A20E 0%, #FFB830 100%)",

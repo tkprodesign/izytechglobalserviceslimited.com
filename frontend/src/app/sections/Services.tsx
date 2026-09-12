@@ -147,7 +147,7 @@ export function Services() {
                     ))}
                     <li className="pt-2">
                       <Link
-                        to={`/?service=${encodeURIComponent(service.title)}#contact`}
+                        to={`/?service=${encodeURIComponent(service.title)}#quote-form`}
                         className="inline-flex items-center gap-1.5 text-xs font-bold tracking-wide transition-all group-hover:gap-2.5"
                         style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}
                       >

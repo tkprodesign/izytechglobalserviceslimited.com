@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Pause, Play } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from "motion/react";
-import { useSearchParams } from "react-router";
-import { InverterCalculator } from "../components/InverterCalculator";
+import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from "motion/react";import { InverterCalculator } from "../components/InverterCalculator";
 
 const stats = [
   { value: 1000, suffix: "+", label: "Jobs Delivered" },
@@ -37,7 +35,7 @@ const slides = [
     description: "Our partnership gives eligible Izy Tech Services customers a smarter way to fund approved power projects: apply through AltPower for deferred-payment financing, then repay in manageable instalments.",
     primaryLabel: "CALCULATE YOUR INVERTER NEEDS",
     secondaryLabel: "START YOUR APPLICATION",
-    secondaryHref: "#contact",
+    secondaryHref: "#quote-form",
     background: "/site-images/project-commercial-solar.jpg",
     overlay: "linear-gradient(100deg, rgba(4,22,39,0.96) 0%, rgba(4,22,39,0.86) 44%, rgba(7,49,38,0.54) 100%)",
     highlights: [
@@ -77,7 +75,6 @@ function AnimatedStat({ value, suffix, label, delay }: { value: number; suffix: 
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
-  const [searchParams, setSearchParams] = useSearchParams();
   const [activeSlide, setActiveSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
@@ -86,10 +83,7 @@ export function Hero() {
 
   const handleProjectEnquiry = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (searchParams.get("service")) {
-      setSearchParams({}, { replace: true });
-    }
-    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+    document.getElementById("quote-form")?.scrollIntoView({ behavior: "smooth" });
   };
 
   const goToSlide = (index: number) => {
@@ -303,7 +297,7 @@ export function Hero() {
                   </button>
                 ) : (
                   <a
-                    href="#contact"
+                    href="#quote-form"
                     onClick={handleProjectEnquiry}
                     className="btn-shimmer inline-flex items-center gap-3 px-9 py-4 font-bold text-[#041627] transition-all hover:scale-[1.03] hover:shadow-[0_8px_30px_rgba(240,162,14,0.45)] text-sm tracking-wider"
                     style={{ fontFamily: "var(--font-ui)", background: "linear-gradient(135deg, #F0A20E 0%, #FFB830 100%)", letterSpacing: "0.08em" }}

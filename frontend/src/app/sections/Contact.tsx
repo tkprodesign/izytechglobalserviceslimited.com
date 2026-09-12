@@ -139,6 +139,7 @@ export function Contact() {
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
+            id="quote-form"
             className="lg:col-span-3 p-8 border border-white/8"
             style={{ background: "rgba(255,255,255,0.04)" }}
           >
