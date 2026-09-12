@@ -226,9 +226,8 @@ export function Hero() {
                 </span>
               </div>
 
-              {/* Keep both slides on the same vertical rhythm. The finance
-                  slide uses this row for its partnership badge; the energy
-                  slide reserves the space so its heading does not jump. */}
+              {/* Keep both slides on the same vertical rhythm with a shared
+                  badge slot above each heading. */}
               <div className="mb-5 flex min-h-[44px] items-center">
                 {slide.id === "finance" ? (
                   <div className="inline-flex items-center gap-3 border border-[#4BC47A]/35 bg-[#0b5d3a]/30 px-3 py-2">
@@ -240,7 +239,14 @@ export function Hero() {
                     <span className="hidden text-[10px] uppercase tracking-wider text-white/45 sm:inline">Powering access</span>
                   </div>
                 ) : (
-                  <span aria-hidden="true" className="invisible h-11" />
+                  <div className="inline-flex items-center gap-3 border border-[#F0A20E]/35 bg-[#6a4600]/20 px-3 py-2">
+                    <span className="text-lg font-semibold tracking-[-0.04em] text-[#F0A20E]" style={{ fontFamily: "var(--font-display)" }}>
+                      izy<span className="text-white">tech</span>
+                    </span>
+                    <span className="text-white/35">×</span>
+                    <span className="text-xs font-bold tracking-[0.12em] text-white/85" style={{ fontFamily: "var(--font-ui)" }}>Energy Solutions</span>
+                    <span className="hidden text-[10px] uppercase tracking-wider text-white/45 sm:inline">Built for Nigeria</span>
+                  </div>
                 )}
               </div>
 
