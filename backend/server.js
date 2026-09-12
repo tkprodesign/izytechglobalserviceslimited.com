@@ -183,7 +183,7 @@ async function initSiteSettingsTable() {
         num: '03',
         title: 'Smart Home Automation',
         description: 'We assess your property and plan connected home systems around lighting, access, security and everyday convenience, with the right infrastructure for a smooth integrated installation.',
-        features: ['Site Assessment', 'Lighting Control', 'Smart Locks & Entry', 'Security Integration', 'Perimeter Security', 'System Planning'],
+        features: ['Lighting Control', 'Smart Locks & Entry', 'Security Integration', 'Perimeter Security', 'System Planning', 'Site Assessment'],
         image: '/site-images/project-site-team.jpg',
         color: '#8B5CF6',
         featured: false,
