@@ -38,12 +38,12 @@ const FALLBACK: Testimonial[] = [
   },
   {
     id: 4,
-    name: "Moni Pulo",
-    role: "Hospital Director",
+    name: "Monipulo",
+    role: "Operations Director",
     company: "Nigeria",
-    text: "After Izy Tech Services' electrical overhaul our hospital has had zero downtime. The UPS systems, distribution boards and transfer switches they installed have been flawless. We trust them completely with critical infrastructure.",
+    text: "Izy Tech Services designed and installed a solar power system for our hospital that has eliminated downtime entirely. The panels, inverters and battery storage they deployed have been flawless. We trust them completely with critical infrastructure.",
     rating: 5,
-    avatar: "MP",
+    avatar: "M",
     metric: "Zero downtime",
   },
   {
