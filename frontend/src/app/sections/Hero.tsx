@@ -6,7 +6,7 @@ const stats = [
   { value: 1000, suffix: "+", label: "Jobs Delivered" },
   { value: 8,    suffix: "+", label: "Years of Excellence" },
   { value: 98,   suffix: "%", label: "Client Satisfaction" },
-  { value: 24,   suffix: "/7", label: "Support Available" },
+  { value: 24,   suffix: "/7", label: "Emergency Support" },
 ];
 
 // Seven and a half seconds gives visitors enough time to read the richer
@@ -17,10 +17,10 @@ const SLIDE_DURATION_SECONDS = Math.ceil(SLIDE_DURATION_MS / 1000);
 const slides = [
   {
     id: "energy",
-    eyebrow: "Nigeria's Premier Energy Solutions Provider",
-    titleLines: [["Power", "the", "Future,"], ["Future-Ready", "Solutions,", "Today"]],
+    eyebrow: "Technology and Energy Solutions Across Nigeria",
+    titleLines: [["Power", "The"], ["Future-Ready", "Solutions,", "Today"]],
     accent: "Today",
-    description: "From solar energy systems to smart homes and industrial wiring — Izy Tech Services delivers cutting-edge solutions across Nigeria and beyond.",
+    description: "From solar energy systems to smart homes and industrial wiring — Izy Tech Services delivers cutting-edge solutions across Nigeria.",
     primaryLabel: "START A PROJECT ENQUIRY",
     secondaryLabel: "OUR SERVICES",
     secondaryHref: "#services",

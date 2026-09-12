@@ -94,7 +94,7 @@ function buildEmail({ subject = '', preheader = '', bodyHtml = '', footerNote = 
         <td class="footer">
           <p class="footer-logo">IZY Technologies Global Services Limited</p>
           <p class="footer-text">
-            Nigeria's premier energy solutions provider.<br/>
+            Nigeria's premier technology and energy solutions provider.<br/>
             Solar energy systems · Smart homes · Industrial wiring
           </p>
           <div class="footer-links">

@@ -34,7 +34,7 @@ const whyUs = [
   },
   {
     icon: Globe,
-    title: "Nationwide Reach",
+    title: "Nationwide Coverage",
     description: "Operating across all 36 states and FCT, with rapid deployment capacity for any project scale.",
   },
 ];

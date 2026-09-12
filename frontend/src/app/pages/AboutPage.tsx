@@ -8,7 +8,7 @@ import { PhoneActions } from "../components/PhoneActions";
 const stats = [
   { value: 1000, suffix: "+", label: "Jobs Delivered" },
   { value: 8,    suffix: "+", label: "Years of Excellence" },
-  { value: 4,    suffix: "",  label: "Service Divisions" },
+  { value: 4,    suffix: "",  label: "Core Services" },
   { value: 98,   suffix: "%", label: "Client Satisfaction" },
 ];
 
@@ -458,7 +458,7 @@ export function AboutPage() {
               </div>
               {[
                 { label: "Email",     value: "info@izytechglobalservices.com", href: "mailto:info@izytechglobalservices.com" },
-                { label: "Phone",     value: "0810 126 2814",                  href: "tel:08101262814" },
+                { label: "Phone",     value: "+234 810 126 2814",              href: "tel:+2348101262814" },
                 { label: "Facebook",  value: "IZY Technologies",               href: "https://facebook.com/izytechglobalservices" },
                 { label: "Instagram", value: "@izytechservices",               href: "https://instagram.com/izytechservices" },
                 { label: "Location",  value: "No 1 Pathfinder close, Sandfield, Borikiri, Port Harcourt, Rivers State", href: null },

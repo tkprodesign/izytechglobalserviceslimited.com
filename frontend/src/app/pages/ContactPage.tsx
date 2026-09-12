@@ -184,7 +184,7 @@ export function ContactPage() {
                   Emergency Electrical?
                 </h3>
                 <p className="text-[#041627]/45 text-sm mb-5" style={{ fontFamily: "var(--font-body)" }}>
-                  24/7 emergency call-out for critical electrical faults and security failures.
+                  24/7 Emergency Support for critical electrical faults and security failures.
                 </p>
                 <a
                   href="tel:+2348101262814"
@@ -260,7 +260,7 @@ export function ContactPage() {
               Prefer to see our work first?
             </h2>
             <p className="text-white/40 mb-7 text-sm" style={{ fontFamily: "var(--font-body)" }}>
-              Browse our portfolio of 1,000+ completed projects across Nigeria.
+              Browse our portfolio of work — over 1,000 jobs delivered across Nigeria.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link

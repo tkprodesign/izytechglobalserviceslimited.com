@@ -370,7 +370,7 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
               className="inline-flex w-full shrink-0 items-center justify-center gap-2 bg-[#041627] px-5 py-3 text-xs font-bold tracking-wider text-white transition-colors hover:bg-[#173047] sm:w-auto"
               style={{ fontFamily: "var(--font-ui)" }}
             >
-              REQUEST ASSESSMENT <ArrowRight size={14} />
+              REQUEST A SITE ASSESSMENT <ArrowRight size={14} />
             </a>
           </div>
         </div>

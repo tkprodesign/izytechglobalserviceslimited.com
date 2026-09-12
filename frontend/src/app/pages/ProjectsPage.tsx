@@ -74,7 +74,7 @@ function EmptyCategoryWidget({ category }: { category: string }) {
             className="inline-flex items-center gap-2 px-6 py-3 text-xs font-bold tracking-wider text-white transition-opacity hover:opacity-90"
             style={{ background: "#041627", fontFamily: "var(--font-ui)" }}
           >
-            START A PROJECT <ArrowRight size={13} />
+            START A PROJECT ENQUIRY <ArrowRight size={13} />
           </Link>
         </div>
       </div>

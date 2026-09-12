@@ -318,7 +318,7 @@ export function StorePage() {
               {
                 icon: Shield,
                 title: "After-Sales Support",
-                body: "2-year workmanship warranty on all Izy Tech Services installations. Emergency support available 24/7.",
+                body: "2-year workmanship warranty on all Izy Tech Services installations. 24/7 Emergency Support.",
               },
             ].map(({ icon: Icon, title, body }, i) => (
               <motion.div

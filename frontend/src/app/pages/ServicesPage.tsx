@@ -126,7 +126,7 @@ export function ServicesPage() {
             Not sure which service you need?
           </h2>
           <p className="text-white/40 mb-8 text-sm" style={{ fontFamily: "var(--font-body)" }}>
-            Our team will assess your site, understand your goals and recommend the right solution — at no cost.
+            Our team will assess your site, understand your goals and recommend the right solution.
           </p>
           <Link
             to="/#quote-form"

@@ -106,7 +106,7 @@ export function Footer() {
             </div>
           </div>
           <p className="text-white/35 text-sm leading-relaxed mb-6" style={{ fontFamily: "var(--font-body)" }}>
-            Nigeria's premier technology and energy services company. Powering homes, businesses and industries since 2018.
+            Technology and energy solutions for homes, businesses and industries across Nigeria — powering the country since 2018.
           </p>
           <div className="flex gap-2">
             {socials.map(({ Icon, href, label }) => (
@@ -209,7 +209,7 @@ export function Footer() {
           © {new Date().getFullYear()} <span className="whitespace-nowrap">Izy Technologies Global Services Limited</span>. All rights reserved.
         </p>
         <p className="text-white/20 text-xs" style={{ fontFamily: "var(--font-ui)" }}>
-          Powering Nigeria, One Project at a Time.
+            Powering Nigeria, One Project at a Time.
         </p>
       </div>
     </footer>

@@ -47,7 +47,7 @@ export function Services() {
               className="text-[#64748b] max-w-sm text-sm leading-relaxed lg:text-right"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              From solar panels to smart homes — we bring the future of technology to your doorstep, backed by 8 years of excellence.
+              From solar panels to smart homes — we bring the future of technology to your doorstep,              backed by years of engineering excellence.
             </p>
             <Link
               to="/services"
@@ -168,7 +168,7 @@ export function Services() {
               Not sure what you need?
             </p>
             <p className="text-[#64748b] text-sm" style={{ fontFamily: "var(--font-body)" }}>
-              Our experts will assess your requirements at no cost.
+              Our experts will assess your requirements before quoting.
             </p>
           </div>
           <a
@@ -180,7 +180,7 @@ export function Services() {
               letterSpacing: "0.07em",
             }}
           >
-            REQUEST ASSESSMENT <ArrowRight size={14} strokeWidth={2.5} />
+            REQUEST A SITE ASSESSMENT <ArrowRight size={14} strokeWidth={2.5} />
           </a>
         </div>
       </div>

@@ -122,7 +122,7 @@ export function Contact() {
                 Emergency Electrical?
               </h3>
               <p className="text-white/40 text-sm mb-5" style={{ fontFamily: "var(--font-body)" }}>
-                24/7 emergency call-out for critical electrical faults and security failures.
+                24/7 Emergency Support for critical electrical faults and security failures.
               </p>
               <a
                 href="tel:+2348101262814"
