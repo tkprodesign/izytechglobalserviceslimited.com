@@ -4,6 +4,8 @@ import { Link } from "react-router";
 import logoIcon from "../../imports/izy-technologies_icon_v1.png";
 import logoHorizontal from "../../imports/izy-technologies_logo-variation-horizontal_v1.png";
 import { api, type SocialLinks } from "../../lib/api";
+import { PhoneActions } from "../components/PhoneActions";
+import { COMPANY_PHONE_DISPLAY, COMPANY_PHONE_TEL } from "../data/contactChannels";
 
 const services = [
   { label: "Solar Energy Systems",  slug: "service-solar" },
@@ -168,7 +170,6 @@ export function Footer() {
           </h4>
           <ul className="space-y-4">
             {[
-              { href: "tel:+2348101262814", Icon: Phone, text: "+234 810 126 2814" },
               { href: "mailto:info@izytechglobalservices.com", Icon: Mail, text: "info@izytechglobalservices.com" },
             ].map(({ href, Icon, text }) => (
               <li key={text}>
@@ -178,6 +179,15 @@ export function Footer() {
                 </a>
               </li>
             ))}
+            <li className="flex items-start gap-3 text-white/35">
+              <Phone size={14} className="mt-0.5 flex-shrink-0" />
+              <div>
+                <a href={COMPANY_PHONE_TEL} className="text-sm hover:text-[#F0A20E] transition-colors" style={{ fontFamily: "var(--font-body)" }}>
+                  {COMPANY_PHONE_DISPLAY}
+                </a>
+                <PhoneActions dark className="mt-2" />
+              </div>
+            </li>
             <li>
               <div className="flex items-start gap-3 text-white/35">
                 <MapPin size={14} className="mt-0.5 flex-shrink-0" />

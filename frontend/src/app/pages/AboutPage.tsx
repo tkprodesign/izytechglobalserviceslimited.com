@@ -3,6 +3,7 @@ import { motion, useInView } from "motion/react";
 import { Award, Users, Globe, ArrowRight, MapPin, Calendar, Zap, Shield, Target, Leaf, Heart } from "lucide-react";
 import { Link } from "react-router";
 import { PageLayout } from "../components/PageLayout";
+import { PhoneActions } from "../components/PhoneActions";
 
 const stats = [
   { value: 1000, suffix: "+", label: "Jobs Delivered" },
@@ -481,6 +482,12 @@ export function AboutPage() {
                   )}
                 </div>
               ))}
+              <div className="flex gap-4 mb-5">
+                <div className="text-xs font-semibold w-20 shrink-0 pt-0.5" style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}>
+                  WhatsApp
+                </div>
+                <PhoneActions />
+              </div>
             </div>
           </motion.div>
         </div>

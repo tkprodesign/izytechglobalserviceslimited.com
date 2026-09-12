@@ -1,7 +1,9 @@
 import { Phone, Mail, MapPin } from "lucide-react";
 import { motion } from "motion/react";
 import { SiteAssessmentForm } from "../components/SiteAssessmentForm";
+import { PhoneActions } from "../components/PhoneActions";
 import { formatCompanyAddress, useCompanyContact } from "../hooks/useCompanyContact";
+import { COMPANY_PHONE_DISPLAY, COMPANY_PHONE_TEL } from "../data/contactChannels";
 
 export function Contact() {
   const companyContact = useCompanyContact();
@@ -9,9 +11,9 @@ export function Contact() {
     {
       icon: Phone,
       label: "Call Us",
-      value: "+234 810 126 2814",
+      value: COMPANY_PHONE_DISPLAY,
       sub: "Mon–Sat, 8am–6pm",
-      href: "tel:+2348101262814",
+      href: COMPANY_PHONE_TEL,
     },
     {
       icon: Mail,
@@ -63,9 +65,8 @@ export function Contact() {
             {contactInfo.map((item, i) => {
               const Icon = item.icon;
               return (
-                <motion.a
+                <motion.div
                   key={item.label}
-                  href={item.href}
                   initial={{ opacity: 0, x: -16 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
@@ -84,14 +85,23 @@ export function Contact() {
                     <div className="text-white/30 text-xs mb-0.5" style={{ fontFamily: "var(--font-ui)" }}>
                       {item.label}
                     </div>
-                    <div className="font-semibold text-white/80 text-sm group-hover:text-[#F0A20E] transition-colors" style={{ fontFamily: "var(--font-body)" }}>
-                      {item.value}
-                    </div>
+                    {item.label === "Call Us" ? (
+                      <>
+                        <div className="font-semibold text-white/80 text-sm" style={{ fontFamily: "var(--font-body)" }}>
+                          {item.value}
+                        </div>
+                        <PhoneActions dark className="mt-2" />
+                      </>
+                    ) : (
+                      <a href={item.href} className="font-semibold text-white/80 text-sm group-hover:text-[#F0A20E] transition-colors" style={{ fontFamily: "var(--font-body)" }}>
+                        {item.value}
+                      </a>
+                    )}
                     <div className="text-white/30 text-xs mt-0.5" style={{ fontFamily: "var(--font-ui)" }}>
                       {item.sub}
                     </div>
                   </div>
-                </motion.a>
+                </motion.div>
               );
             })}
 

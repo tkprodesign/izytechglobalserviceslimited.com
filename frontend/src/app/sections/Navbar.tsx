@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router";
-import { Menu, X, Phone, ChevronDown } from "lucide-react";
+import { Menu, X, Phone, MessageCircle, ChevronDown } from "lucide-react";
 import logoIcon from "../../imports/izy-technologies_icon_v1.png";
+import {
+  COMPANY_PHONE_DISPLAY,
+  COMPANY_PHONE_TEL,
+  COMPANY_WHATSAPP_URL,
+} from "../data/contactChannels";
 
 type NavChild = { label: string; to?: string; href?: string };
 type NavLink = {
@@ -196,17 +201,31 @@ export function Navbar() {
           ))}
         </div>
 
-        {/* Right: phone + CTA */}
+        {/* Right: call + WhatsApp + CTA */}
         <div className="hidden lg:flex items-center gap-5">
           <a
-            href="tel:+2348101262814"
+            href={COMPANY_PHONE_TEL}
             className={`flex items-center gap-1.5 text-xs transition-colors ${
               isTransparent ? "text-white/55 hover:text-white/80" : "text-[#0d1b2e]/40 hover:text-[#C8971A]"
             }`}
             style={{ fontFamily: "var(--font-ui)" }}
           >
             <Phone size={12} />
-            +234 810 126 2814
+            {COMPANY_PHONE_DISPLAY}
+          </a>
+          <a
+            href={COMPANY_WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Chat on WhatsApp"
+            aria-label="Chat on WhatsApp"
+            className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${
+              isTransparent
+                ? "border-white/20 text-[#6ee795] hover:border-[#6ee795]/60 hover:bg-white/10"
+                : "border-[#25D366]/30 text-[#1da851] hover:border-[#25D366] hover:bg-[#25D366]/8"
+            }`}
+          >
+            <MessageCircle size={15} />
           </a>
           <a
             href="/#contact"
@@ -307,13 +326,25 @@ export function Navbar() {
             )
           )}
           <div className="pt-3 space-y-2">
-            <a
-              href="tel:+2348101262814"
-              className="flex items-center gap-2 px-3 py-2 text-sm text-[#0d1b2e]/50"
-            >
-              <Phone size={14} />
-              +234 810 126 2814
-            </a>
+            <div className="flex items-center gap-4 px-3 py-2">
+              <a
+                href={COMPANY_PHONE_TEL}
+                className="flex items-center gap-2 text-sm text-[#0d1b2e]/50"
+              >
+                <Phone size={14} />
+                {COMPANY_PHONE_DISPLAY}
+              </a>
+              <a
+                href={COMPANY_WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-1.5 text-sm font-medium text-[#1da851]"
+              >
+                <MessageCircle size={15} />
+                WhatsApp
+              </a>
+            </div>
             <a
               href="/#contact"
               className="block text-center px-5 py-3 text-sm font-semibold text-[#041627]"
