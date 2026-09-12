@@ -192,18 +192,32 @@ export function Hero() {
       </div>
 
       {/* Content */}
-      <motion.div className="absolute inset-0 min-h-0 flex flex-col" style={{ opacity }}>
-        <div className="flex-1 min-h-0 max-w-7xl mx-auto w-full px-6 flex items-start overflow-hidden">
-          <AnimatePresence mode="popLayout" initial={false}>
+      <motion.div className="relative flex-1 flex flex-col" style={{ opacity }}>
+        <div className="max-w-7xl mx-auto w-full px-6">
+          {/* Keep both panels in the same grid cell so the layout reserves
+              enough height for the taller slide while only the active panel
+              is visible. This prevents the stats bar from covering content
+              when the carousel changes slides. */}
+          <div className="grid w-full items-start">
+            {slides.map((slide, slideIndex) => {
+              const isActive = slideIndex === activeSlide;
+
+              return (
             <motion.div
               key={slide.id}
-              initial={{ opacity: 0, x: reducedMotion ? 0 : 30, y: reducedMotion ? 0 : 16, filter: reducedMotion ? "blur(0px)" : "blur(8px)" }}
-              animate={{ opacity: 1, x: 0, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, x: reducedMotion ? 0 : -30, y: reducedMotion ? 0 : -12, filter: reducedMotion ? "blur(0px)" : "blur(8px)" }}
+              initial={false}
+              animate={{
+                opacity: isActive ? 1 : 0,
+                x: isActive ? 0 : (slideIndex > activeSlide ? 30 : -30),
+                y: isActive ? 0 : (slideIndex > activeSlide ? 16 : -12),
+                filter: isActive ? "blur(0px)" : "blur(8px)",
+              }}
               transition={{ duration: reducedMotion ? 0 : 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="max-w-3xl w-full pt-32 pb-24 sm:pt-36 md:pt-32 lg:pt-24 xl:pt-24 lg:pb-8"
+              className="col-start-1 row-start-1 max-w-3xl w-full pt-32 pb-24 sm:pt-36 md:pt-32 lg:pt-24 xl:pt-24 lg:pb-8"
               role="tabpanel"
+              aria-hidden={!isActive}
               aria-label={slide.id === "finance" ? "AltPower partnership" : "Energy solutions"}
+              style={{ pointerEvents: isActive ? "auto" : "none" }}
             >
               <div className="flex h-14 items-center gap-3 mb-7 sm:h-10">
                 <div className="w-10 h-px" style={{ background: slide.id === "finance" ? "#4BC47A" : "#F0A20E" }} />
@@ -323,7 +337,9 @@ export function Hero() {
                 </>
               )}
             </motion.div>
-          </AnimatePresence>
+              );
+            })}
+          </div>
         </div>
 
         {/* Stats bar */}
