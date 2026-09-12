@@ -22,6 +22,7 @@ import {
   FolderOpen,
   Wrench,
   MessageSquare,
+  MapPin,
 } from 'lucide-react';
 
 interface Props {
@@ -74,6 +75,7 @@ export function DashboardLayout({ children }: Props) {
     { to: '/admin/quotes', label: 'Quote Requests', icon: FileText },
     { to: '/admin/assessments', label: 'Site Assessments', icon: ClipboardCheck },
     { to: '/admin/socials', label: 'Social Media', icon: Share2 },
+    { to: dev ? '/dev/company-contact' : '/admin/company-contact', label: 'Company Address', icon: MapPin },
     { to: '/admin/products', label: 'Store Products', icon: ShoppingBag },
     { to: '/admin/enquiries', label: 'Store Enquiries', icon: ClipboardList },
     { to: '/admin/projects', label: 'Projects', icon: FolderOpen },

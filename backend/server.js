@@ -214,6 +214,32 @@ async function initSiteSettingsTable() {
       },
     ]),
   ]);
+
+  await db.query(`
+    INSERT INTO site_settings (key, value) VALUES ($1, $2)
+    ON CONFLICT (key) DO NOTHING
+  `, ['company_contact', JSON.stringify(DEFAULT_COMPANY_CONTACT)]);
+}
+
+const DEFAULT_COMPANY_CONTACT = {
+  addressLine1: 'No 1 Pathfinder close',
+  addressLine2: 'Sandfield, Borikiri',
+  city: 'Port Harcourt',
+  state: 'Rivers State',
+};
+
+function normalizeCompanyContact(value) {
+  if (!value || typeof value !== 'object') return null;
+
+  const data = {
+    addressLine1: String(value.addressLine1 || '').trim(),
+    addressLine2: String(value.addressLine2 || '').trim(),
+    city: String(value.city || '').trim(),
+    state: String(value.state || '').trim(),
+  };
+
+  if (!data.addressLine1 || !data.city || !data.state) return null;
+  return data;
 }
 
 const SERVICE_IDS = ['solar', 'industrial', 'smartHome', 'security', 'itTech', 'electrical'];
@@ -721,6 +747,39 @@ app.put('/api/settings/services', requireDev, async (req, res) => {
       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
     `, [JSON.stringify(data)]);
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Site Settings: Company address (public read, authenticated write) ─────────
+app.get('/api/settings/company-contact', async (_req, res) => {
+  try {
+    const { rows } = await db.query(
+      "SELECT value FROM site_settings WHERE key = 'company_contact' LIMIT 1"
+    );
+    const data = rows[0] ? normalizeCompanyContact(JSON.parse(rows[0].value)) : DEFAULT_COMPANY_CONTACT;
+    if (!data) return res.status(500).json({ error: 'Company contact address is invalid' });
+    res.json({ data });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/settings/company-contact', requireAuth, async (req, res) => {
+  const data = normalizeCompanyContact(req.body?.data);
+  if (!data) {
+    return res.status(400).json({
+      error: 'Address line 1, city and state are required',
+    });
+  }
+
+  try {
+    await db.query(`
+      INSERT INTO site_settings (key, value, updated_at) VALUES ('company_contact', $1, NOW())
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+    `, [JSON.stringify(data)]);
+    res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

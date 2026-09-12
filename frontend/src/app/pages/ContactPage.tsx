@@ -3,39 +3,41 @@ import { motion } from "motion/react";
 import { Link } from "react-router";
 import { PageLayout } from "../components/PageLayout";
 import { SiteAssessmentForm } from "../components/SiteAssessmentForm";
-
-const contactInfo = [
-  {
-    icon: Phone,
-    label: "Call Us",
-    value: "+234 810 126 2814",
-    sub: "Mon–Sat, 8am–6pm",
-    href: "tel:+2348101262814",
-  },
-  {
-    icon: Mail,
-    label: "Email Us",
-    value: "info@izytechglobalservices.com",
-    sub: "We reply within 24 hours",
-    href: "mailto:info@izytechglobalservices.com",
-  },
-  {
-    icon: MapPin,
-    label: "Head Office",
-    value: "Port Harcourt, Rivers State",
-    sub: "Nationwide service coverage",
-    href: "#",
-  },
-  {
-    icon: Clock,
-    label: "Working Hours",
-    value: "Mon – Sat: 8am – 6pm",
-    sub: "Emergency line available 24/7",
-    href: "#",
-  },
-];
+import { formatCompanyAddress, useCompanyContact } from "../hooks/useCompanyContact";
 
 export function ContactPage() {
+  const companyContact = useCompanyContact();
+  const contactInfo = [
+    {
+      icon: Phone,
+      label: "Call Us",
+      value: "+234 810 126 2814",
+      sub: "Mon–Sat, 8am–6pm",
+      href: "tel:+2348101262814",
+    },
+    {
+      icon: Mail,
+      label: "Email Us",
+      value: "info@izytechglobalservices.com",
+      sub: "We reply within 24 hours",
+      href: "mailto:info@izytechglobalservices.com",
+    },
+    {
+      icon: MapPin,
+      label: "Head Office",
+      value: formatCompanyAddress(companyContact),
+      sub: "Nationwide service coverage",
+      href: "#",
+    },
+    {
+      icon: Clock,
+      label: "Working Hours",
+      value: "Mon – Sat: 8am – 6pm",
+      sub: "Emergency line available 24/7",
+      href: "#",
+    },
+  ];
+
   return (
     <PageLayout>
       {/* ── Hero ── */}

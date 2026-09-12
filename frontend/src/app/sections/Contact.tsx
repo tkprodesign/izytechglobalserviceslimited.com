@@ -1,32 +1,34 @@
 import { Phone, Mail, MapPin } from "lucide-react";
 import { motion } from "motion/react";
 import { SiteAssessmentForm } from "../components/SiteAssessmentForm";
-
-const contactInfo = [
-  {
-    icon: Phone,
-    label: "Call Us",
-    value: "+234 810 126 2814",
-    sub: "Mon–Sat, 8am–6pm",
-    href: "tel:+2348101262814",
-  },
-  {
-    icon: Mail,
-    label: "Email Us",
-    value: "info@izytechglobalservices.com",
-    sub: "We reply within 24 hours",
-    href: "mailto:info@izytechglobalservices.com",
-  },
-  {
-    icon: MapPin,
-    label: "Head Office",
-    value: "Port Harcourt, Rivers State",
-    sub: "Nationwide service coverage",
-    href: "#",
-  },
-];
+import { formatCompanyAddress, useCompanyContact } from "../hooks/useCompanyContact";
 
 export function Contact() {
+  const companyContact = useCompanyContact();
+  const contactInfo = [
+    {
+      icon: Phone,
+      label: "Call Us",
+      value: "+234 810 126 2814",
+      sub: "Mon–Sat, 8am–6pm",
+      href: "tel:+2348101262814",
+    },
+    {
+      icon: Mail,
+      label: "Email Us",
+      value: "info@izytechglobalservices.com",
+      sub: "We reply within 24 hours",
+      href: "mailto:info@izytechglobalservices.com",
+    },
+    {
+      icon: MapPin,
+      label: "Head Office",
+      value: formatCompanyAddress(companyContact),
+      sub: "Nationwide service coverage",
+      href: "#",
+    },
+  ];
+
   return (
     <section id="contact" className="py-28 overflow-hidden" style={{ background: "#041627" }}>
       <div className="max-w-7xl mx-auto px-6">

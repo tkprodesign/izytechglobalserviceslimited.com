@@ -90,6 +90,13 @@ export interface SocialLinks {
   platforms: SocialPlatform[];
 }
 
+export interface CompanyContact {
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  state: string;
+}
+
 export interface ServiceContent {
   id: string;
   num: string;
@@ -162,6 +169,12 @@ export const api = {
 
   updateSocials: (data: { platforms: SocialPlatform[] }) =>
     authPut<{ success: boolean }>('/api/settings/socials', data),
+
+  companyContact: () =>
+    get<{ data: CompanyContact }>('/api/settings/company-contact'),
+
+  updateCompanyContact: (data: { data: CompanyContact }) =>
+    authPut<{ success: boolean; data: CompanyContact }>('/api/settings/company-contact', data),
 
   services: () =>
     get<{ data: ServiceContent[] }>('/api/settings/services'),
