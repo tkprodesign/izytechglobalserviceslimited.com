@@ -242,9 +242,7 @@ export function About() {
                         <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#F0A20E" }} />
                       </div>
                       {/* Line below dot */}
-                      {!isLast && (
-                        <div className="w-px flex-1" style={{ background: "linear-gradient(to bottom, #F0A20E40, #F0A20E20)" }} />
-                      )}
+                      <div className="w-px flex-1" style={{ background: "linear-gradient(to bottom, #F0A20E40, #F0A20E20)" }} />
                     </div>
 
                     {/* Content */}
