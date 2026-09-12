@@ -210,8 +210,12 @@ export function Navbar() {
           </a>
           <a
             href="/#contact"
-            className="px-5 py-2.5 text-sm font-semibold transition-all hover:opacity-90 bg-[#C8971A] text-[#041627]"
-            style={{ fontFamily: "var(--font-ui)", borderRadius: 0 }}
+            className="px-5 py-2.5 text-sm font-semibold transition-all hover:opacity-90 text-[#041627]"
+            style={{
+              background: "linear-gradient(135deg, #F0A20E 0%, #FFB830 100%)",
+              fontFamily: "var(--font-ui)",
+              borderRadius: 0,
+            }}
           >
             Start a Project Enquiry
           </a>
@@ -313,7 +317,10 @@ export function Navbar() {
             <a
               href="/#contact"
               className="block text-center px-5 py-3 text-sm font-semibold text-[#041627]"
-              style={{ background: "#C8971A", borderRadius: 0 }}
+              style={{
+                background: "linear-gradient(135deg, #F0A20E 0%, #FFB830 100%)",
+                borderRadius: 0,
+              }}
               onClick={() => setMobileOpen(false)}
             >
               Start a Project Enquiry
