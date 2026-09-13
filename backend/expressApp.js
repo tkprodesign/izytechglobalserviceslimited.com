@@ -4,6 +4,7 @@ const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const emailRoutes = require('./routes/email');
+const { initInvoicesTable, createInvoiceRouter } = require('./invoices_endpoint');
 const {
   contactAutoReply,
   contactNotification,
@@ -73,40 +74,11 @@ db.connect()
   .then(() => initMilestonesTable())
   .then(() => initFounderTable())
   .then(() => initProjectsTable())
-  .then(() => initInvoicesTable())
+  .then(() => initInvoicesTable(db))
   .catch((err) => {
     console.error('Failed to connect to database:', err.message);
     process.exit(1);
   });
-
-async function initInvoicesTable() {
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS invoices (
-      id               SERIAL PRIMARY KEY,
-      invoice_number   TEXT NOT NULL UNIQUE,
-      customer_name    TEXT NOT NULL,
-      customer_email   TEXT NOT NULL,
-      customer_phone   TEXT NOT NULL DEFAULT '',
-      customer_address TEXT NOT NULL DEFAULT '',
-      line_items       JSONB NOT NULL DEFAULT '[]',
-      subtotal         NUMERIC(12,2) NOT NULL DEFAULT 0,
-      tax_rate         NUMERIC(5,2) NOT NULL DEFAULT 7.50,
-      tax_label        TEXT NOT NULL DEFAULT 'VAT (7.5%)',
-      tax_amount       NUMERIC(12,2) NOT NULL DEFAULT 0,
-      discount         NUMERIC(12,2) NOT NULL DEFAULT 0,
-      total            NUMERIC(12,2) NOT NULL DEFAULT 0,
-      notes            TEXT NOT NULL DEFAULT '',
-      status           TEXT NOT NULL DEFAULT 'unpaid'
-        CHECK (status IN ('unpaid', 'paid', 'overdue', 'cancelled')),
-      due_date         DATE,
-      paid_date        TIMESTAMPTZ,
-      created_by       TEXT NOT NULL DEFAULT '',
-      created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-  console.log('Invoices table ready');
-}
 
 async function initTestimonialsTable() {
   await db.query(`
@@ -399,6 +371,8 @@ function requireDev(req, res, next) {
     next();
   });
 }
+
+app.use(createInvoiceRouter({ db, requireAuth }));
 
 async function initStoreTable() {
   await db.query(`

@@ -1,6 +1,8 @@
+const express = require('express');
+
 // ── Invoices ────────────────────────────────────────────────────────────────
 
-async function initInvoicesTable() {
+async function initInvoicesTable(db) {
   await db.query(`
     CREATE TABLE IF NOT EXISTS invoices (
       id              SERIAL PRIMARY KEY,
@@ -36,9 +38,12 @@ function generateInvoiceNumber() {
   return 'IZY-' + year + month + '-' + rand;
 }
 
+function createInvoiceRouter({ db, requireAuth }) {
+  const router = express.Router();
+
 // ── Admin: Invoices CRUD ────────────────────────────────────────────────────
 
-app.get('/api/admin/invoices', requireAuth, async (req, res) => {
+router.get('/api/admin/invoices', requireAuth, async (req, res) => {
   try {
     const { rows } = await db.query('SELECT * FROM invoices ORDER BY created_at DESC');
     res.json({ data: rows });
@@ -47,7 +52,7 @@ app.get('/api/admin/invoices', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/admin/invoices/:id', requireAuth, async (req, res) => {
+router.get('/api/admin/invoices/:id', requireAuth, async (req, res) => {
   try {
     const { rows } = await db.query('SELECT * FROM invoices WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Invoice not found' });
@@ -57,7 +62,7 @@ app.get('/api/admin/invoices/:id', requireAuth, async (req, res) => {
   }
 });
 
-app.post('/api/admin/invoices', requireAuth, async (req, res) => {
+router.post('/api/admin/invoices', requireAuth, async (req, res) => {
   const { customer_name, customer_email, customer_phone, customer_address, line_items, tax_rate, tax_label, discount, notes, due_date, status } = req.body || {};
   if (!customer_name || !customer_email) return res.status(400).json({ error: 'Customer name and email are required' });
   if (!line_items || !line_items.length) return res.status(400).json({ error: 'At least one line item is required' });
@@ -88,7 +93,7 @@ app.post('/api/admin/invoices', requireAuth, async (req, res) => {
   }
 });
 
-app.put('/api/admin/invoices/:id', requireAuth, async (req, res) => {
+router.put('/api/admin/invoices/:id', requireAuth, async (req, res) => {
   const { customer_name, customer_email, customer_phone, customer_address, line_items, tax_rate, tax_label, discount, notes, due_date, status } = req.body || {};
   const items = (line_items || []).map(item => ({
     description: item.description || '',
@@ -114,7 +119,7 @@ app.put('/api/admin/invoices/:id', requireAuth, async (req, res) => {
   }
 });
 
-app.delete('/api/admin/invoices/:id', requireAuth, async (req, res) => {
+router.delete('/api/admin/invoices/:id', requireAuth, async (req, res) => {
   try {
     const { rows } = await db.query('DELETE FROM invoices WHERE id=$1 RETURNING id, invoice_number', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Invoice not found' });
@@ -126,7 +131,7 @@ app.delete('/api/admin/invoices/:id', requireAuth, async (req, res) => {
 
 // ── Admin: Send invoice email ───────────────────────────────────────────────
 
-app.post('/api/admin/invoices/:id/send', requireAuth, async (req, res) => {
+router.post('/api/admin/invoices/:id/send', requireAuth, async (req, res) => {
   try {
     const { rows } = await db.query('SELECT * FROM invoices WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Invoice not found' });
@@ -168,4 +173,9 @@ app.post('/api/admin/invoices/:id/send', requireAuth, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
+  });
+
+  return router;
+}
+
+module.exports = { initInvoicesTable, createInvoiceRouter };
