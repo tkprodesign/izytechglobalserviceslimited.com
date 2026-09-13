@@ -1,10 +1,10 @@
 'use strict';
 
+const path = require('path');
 const PDFDocument = require('pdfkit');
 
 const NAVY = '#041627';
 const GOLD = '#F0A20E';
-const BLUE = '#1a56db';
 const SLATE = '#3a4a5c';
 const MUTED = '#8fadc8';
 const LINE = '#eef1f6';
@@ -18,6 +18,10 @@ const COMPANY = {
   address: '1 Pathfinder Close, Sandfield, Borikiri, Port Harcourt, Rivers State',
 };
 
+const LOGO_PATH = path.join(__dirname, '..', 'assets', 'izy-icon.png');
+const FONT_REG = path.join(__dirname, '..', 'assets', 'fonts', 'DejaVuSans.ttf');
+const FONT_BOLD = path.join(__dirname, '..', 'assets', 'fonts', 'DejaVuSans-Bold.ttf');
+
 function naira(n) {
   const v = Number(n) || 0;
   return '\u20A6' + v.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -30,12 +34,9 @@ function fmtDate(d) {
   return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function esc(s = '') {
-  return String(s);
-}
-
 /**
- * Generates the official IZY invoice PDF.
+ * Generates the official IZY invoice PDF with logo, ₦ support (DejaVu) and
+ * a clean fixed-grid layout.
  * @returns {Promise<Buffer>}
  */
 function generateInvoicePdf(inv) {
@@ -46,141 +47,177 @@ function generateInvoicePdf(inv) {
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    const W = doc.page.width;
-    const M = 46;
+    // Register brand fonts (₦ glyph lives in DejaVu, not in Helvetica)
+    doc.registerFont('body', FONT_REG);
+    doc.registerFont('bold', FONT_BOLD);
 
-    /* ── Header band ─────────────────────────────────────────── */
-    doc.rect(0, 0, W, 118).fill(NAVY);
-    doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(20)
-      .text(COMPANY.name.toUpperCase(), M, 34, { characterSpacing: 1 });
-    doc.fillColor('#ffffff').font('Helvetica').fontSize(9.5)
-      .text(COMPANY.legal.toUpperCase(), M, 60, { characterSpacing: 1.2 });
-    doc.fillColor(MUTED).fontSize(8)
-      .text(COMPANY.address, M, 78, { width: W - M * 2 - 160 });
-    doc.fillColor(MUTED).fontSize(8)
-      .text(COMPANY.phone + '  ·  ' + COMPANY.email + '  ·  ' + COMPANY.site, M, 92);
+    const W = doc.page.width;   // 595.28
+    const H = doc.page.height;  // 841.89
+    const M = 48;
+    const RIGHT = W - M;
 
-    // Gold accent bar
-    doc.rect(0, 118, W, 3).fill(GOLD);
+    /* ── Header band with logo ───────────────────────────────── */
+    doc.rect(0, 0, W, 122).fill(NAVY);
 
-    // Invoice number block (right)
-    doc.fillColor(MUTED).font('Helvetica').fontSize(8)
-      .text('INVOICE NO.', W - 170, 34, { width: 124, align: 'right', characterSpacing: 1 });
-    doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(13)
-      .text(inv.invoice_number, W - 170, 46, { width: 124, align: 'right' });
-
-    /* ── Meta: dates + status ────────────────────────────────── */
-    let y = 148;
-    doc.font('Helvetica').fontSize(9);
-    const metaRows = [
-      ['Issue date', fmtDate(inv.created_at)],
-      ['Due date', fmtDate(inv.due_date)],
-      ...(inv.status === 'paid' && inv.paid_date ? [['Payment date', fmtDate(inv.paid_date)]] : []),
-    ];
-    for (const [label, value] of metaRows) {
-      doc.fillColor(MUTED).text(label.toUpperCase(), M, y, { characterSpacing: 0.8 });
-      doc.fillColor(SLATE).font('Helvetica-Bold').text(value, M + 92, y);
-      doc.font('Helvetica');
-      y += 16;
+    // Logo
+    const logoSize = 56;
+    const logoY = 33;
+    try {
+      doc.image(LOGO_PATH, M, logoY, { width: logoSize, height: logoSize });
+    } catch (_) {
+      // If the asset is ever missing, degrade gracefully to a gold mark
+      doc.roundedRect(M, logoY, logoSize, logoSize, 10).fill(GOLD);
+      doc.fillColor(NAVY).font('bold').fontSize(22)
+        .text('IZY', M, logoY + 16, { width: logoSize, align: 'center' });
     }
 
-    // Status pill
-    const pill = inv.status === 'paid' ? 'PAID' : inv.status === 'overdue' ? 'OVERDUE' : inv.status === 'cancelled' ? 'CANCELLED' : 'UNPAID';
-    const pillColor = inv.status === 'paid' ? '#16a34a' : inv.status === 'overdue' ? '#dc2626' : inv.status === 'cancelled' ? '#6b7280' : '#b45309';
-    const pillW = 84;
-    doc.roundedRect(W - M - pillW, 148, pillW, 22, 11).fill(pillColor);
-    doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(9)
-      .text(pill, W - M - pillW, 155, { width: pillW, align: 'center', characterSpacing: 1.5 });
+    // Brand text next to the logo
+    const tx = M + logoSize + 16;
+    doc.fillColor(GOLD).font('bold').fontSize(19)
+      .text(COMPANY.name.toUpperCase(), tx, logoY + 2, { characterSpacing: 1 });
+    doc.fillColor('#ffffff').font('body').fontSize(9.5)
+      .text(COMPANY.legal.toUpperCase(), tx, logoY + 26, { characterSpacing: 1.4 });
+    doc.fillColor(MUTED).font('body').fontSize(8)
+      .text(COMPANY.address, tx, logoY + 42, { width: W - tx - 150 });
+
+    // Invoice number block (top right)
+    doc.fillColor(MUTED).font('body').fontSize(7.5)
+      .text('INVOICE NO.', RIGHT - 130, logoY + 2, { width: 130, align: 'right', characterSpacing: 1 });
+    doc.fillColor('#ffffff').font('bold').fontSize(13)
+      .text(inv.invoice_number, RIGHT - 130, logoY + 13, { width: 130, align: 'right' });
+
+    // Gold accent bar
+    doc.rect(0, 122, W, 3).fill(GOLD);
+
+    /* ── Meta row: dates (left) + status pill (right) ────────── */
+    let y = 152;
+    doc.font('body').fontSize(9);
+    const metaRows = [
+      ['ISSUE DATE', fmtDate(inv.created_at)],
+      ['DUE DATE', fmtDate(inv.due_date)],
+      ...(inv.status === 'paid' && inv.paid_date ? [['PAID ON', fmtDate(inv.paid_date)]] : []),
+    ];
+    const metaStart = y;
+    for (const [label, value] of metaRows) {
+      doc.fillColor(MUTED).text(label, M, y, { characterSpacing: 1.2 });
+      doc.fillColor(SLATE).font('bold').text(value, M + 92, y);
+      doc.font('body');
+      y += 17;
+    }
+
+    // Status pill — vertically centred against the meta rows
+    const pillLabel = inv.status === 'paid' ? 'PAID'
+      : inv.status === 'overdue' ? 'OVERDUE'
+      : inv.status === 'cancelled' ? 'CANCELLED' : 'UNPAID';
+    const pillColor = inv.status === 'paid' ? '#16a34a'
+      : inv.status === 'overdue' ? '#dc2626'
+      : inv.status === 'cancelled' ? '#6b7280' : '#b45309';
+    const pillW = 86, pillH = 24;
+    const pillY = metaStart + 4;
+    doc.roundedRect(RIGHT - pillW, pillY, pillW, pillH, 12).fill(pillColor);
+    doc.fillColor('#ffffff').font('bold').fontSize(9)
+      .text(pillLabel, RIGHT - pillW, pillY + 8, { width: pillW, align: 'center', characterSpacing: 1.5 });
 
     /* ── Bill to ─────────────────────────────────────────────── */
-    y = Math.max(y, 186) + 10;
-    doc.fillColor(MUTED).font('Helvetica').fontSize(8)
-      .text('BILL TO', M, y, { characterSpacing: 1.2 });
-    doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(12)
-      .text(esc(inv.customer_name), M, y + 14);
-    doc.fillColor(SLATE).font('Helvetica').fontSize(9.5);
-    let by = y + 32;
+    y += 14;
+    const billToY = Math.max(y, 216);
+    doc.fillColor(MUTED).font('body').fontSize(8)
+      .text('BILL TO', M, billToY, { characterSpacing: 1.2 });
+    doc.fillColor(NAVY).font('bold').fontSize(12)
+      .text(inv.customer_name || '', M, billToY + 15);
+    doc.font('body').fillColor(SLATE).fontSize(9.5);
+    let by = billToY + 34;
     if (inv.customer_email) { doc.text(inv.customer_email, M, by); by += 14; }
     if (inv.customer_phone) { doc.text(inv.customer_phone, M, by); by += 14; }
     if (inv.customer_address) {
-      doc.text(esc(inv.customer_address), M, by, { width: 280 });
-      by += 14 * Math.ceil(esc(inv.customer_address).length / 45);
+      doc.text(inv.customer_address, M, by, { width: 300 });
+      by += 14 * Math.ceil((inv.customer_address.length / 46));
     }
 
-    /* ── Line items table ────────────────────────────────────── */
-    let ty = Math.max(by + 16, 250);
-    const colX = { desc: M, qty: W - M - 170, unit: W - M - 110, amt: W - M };
+    /* ── Items table (fixed grid) ────────────────────────────── */
+    // Column geometry is computed once so headers and cells can never drift.
+    const qtyW = 52, unitW = 96, amtW = 110;
+    const qtyX = RIGHT - (amtW + unitW + qtyW);
+    const unitX = qtyX + qtyW;
+    const amtX = unitX + unitW;
+    const descX = M + 12;
+    const descW = qtyX - descX - 12;
 
-    doc.rect(M, ty, W - M * 2, 24).fill('#f4f6fa');
-    doc.fillColor(MUTED).font('Helvetica-Bold').fontSize(8);
-    doc.text('DESCRIPTION', colX.desc + 10, ty + 8, { characterSpacing: 0.8 });
-    doc.text('QTY', colX.qty, ty + 8, { width: 40, align: 'center', characterSpacing: 0.8 });
-    doc.text('UNIT PRICE', colX.unit, ty + 8, { width: 90, align: 'right', characterSpacing: 0.8 });
-    doc.text('AMOUNT', colX.amt - 90, ty + 8, { width: 90, align: 'right', characterSpacing: 0.8 });
+    let ty = Math.max(by + 24, 300);
 
-    ty += 24;
-    doc.font('Helvetica').fontSize(9.5);
+    // Header row
+    const headH = 26;
+    doc.rect(M, ty, W - M * 2, headH).fill('#f4f6fa');
+    doc.fillColor(MUTED).font('bold').fontSize(8);
+    doc.text('DESCRIPTION', descX, ty + 9, { characterSpacing: 0.8 });
+    doc.text('QTY', qtyX, ty + 9, { width: qtyW, align: 'center', characterSpacing: 0.8 });
+    doc.text('UNIT PRICE', unitX, ty + 9, { width: unitW, align: 'right', characterSpacing: 0.8 });
+    doc.text('AMOUNT', amtX, ty + 9, { width: amtW, align: 'right', characterSpacing: 0.8 });
+    ty += headH;
+
+    // Body rows — cursor-based so multi-line descriptions stay aligned
     (inv.line_items || []).forEach((item, i) => {
-      const desc = esc(item.description || '—');
-      const descLines = doc.heightOfString(desc, { width: colX.qty - colX.desc - 20 });
-      const rowH = Math.max(26, descLines + 14);
+      const desc = String(item.description || '\u2014');
+      doc.font('body').fontSize(9.5);
+      const descH = doc.heightOfString(desc, { width: descW, lineGap: 1 });
+      const rowH = Math.max(28, descH + 16);
 
-      if (i % 2 === 1) {
-        doc.rect(M, ty, W - M * 2, rowH).fill('#fafbfd');
-      }
-      doc.fillColor(NAVY).font('Helvetica')
-        .text(desc, colX.desc + 10, ty + 7, { width: colX.qty - colX.desc - 20 });
+      if (i % 2 === 1) doc.rect(M, ty, W - M * 2, rowH).fill('#fafbfd');
+
+      const baseline = ty + 8;
+      doc.fillColor(NAVY).text(desc, descX, baseline, { width: descW, lineGap: 1 });
       doc.fillColor(SLATE)
-        .text(String(item.quantity), colX.qty, ty + 7, { width: 40, align: 'center' })
-        .text(naira(item.unit_price), colX.unit, ty + 7, { width: 90, align: 'right' });
-      doc.fillColor(NAVY).font('Helvetica-Bold')
-        .text(naira(item.amount), colX.amt - 90, ty + 7, { width: 90, align: 'right' });
-      doc.font('Helvetica');
+        .text(String(item.quantity ?? ''), qtyX, baseline, { width: qtyW, align: 'center' })
+        .text(naira(item.unit_price), unitX, baseline, { width: unitW, align: 'right' });
+      doc.fillColor(NAVY).font('bold')
+        .text(naira(item.amount), amtX, baseline, { width: amtW, align: 'right' });
 
-      doc.moveTo(M, ty + rowH).lineTo(W - M, ty + rowH).lineWidth(0.5).stroke(LINE);
+      doc.moveTo(M, ty + rowH).lineTo(RIGHT, ty + rowH).lineWidth(0.5).stroke(LINE);
       ty += rowH;
     });
 
-    /* ── Totals ──────────────────────────────────────────────── */
-    ty += 16;
-    const totX = W - M - 220;
-    const row = (label, value, opts = {}) => {
-      doc.fillColor(opts.bold ? NAVY : SLATE).font(opts.bold ? 'Helvetica-Bold' : 'Helvetica')
-        .fontSize(opts.size || 9.5)
-        .text(label, totX, ty, { width: 110, align: 'left' });
+    /* ── Totals (fixed two-column block, right-aligned) ──────── */
+    ty += 18;
+    const totLabelW = 120, totValW = 120, totGap = 12;
+    const totValX = RIGHT - totValW;
+    const totLabelX = totValX - totGap - totLabelW;
+
+    const totalRow = (label, value, opts = {}) => {
+      doc.font(opts.bold ? 'bold' : 'body').fontSize(opts.size || 10);
       doc.fillColor(opts.color || (opts.bold ? NAVY : SLATE))
-        .text(value, totX + 110, ty, { width: 110, align: 'right' });
-      ty += (opts.size || 9.5) + 9;
+        .text(label, totLabelX, ty, { width: totLabelW, align: 'right' });
+      doc.text(value, totValX, ty, { width: totValW, align: 'right' });
+      ty += (opts.size || 10) + 10;
     };
 
-    row('Subtotal', naira(inv.subtotal));
-    if (Number(inv.discount) > 0) row('Discount', '-' + naira(inv.discount), { color: '#dc2626' });
-    row(inv.tax_label || 'VAT', naira(inv.tax_amount));
+    totalRow('Subtotal', naira(inv.subtotal));
+    if (Number(inv.discount) > 0) totalRow('Discount', '-' + naira(inv.discount), { color: '#dc2626' });
+    totalRow(inv.tax_label || 'VAT', naira(inv.tax_amount));
 
-    doc.moveTo(totX, ty).lineTo(W - M, ty).lineWidth(1).stroke(NAVY);
-    ty += 10;
-    row('TOTAL', naira(inv.total), { bold: true, size: 13 });
+    doc.moveTo(totLabelX, ty).lineTo(RIGHT, ty).lineWidth(1).stroke(NAVY);
+    ty += 12;
+    totalRow('TOTAL', naira(inv.total), { bold: true, size: 14 });
 
     /* ── Notes ───────────────────────────────────────────────── */
     if (inv.notes) {
-      ty += 8;
-      doc.fillColor(MUTED).font('Helvetica-Bold').fontSize(8)
+      ty += 10;
+      doc.fillColor(MUTED).font('bold').fontSize(8)
         .text('NOTES', M, ty, { characterSpacing: 1 });
-      doc.fillColor(SLATE).font('Helvetica').fontSize(9)
-        .text(esc(inv.notes), M, ty + 13, { width: W - M * 2, lineGap: 2 });
+      doc.fillColor(SLATE).font('body').fontSize(9)
+        .text(String(inv.notes), M, ty + 14, { width: W - M * 2, lineGap: 2 });
     }
 
     /* ── Footer on every page ────────────────────────────────── */
     const range = doc.bufferedPageRange();
     for (let i = range.start; i < range.start + range.count; i++) {
       doc.switchToPage(i);
-      const H = doc.page.height;
-      doc.rect(0, H - 40, W, 40).fill('#f8f9fb');
-      doc.rect(0, H - 40, W, 1).fill(LINE);
-      doc.fillColor(MUTED).font('Helvetica').fontSize(7.5)
-        .text(COMPANY.legal + '  ·  ' + COMPANY.address, M, H - 27, { width: W - M * 2, align: 'center' });
+      const pageH = doc.page.height;
+      doc.rect(0, pageH - 42, W, 42).fill('#f8f9fb');
+      doc.rect(0, pageH - 42, W, 1).fill(LINE);
+      doc.fillColor(MUTED).font('body').fontSize(7.5)
+        .text(COMPANY.legal + '  \u00b7  ' + COMPANY.address, M, pageH - 29, { width: W - M * 2, align: 'center' });
       doc.fillColor(MUTED).fontSize(7)
-        .text('Thank you for your business.  ·  ' + COMPANY.phone + '  ·  ' + COMPANY.email, M, H - 16, { width: W - M * 2, align: 'center' });
+        .text('Thank you for your business.  \u00b7  ' + COMPANY.phone + '  \u00b7  ' + COMPANY.email, M, pageH - 17, { width: W - M * 2, align: 'center' });
     }
 
     doc.end();
