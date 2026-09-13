@@ -11,6 +11,7 @@ COPY expressApp.js ./
 COPY routes/ ./routes/
 COPY lib/ ./lib/
 COPY migrations/ ./migrations/
+COPY assets/ ./assets/
 
 EXPOSE 3000
 

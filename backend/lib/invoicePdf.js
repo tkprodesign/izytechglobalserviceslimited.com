@@ -1,5 +1,6 @@
 'use strict';
 
+const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 
@@ -51,9 +52,24 @@ function generateInvoicePdf(inv) {
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    // Register brand fonts (₦ glyph lives in DejaVu, not in Helvetica)
-    doc.registerFont('body', FONT_REG);
-    doc.registerFont('bold', FONT_BOLD);
+    // Register brand fonts (₦ glyph lives in DejaVu, not in Helvetica).
+    // Fall back to built-in Helvetica if the bundled files are missing so
+    // invoice emails never hard-fail — naira renders as "N" in that case.
+    const hasFontFiles = fs.existsSync(FONT_REG) && fs.existsSync(FONT_BOLD);
+    try {
+      if (hasFontFiles) {
+        doc.registerFont('body', FONT_REG);
+        doc.registerFont('bold', FONT_BOLD);
+      } else {
+        console.warn('Invoice PDF font files missing, using Helvetica fallback');
+        doc.registerFont('body', 'Helvetica');
+        doc.registerFont('bold', 'Helvetica-Bold');
+      }
+    } catch (fontErr) {
+      console.error('Invoice PDF font registration failed:', fontErr.message);
+      doc.registerFont('body', 'Helvetica');
+      doc.registerFont('bold', 'Helvetica-Bold');
+    }
 
     const W = doc.page.width;   // 595.28
     const H = doc.page.height;  // 841.89
@@ -66,13 +82,15 @@ function generateInvoicePdf(inv) {
     // Logo
     const logoSize = 56;
     const logoY = 33;
-    try {
-      doc.image(LOGO_PATH, M, logoY, { width: logoSize, height: logoSize });
-    } catch (_) {
-      // If the asset is ever missing, degrade gracefully to a gold mark
-      doc.roundedRect(M, logoY, logoSize, logoSize, 10).fill(GOLD);
-      doc.fillColor(NAVY).font('bold').fontSize(22)
-        .text('IZY', M, logoY + 16, { width: logoSize, align: 'center' });
+    if (fs.existsSync(LOGO_PATH)) {
+      try {
+        doc.image(LOGO_PATH, M, logoY, { width: logoSize, height: logoSize });
+      } catch (_) {
+        drawLogoFallback(doc, M, logoY, logoSize);
+      }
+    } else {
+      console.warn('Invoice PDF logo asset missing, using fallback mark');
+      drawLogoFallback(doc, M, logoY, logoSize);
     }
 
     // Brand text next to the logo
@@ -226,6 +244,12 @@ function generateInvoicePdf(inv) {
 
     doc.end();
   });
+}
+
+function drawLogoFallback(doc, x, y, size) {
+  doc.roundedRect(x, y, size, size, 10).fill(GOLD);
+  doc.fillColor(NAVY).font('bold').fontSize(22)
+    .text('IZY', x, y + 16, { width: size, align: 'center' });
 }
 
 module.exports = { generateInvoicePdf };
