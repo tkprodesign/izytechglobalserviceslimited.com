@@ -1069,7 +1069,10 @@ export function InvoicesPage() {
               <div className="flex items-center gap-2">
                 {editing && (
                   <button
-                    onClick={handleDelete(invoices.find(i => i.id === editingId)!)}
+                    onClick={() => {
+                      const inv = invoices.find(i => i.id === editingId);
+                      if (inv) handleDelete(inv);
+                    }}
                     className="p-2.5 rounded-lg text-sm font-medium text-white flex items-center gap-1 hover:bg-red-600 transition-colors"
                     style={{ background: '#dc2626' }}
                   >
