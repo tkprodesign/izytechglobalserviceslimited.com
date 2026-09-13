@@ -75,6 +75,7 @@ import { ProjectsManagerPage } from "./admin/ProjectsManagerPage";
 import { TestimonialsManagerPage } from "./admin/TestimonialsManagerPage";
 import { SiteAssessmentsPage } from "./admin/SiteAssessmentsPage";
 import { CompanyContactPage } from "./admin/CompanyContactPage";
+import { InvoicesPage } from "./admin/InvoicesPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ServicesPage } from "./pages/ServicesPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
@@ -168,6 +169,9 @@ export default function App() {
       } />
       <Route path="/admin/email" element={
         <ProtectedRoute><EmailPage /></ProtectedRoute>
+      } />
+      <Route path="/admin/invoices" element={
+        <ProtectedRoute><InvoicesPage /></ProtectedRoute>
       } />
 
       {/* Company content — both roles */}

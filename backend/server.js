@@ -79,6 +79,7 @@ db.connect()
   .then(() => initMilestonesTable())
   .then(() => initFounderTable())
   .then(() => initProjectsTable())
+  .then(() => initInvoicesTable())
   .catch((err) => {
     console.error('Failed to connect to database:', err.message);
     process.exit(1);

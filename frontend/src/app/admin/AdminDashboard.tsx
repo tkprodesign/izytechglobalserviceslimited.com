@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   ClipboardList,
   FolderOpen,
+  Receipt,
   ArrowUpRight,
 } from 'lucide-react';
 
@@ -73,6 +74,7 @@ const quickAccessItems = [
   { to: '/admin/products', label: 'Store Products', description: 'Manage the product catalogue', icon: ShoppingBag, color: '#0f766e' },
   { to: '/admin/projects', label: 'Projects', description: 'Update published work', icon: FolderOpen, color: '#2563eb' },
   { to: '/admin/email', label: 'Email Manager', description: 'Monitor inbound email', icon: Mail, color: '#8b5cf6' },
+  { to: '/admin/invoices', label: 'Invoices', description: 'Create and send invoices', icon: Receipt, color: '#b45309' },
 ];
 
 export function AdminDashboard() {

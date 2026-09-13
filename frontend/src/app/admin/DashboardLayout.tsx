@@ -3,11 +3,11 @@ import { NavLink, useNavigate } from 'react-router';
 import { getUser, removeToken, isDeveloper } from '../../lib/auth';
 import {
   LayoutDashboard,
-  Mail,
   FileText,
   LogOut,
   ShoppingBag,
   ClipboardList,
+  Receipt,
   ClipboardCheck,
   Menu,
   X,
@@ -72,6 +72,7 @@ export function DashboardLayout({ children }: Props) {
     { to: '/admin/projects', label: 'Projects', icon: FolderOpen },
     { to: '/admin/testimonials', label: 'Testimonials', icon: MessageSquare },
     { to: '/admin/email', label: 'Email Manager', icon: Mail },
+    { to: '/admin/invoices', label: 'Invoices', icon: Receipt },
   ];
 
 

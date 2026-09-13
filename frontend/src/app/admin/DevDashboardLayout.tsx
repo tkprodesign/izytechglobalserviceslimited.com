@@ -22,6 +22,8 @@ import {
   Server,
   Database,
   Cog,
+  FileText,
+  Receipt,
 } from 'lucide-react';
 
 interface Props {
@@ -81,6 +83,7 @@ export function DevDashboardLayout({ children }: Props) {
     { to: '/admin/testimonials', label: 'Testimonials', icon: MessageSquare },
     { to: '/admin/products', label: 'Store Products', icon: ShoppingBag },
     { to: '/admin/enquiries', label: 'Store Enquiries', icon: ClipboardList },
+    { to: '/admin/invoices', label: 'Invoices', icon: Receipt },
   ];
 
   const navBase = 'flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all';
