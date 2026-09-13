@@ -626,7 +626,80 @@ export function InvoicesPage() {
               </p>
             </div>
           ) : (
-            <table className="w-full">
+            <>
+            {/* ── Mobile: stacked cards (no horizontal scroll needed) ── */}
+            <div className="md:hidden divide-y" style={{ borderColor: '#e2e8f0' }}>
+              {filteredInvoices().map(inv => (
+                <div key={inv.id} className="p-4" style={{ borderColor: '#e2e8f0' }}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold" style={{ color: '#0f172a' }}>{inv.invoice_number}</p>
+                      <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>Due {fmtDate(inv.due_date) || '—'}</p>
+                    </div>
+                    <span
+                      className="inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+                      style={{ background: statusColor(inv.status) + '16', color: statusColor(inv.status) }}
+                    >
+                      {inv.status === 'paid' ? <CheckCircle size={11} /> : inv.status === 'overdue' ? <AlertCircle size={11} /> : inv.status === 'cancelled' ? null : <Clock size={11} />}
+                      {statusLabel(inv.status)}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 min-w-0">
+                    <p className="text-sm font-medium truncate" style={{ color: '#0f172a' }}>{inv.customer_name}</p>
+                    <p className="text-xs truncate" style={{ color: '#94a3b8' }}>{inv.customer_email}</p>
+                  </div>
+
+                  <div className="mt-2 flex items-baseline justify-between gap-3">
+                    <p className="text-base font-bold" style={{ color: '#0f172a' }}>{naira(inv.total)}</p>
+                    <p className="text-xs" style={{ color: '#94a3b8' }}>Created {new Date(inv.created_at).toLocaleDateString('en-GB')}</p>
+                  </div>
+                  {Number(inv.discount) > 0 && (
+                    <p className="text-xs mt-0.5" style={{ color: '#dc2626' }}>-{naira(inv.discount)} discount</p>
+                  )}
+
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      onClick={() => handleDownloadPdf(inv)}
+                      disabled={generatingPdf}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium transition-colors disabled:opacity-40 active:bg-blue-50"
+                      style={{ borderColor: '#e2e8f0', color: '#2563eb' }}
+                    >
+                      <Download size={13} /> PDF
+                    </button>
+                    <button
+                      onClick={() => openEdit(inv)}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium transition-colors active:bg-gray-100"
+                      style={{ borderColor: '#e2e8f0', color: '#334155' }}
+                    >
+                      <Pencil size={13} /> Edit
+                    </button>
+                    <button
+                      onClick={() => handleSend(inv)}
+                      disabled={sending === inv.id}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium transition-colors disabled:opacity-40 active:bg-green-50"
+                      style={{ borderColor: '#e2e8f0', color: '#16a34a' }}
+                    >
+                      <Mail size={13} className={sending === inv.id ? 'animate-pulse' : ''} /> Send
+                    </button>
+                    {inv.status !== 'cancelled' && (
+                      <button
+                        onClick={() => handleDelete(inv)}
+                        disabled={sending === inv.id}
+                        className="ml-auto p-2 rounded-lg border transition-colors disabled:opacity-40 active:bg-red-50"
+                        style={{ borderColor: '#e2e8f0', color: '#dc2626' }}
+                        title="Delete"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Desktop: table ── */}
+            <table className="w-full hidden md:table">
               <thead>
                 <tr style={{ background: '#f8fafc' }}>
                   <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#94a3b8' }}>Invoice</th>
@@ -705,6 +778,7 @@ export function InvoicesPage() {
                 ))}
               </tbody>
             </table>
+            </>
           )}
         </div>
 
