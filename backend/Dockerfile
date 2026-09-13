@@ -7,6 +7,7 @@ COPY package.json ./
 RUN npm install --omit=dev
 
 COPY server.js ./
+COPY expressApp.js ./
 COPY routes/ ./routes/
 COPY lib/ ./lib/
 COPY migrations/ ./migrations/

@@ -22,7 +22,6 @@ import {
   Server,
   Database,
   Cog,
-  FileText,
   Receipt,
 } from 'lucide-react';
 
