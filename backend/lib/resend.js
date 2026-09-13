@@ -28,7 +28,7 @@ async function resendRequest(path, options = {}) {
   return data;
 }
 
-async function sendResendEmail({ from, to, subject, html, text, replyTo, headers } = {}) {
+async function sendResendEmail({ from, to, subject, html, text, replyTo, headers, attachments } = {}) {
   if (!from || !to || !subject) {
     throw new Error('from, to, and subject are required to send an email');
   }
@@ -43,6 +43,14 @@ async function sendResendEmail({ from, to, subject, html, text, replyTo, headers
       text,
       ...(replyTo ? { reply_to: replyTo } : {}),
       ...(headers && typeof headers === 'object' ? { headers } : {}),
+      ...(Array.isArray(attachments) && attachments.length
+        ? {
+            attachments: attachments.map(a => ({
+              filename: a.filename,
+              content: Buffer.isBuffer(a.content) ? a.content.toString('base64') : String(a.content),
+            })),
+          }
+        : {}),
     }),
   });
 }

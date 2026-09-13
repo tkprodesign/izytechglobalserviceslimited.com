@@ -459,6 +459,18 @@ export function InvoicesPage() {
       setEditing(false);
       setEditingId(null);
       setMobileView('list');
+      // The backend auto-emails the invoice (with PDF attached) to the customer
+      // address on every create/update — surface the outcome to the user.
+      if (data.email_sent) {
+        setSent(editingId || (data.data && data.data.id) || 0);
+        setTimeout(() => setSent(null), 4000);
+      } else {
+        setError(
+          'Invoice saved, but the email to ' + (payload.customer_email || 'the customer') +
+          ' could not be sent' + (data.email_error ? ': ' + data.email_error : '.') +
+          ' Use the send button on the invoice to retry.'
+        );
+      }
       loadInvoices();
       resetForm();
     } catch (err) {
@@ -1009,7 +1021,7 @@ export function InvoicesPage() {
 
         {/* Pending send indicator */}
         {sending && <p className="text-center text-sm mt-3 text-amber-600">Sending invoice email…</p>}
-        {sent && <p className="text-center text-sm mt-3 text-green-600 flex items-center justify-center gap-2"><CheckCircle size={14} /> Invoice sent successfully</p>}
+        {sent && <p className="text-center text-sm mt-3 text-green-600 flex items-center justify-center gap-2"><CheckCircle size={14} /> Invoice emailed to the customer with PDF attached</p>}
         {sendingError && <p className="text-center text-sm mt-3 text-red-600 flex items-center justify-center gap-2"><AlertCircle size={14} /> {sendingError}</p>}
         {generatingPdf && <p className="text-center text-sm mt-3 text-blue-600">Generating PDF…</p>}
       </div>

@@ -1,4 +1,7 @@
 const express = require('express');
+const { sendResendEmail } = require('./lib/resend');
+const { invoiceEmail } = require('./lib/emailTemplate');
+const { generateInvoicePdf } = require('./lib/invoicePdf');
 
 // ── Invoices ────────────────────────────────────────────────────────────────
 
@@ -38,6 +41,38 @@ function generateInvoiceNumber() {
   return 'IZY-' + year + month + '-' + rand;
 }
 
+function parseRate(tax_rate) {
+  const n = Number(tax_rate);
+  return Number.isFinite(n) ? n : 7.5;
+}
+
+/**
+ * Emails an invoice to the customer address on the invoice.
+ * The email body IS the invoice (branded template) and a PDF copy is attached.
+ * @returns {Promise<{ok: boolean, error?: string}>}
+ */
+async function sendInvoiceEmail(inv) {
+  const pdfBuffer = await generateInvoicePdf(inv);
+  const html = invoiceEmail({ invoice: inv });
+  const naira = n => '\u20A6' + (Number(n) || 0).toLocaleString('en-NG');
+
+  await sendResendEmail({
+    from: process.env.INFO_EMAIL || 'info@izytechglobalservices.com',
+    to: inv.customer_email,
+    subject: `Invoice ${inv.invoice_number} from Izy Tech Services${inv.status === 'paid' ? ' \u2014 Paid' : ''}`,
+    html,
+    text: `Invoice ${inv.invoice_number}\nBill to: ${inv.customer_name}\nTotal: ${naira(inv.total)} (${inv.status === 'paid' ? 'PAID' : 'UNPAID'})\n\nThe full invoice is attached as a PDF. Questions? Call +234 810 126 2814 or reply to this email.`,
+    attachments: [
+      {
+        filename: `${inv.invoice_number}.pdf`,
+        content: pdfBuffer,
+        contentType: 'application/pdf',
+      },
+    ],
+  });
+  return { ok: true };
+}
+
 function createInvoiceRouter({ db, requireAuth }) {
   const router = express.Router();
 
@@ -75,7 +110,7 @@ router.post('/api/admin/invoices', requireAuth, async (req, res) => {
   }));
 
   const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
-  const rate = Number(tax_rate) ?? 7.5;
+  const rate = parseRate(tax_rate);
   const taxAmt = Math.round(subtotal * rate) / 100;
   const disc = Number(discount) || 0;
   const total = subtotal + taxAmt - disc;
@@ -87,7 +122,22 @@ router.post('/api/admin/invoices', requireAuth, async (req, res) => {
       'INSERT INTO invoices (invoice_number, customer_name, customer_email, customer_phone, customer_address, line_items, subtotal, tax_rate, tax_label, tax_amount, discount, total, notes, status, due_date, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *',
       [invoice_number, customer_name, customer_email, customer_phone || '', customer_address || '', JSON.stringify(items), subtotal, rate, tax_label || 'VAT (7.5%)', taxAmt, disc, total, notes || '', status || 'unpaid', due_date || null, user.email || user.role || 'admin']
     );
-    res.status(201).json({ data: rows[0] });
+    const inv = rows[0];
+
+    // Auto-send invoice email (with PDF attached) to the customer on creation.
+    let emailResult = { ok: false, error: 'not attempted' };
+    try {
+      emailResult = await sendInvoiceEmail(inv);
+    } catch (emailErr) {
+      console.error('Invoice email error:', emailErr.message);
+      emailResult = { ok: false, error: emailErr.message };
+    }
+
+    res.status(201).json({
+      data: inv,
+      email_sent: emailResult.ok,
+      email_error: emailResult.ok ? null : (emailResult.error || 'Email could not be sent'),
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -102,7 +152,7 @@ router.put('/api/admin/invoices/:id', requireAuth, async (req, res) => {
     amount: (Number(item.quantity) || 1) * (Number(item.unit_price) || 0),
   }));
   const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
-  const rate = Number(tax_rate) ?? 7.5;
+  const rate = parseRate(tax_rate);
   const taxAmt = Math.round(subtotal * rate) / 100;
   const disc = Number(discount) || 0;
   const total = subtotal + taxAmt - disc;
@@ -113,7 +163,22 @@ router.put('/api/admin/invoices/:id', requireAuth, async (req, res) => {
       [customer_name, customer_email, customer_phone || '', customer_address || '', JSON.stringify(items), subtotal, rate, tax_label || 'VAT (7.5%)', taxAmt, disc, total, notes || '', status || 'unpaid', due_date || null, req.params.id]
     );
     if (!rows.length) return res.status(404).json({ error: 'Invoice not found' });
-    res.json({ data: rows[0] });
+    const inv = rows[0];
+
+    // Auto-send the updated invoice to the customer address on every update.
+    let emailResult = { ok: false, error: 'not attempted' };
+    try {
+      emailResult = await sendInvoiceEmail(inv);
+    } catch (emailErr) {
+      console.error('Invoice email error:', emailErr.message);
+      emailResult = { ok: false, error: emailErr.message };
+    }
+
+    res.json({
+      data: inv,
+      email_sent: emailResult.ok,
+      email_error: emailResult.ok ? null : (emailResult.error || 'Email could not be sent'),
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -129,51 +194,19 @@ router.delete('/api/admin/invoices/:id', requireAuth, async (req, res) => {
   }
 });
 
-// ── Admin: Send invoice email ───────────────────────────────────────────────
+// ── Admin: Re-send invoice email on demand ─────────────────────────────────
 
 router.post('/api/admin/invoices/:id/send', requireAuth, async (req, res) => {
   try {
     const { rows } = await db.query('SELECT * FROM invoices WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Invoice not found' });
-    const inv = rows[0];
-    const { customEmail } = require('./lib/emailTemplate');
-
-    const itemsHtml = inv.line_items.map(item =>
-      '<tr><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;color:#334155">' + item.description + '</td>' +
-      '<td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;color:#64748b">' + item.quantity + '</td>' +
-      '<td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:right;color:#64748b">&#8358;' + Number(item.unit_price).toLocaleString('en-NG', { minimumFractionDigits: 2 }) + '</td>' +
-      '<td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600;color:#0f172a">&#8358;' + Number(item.amount).toLocaleString('en-NG', { minimumFractionDigits: 2 }) + '</td></tr>'
-    ).join('');
-
-    const emailHtml = '<div style="font-family:Inter,system-ui,sans-serif;max-width:600px;margin:0 auto;padding:32px;background:#f8fafc">' +
-      '<div style="background:#fff;border-radius:12px;padding:32px;box-shadow:0 1px 3px rgba(0,0,0,0.06)">' +
-      '<div style="text-align:center;margin-bottom:24px"><h1 style="font-size:20px;font-weight:700;color:#0f172a;margin:0">Izy Tech Services</h1><p style="font-size:12px;color:#94a3b8;margin:4px 0 0">Technology and Energy Solutions</p></div>' +
-      '<div style="background:#2563eb;color:#fff;padding:16px 20px;border-radius:8px;margin-bottom:24px"><h2 style="margin:0;font-size:16px;font-weight:600">Invoice ' + inv.invoice_number + '</h2><p style="margin:4px 0 0;font-size:13px;opacity:0.9">Status: ' + (inv.status === 'paid' ? 'Paid' : 'Unpaid') + '</p></div>' +
-      '<div style="margin-bottom:24px;font-size:13px"><p style="color:#94a3b8;margin:0 0 4px;font-size:11px;text-transform:uppercase;font-weight:600">Bill To</p><p style="color:#0f172a;margin:0;font-weight:600">' + inv.customer_name + '</p><p style="color:#64748b;margin:2px 0 0">' + inv.customer_email + '</p>' + (inv.customer_phone ? '<p style="color:#64748b;margin:2px 0 0">' + inv.customer_phone + '</p>' : '') + (inv.customer_address ? '<p style="color:#64748b;margin:2px 0 0">' + inv.customer_address + '</p>' : '') + '</div>' +
-      '<table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px"><thead><tr style="background:#f1f5f9"><th style="padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase;color:#64748b;font-weight:600">Description</th><th style="padding:8px 12px;text-align:center;font-size:11px;text-transform:uppercase;color:#64748b;font-weight:600">Qty</th><th style="padding:8px 12px;text-align:right;font-size:11px;text-transform:uppercase;color:#64748b;font-weight:600">Unit Price</th><th style="padding:8px 12px;text-align:right;font-size:11px;text-transform:uppercase;color:#64748b;font-weight:600">Amount</th></tr></thead><tbody>' + itemsHtml + '</tbody></table>' +
-      '<div style="text-align:right;margin-bottom:24px"><p style="margin:4px 0;font-size:13px;color:#64748b">Subtotal: &#8358;' + Number(inv.subtotal).toLocaleString('en-NG', { minimumFractionDigits: 2 }) + '</p><p style="margin:4px 0;font-size:13px;color:#64748b">' + inv.tax_label + ': &#8358;' + Number(inv.tax_amount).toLocaleString('en-NG', { minimumFractionDigits: 2 }) + '</p>' + (Number(inv.discount) > 0 ? '<p style="margin:4px 0;font-size:13px;color:#dc2626">Discount: -&#8358;' + Number(inv.discount).toLocaleString('en-NG', { minimumFractionDigits: 2 }) + '</p>' : '') + '<p style="margin:8px 0 0;font-size:18px;font-weight:700;color:#0f172a;border-top:2px solid #e2e8f0;padding-top:8px">Total: &#8358;' + Number(inv.total).toLocaleString('en-NG', { minimumFractionDigits: 2 }) + '</p></div>' +
-      (inv.notes ? '<div style="background:#f8fafc;padding:12px 16px;border-radius:8px;margin-bottom:20px"><p style="font-size:12px;color:#64748b;margin:0"><strong>Note:</strong> ' + inv.notes + '</p></div>' : '') +
-      '<div style="text-align:center;padding-top:16px;border-top:1px solid #e2e8f0"><p style="font-size:11px;color:#94a3b8;margin:0">Izy Technologies Global Services Limited</p><p style="font-size:11px;color:#94a3b8;margin:2px 0 0">+234 810 126 2814 | info@izytechglobalservices.com</p></div>' +
-      '</div></div>';
-
-    try {
-      await customEmail({
-        from: process.env.INFO_EMAIL || 'info@izytechglobalservices.com',
-        to: inv.customer_email,
-        subject: 'Invoice ' + inv.invoice_number + ' - Izy Tech Services',
-        html: emailHtml,
-        text: 'Invoice ' + inv.invoice_number + ' | Total: N' + Number(inv.total).toLocaleString('en-NG') + ' | Please find details in the attached invoice.',
-      });
-    } catch (emailErr) {
-      console.error('Invoice email error:', emailErr.message);
-      return res.status(500).json({ error: 'Invoice saved but email could not be sent: ' + emailErr.message });
-    }
-
-    res.json({ success: true, message: 'Invoice sent successfully' });
+    await sendInvoiceEmail(rows[0]);
+    res.json({ success: true, message: 'Invoice emailed to ' + rows[0].customer_email });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Invoice email error:', err.message);
+    res.status(500).json({ error: 'Invoice saved but email could not be sent: ' + err.message });
   }
-  });
+});
 
   return router;
 }

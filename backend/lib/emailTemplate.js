@@ -258,6 +258,79 @@ function assessmentChargeEmail({ name, service, fee, currency = 'NGN', instructi
   });
 }
 
+/**
+ * Invoice email — looks like an invoice inside a real branded email.
+ * Summary table in the body + full PDF invoice attached separately.
+ */
+function invoiceEmail({ invoice, bodyHtml }) {
+  const inv = invoice;
+  const naira = n => '\u20A6' + (Number(n) || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtDate = d => d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '\u2014';
+
+  const paid = inv.status === 'paid';
+  const overdue = inv.status === 'overdue';
+  const pillColor = paid ? '#16a34a' : overdue ? '#dc2626' : inv.status === 'cancelled' ? '#6b7280' : '#b45309';
+  const pillLabel = paid ? 'PAID' : overdue ? 'OVERDUE' : inv.status === 'cancelled' ? 'CANCELLED' : 'UNPAID';
+
+  const itemRows = (inv.line_items || []).map(item => `
+        <tr>
+          <td style="padding:10px 14px;border-bottom:1px solid #eef1f6;font-size:13px;color:#041627">${escHtml(item.description || '\u2014')}</td>
+          <td style="padding:10px 14px;border-bottom:1px solid #eef1f6;font-size:13px;color:#5a6a82;text-align:center">${escHtml(String(item.quantity))}</td>
+          <td style="padding:10px 14px;border-bottom:1px solid #eef1f6;font-size:13px;color:#5a6a82;text-align:right">${naira(item.unit_price)}</td>
+          <td style="padding:10px 14px;border-bottom:1px solid #eef1f6;font-size:13px;color:#041627;font-weight:600;text-align:right">${naira(item.amount)}</td>
+        </tr>`).join('');
+
+  const body = bodyHtml || `
+      <h2 class="greeting">Hello ${escHtml(inv.customer_name)},</h2>
+      <p class="body-text">${paid
+        ? 'Please find your payment confirmation and receipt for the invoice below. A PDF copy is attached for your records.'
+        : 'Please find invoice <strong>' + escHtml(inv.invoice_number) + '</strong> below for your kind attention. The complete invoice is attached to this email as a PDF document.'}</p>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:0 0 18px 0">
+        <div>
+          <p style="margin:0;font-size:11px;color:#8fadc8;font-weight:600;letter-spacing:0.08em">INVOICE ${escHtml(inv.invoice_number)}</p>
+          <p style="margin:4px 0 0;font-size:13px;color:#5a6a82">Issued ${fmtDate(inv.created_at)}${inv.due_date ? ' &middot; Due ' + fmtDate(inv.due_date) : ''}</p>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:#ffffff;background:${pillColor};padding:5px 14px;border-radius:20px;letter-spacing:0.08em">${pillLabel}</span>
+      </div>
+
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #eef1f6;border-radius:10px;overflow:hidden">
+        <thead>
+          <tr style="background:#f8faff">
+            <th style="padding:10px 14px;text-align:left;font-size:11px;color:#5a6a82;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Description</th>
+            <th style="padding:10px 14px;text-align:center;font-size:11px;color:#5a6a82;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Qty</th>
+            <th style="padding:10px 14px;text-align:right;font-size:11px;color:#5a6a82;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Unit Price</th>
+            <th style="padding:10px 14px;text-align:right;font-size:11px;color:#5a6a82;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Amount</th>
+          </tr>
+        </thead>
+        <tbody>${itemRows}</tbody>
+        <tfoot>
+          <tr><td colspan="2" style="padding:8px 14px;font-size:12px;color:#5a6a82">Subtotal</td><td colspan="2" style="padding:8px 14px;font-size:12px;color:#041627;text-align:right">${naira(inv.subtotal)}</td></tr>
+          ${Number(inv.discount) > 0 ? `<tr><td colspan="2" style="padding:4px 14px;font-size:12px;color:#dc2626">Discount</td><td colspan="2" style="padding:4px 14px;font-size:12px;color:#dc2626;text-align:right">-${naira(inv.discount)}</td></tr>` : ''}
+          <tr><td colspan="2" style="padding:4px 14px;font-size:12px;color:#5a6a82">${escHtml(inv.tax_label || 'VAT')}</td><td colspan="2" style="padding:4px 14px;font-size:12px;color:#041627;text-align:right">${naira(inv.tax_amount)}</td></tr>
+          <tr style="background:#f8faff"><td colspan="2" style="padding:12px 14px;font-size:14px;color:#041627;font-weight:700;border-top:2px solid #041627">TOTAL</td><td colspan="2" style="padding:12px 14px;font-size:14px;color:#041627;font-weight:700;text-align:right;border-top:2px solid #041627">${naira(inv.total)}</td></tr>
+        </tfoot>
+      </table>
+
+      ${inv.notes ? `<div class="info-box" style="margin-top:18px"><p style="font-size:13px;color:#3a4a5c;margin:0"><strong>Note:</strong> ${escHtml(inv.notes)}</p></div>` : ''}
+
+      <hr class="divider"/>
+      <p class="body-text" style="font-size:13px">${paid
+        ? 'Thank you for your payment. If you have any questions about this invoice, simply reply to this email or call us.'
+        : 'To settle this invoice or if you have any questions, simply reply to this email or call us directly:'}</p>
+      ${paid ? '' : `<p class="body-text" style="font-size:13px">\ud83d\udcde <a href="tel:+2348101262814" style="color:#1a56db">+234 810 126 2814</a></p>`}
+      <p style="font-size:12px;color:#8fadc8;margin:16px 0 0">📎 PDF invoice attached \u2014 ${escHtml(inv.invoice_number)}.pdf</p>`;
+
+  return buildEmail({
+    subject: `Invoice ${inv.invoice_number} from IZY Tech Services${paid ? ' \u2014 Paid' : ''}`,
+    preheader: paid
+      ? `Payment confirmed for invoice ${inv.invoice_number} \u2014 ${naira(inv.total)}`
+      : `Invoice ${inv.invoice_number} \u2014 ${naira(inv.total)}${inv.due_date ? ', due ' + fmtDate(inv.due_date) : ''}`,
+    bodyHtml: body,
+    footerNote: 'This invoice was sent by Izy Technologies Global Services Limited. Reply to this email with any questions.',
+  });
+}
+
 function customEmail({ subject = '', preheader = '', toName, greeting, bodyHtml: body, ctaLabel, ctaUrl }) {
   return buildEmail({
     subject,
@@ -282,6 +355,7 @@ module.exports = {
   siteAssessmentNotification,
   siteAssessmentAutoReply,
   assessmentChargeEmail,
+  invoiceEmail,
   customEmail,
   plainTextToHtml,
 };
