@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from './DashboardLayout';
 import { getToken } from '../../lib/auth';
+import { ngDateTime } from '../../lib/ngtime';
 import { Package, MapPin, Building2, Phone, Mail, CheckCircle, Clock, XCircle } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
@@ -33,7 +34,7 @@ const STATUS_STYLES: Record<string, { bg: string; color: string; label: string; 
 };
 
 function fmt(iso: string) {
-  return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return ngDateTime(iso);
 }
 
 export function StoreEnquiriesPage() {

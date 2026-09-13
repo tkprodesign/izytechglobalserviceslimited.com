@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from './DashboardLayout';
 import { getToken } from '../../lib/auth';
+import { ngDateTime } from '../../lib/ngtime';
 
 const API = import.meta.env.VITE_API_URL ?? '';
 
@@ -14,7 +15,7 @@ interface Contact {
 }
 
 function fmt(iso: string) {
-  return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return ngDateTime(iso);
 }
 
 export function ContactsPage() {

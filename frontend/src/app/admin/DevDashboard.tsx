@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { DevDashboardLayout } from './DevDashboardLayout';
 import { getToken, removeToken } from '../../lib/auth';
+import { ngDate } from '../../lib/ngtime';
 import { useNavigate } from 'react-router';
 import {
   Mail,
@@ -102,7 +103,7 @@ function StatusBadge({ ok, label }: { ok: boolean; label: string }) {
 }
 
 function fmt(iso: string) {
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return ngDate(iso);
 }
 
 function fmtUptime(seconds: number) {

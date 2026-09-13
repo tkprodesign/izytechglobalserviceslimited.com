@@ -265,7 +265,10 @@ function assessmentChargeEmail({ name, service, fee, currency = 'NGN', instructi
 function invoiceEmail({ invoice, bodyHtml }) {
   const inv = invoice;
   const naira = n => '\u20A6' + (Number(n) || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const fmtDate = d => d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '\u2014';
+  const fmtDate = d => d ? new Date(d).toLocaleDateString('en-NG', {
+    timeZone: 'Africa/Lagos',
+    day: 'numeric', month: 'short', year: 'numeric',
+  }) : '\u2014';
 
   const paid = inv.status === 'paid';
   const overdue = inv.status === 'overdue';

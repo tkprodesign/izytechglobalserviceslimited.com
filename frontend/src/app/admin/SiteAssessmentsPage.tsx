@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle, ClipboardCheck, ExternalLink, FileImage, Loader2, Send } from "lucide-react";
 import { DashboardLayout } from "./DashboardLayout";
 import { getToken } from "../../lib/auth";
+import { ngDateTime } from "../../lib/ngtime";
 
 const API = import.meta.env.VITE_API_URL ?? "";
 
@@ -57,7 +58,7 @@ const paymentStatuses = [
 ];
 
 function fmt(value: string | null) {
-  return value ? new Date(value).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "—";
+  return value ? ngDateTime(value) : "—";
 }
 
 function datetimeInput(value: string | null) {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { DashboardLayout } from './DashboardLayout';
 import { getToken } from '../../lib/auth';
+import { ngDate } from '../../lib/ngtime';
 import {
   Mail,
   FileText,
@@ -63,7 +64,7 @@ function StatCard({ icon: Icon, label, value, sub, color }: {
 }
 
 function fmt(iso: string) {
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return ngDate(iso);
 }
 
 const quickAccessItems = [

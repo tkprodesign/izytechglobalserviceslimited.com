@@ -31,7 +31,11 @@ function fmtDate(d) {
   if (!d) return '\u2014';
   const dt = new Date(d);
   if (isNaN(dt.getTime())) return String(d);
-  return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  // All invoice dates are Nigeria time (WAT) — never the server's timezone.
+  return dt.toLocaleDateString('en-NG', {
+    timeZone: 'Africa/Lagos',
+    day: 'numeric', month: 'short', year: 'numeric',
+  });
 }
 
 /**

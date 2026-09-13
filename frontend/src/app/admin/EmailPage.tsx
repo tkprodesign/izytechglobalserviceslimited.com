@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { DashboardLayout } from './DashboardLayout';
 import { getToken, removeToken, isDeveloper } from '../../lib/auth';
+import { ngSmartDate, ngDateTimeWAT } from '../../lib/ngtime';
 import {
   Mail, Send, RefreshCw, PenSquare, X, ChevronLeft,
   Inbox, Archive, ArchiveRestore, AlertCircle, Loader2, Reply,
@@ -79,20 +80,7 @@ type ComposeDefaults = { to: string; subject: string; replyHeaders?: ThreadHeade
 /* ── Helpers ───────────────────────────────────────────────────────────────── */
 
 function fmtDate(d: string | null) {
-  if (!d) return '';
-  const dt = new Date(d);
-  const now = new Date();
-  const diffMs = now.getTime() - dt.getTime();
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffDays === 0) {
-    return dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-  }
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) {
-    return dt.toLocaleDateString('en-GB', { weekday: 'short' });
-  }
-  return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  return ngSmartDate(d);
 }
 
 function senderDisplay(from: EmailMeta['from']) {
@@ -771,10 +759,7 @@ export function EmailPage() {
                         <p className="text-xs" style={{ color: '#94a3b8' }}>
                           {selectedMeta.source === 'sent' ? selectedMeta.to?.address : selectedMeta.from?.address}
                           {' · '}
-                          {selectedMeta.date ? new Date(selectedMeta.date).toLocaleString('en-GB', {
-                            day: 'numeric', month: 'short', year: 'numeric',
-                            hour: '2-digit', minute: '2-digit',
-                          }) : ''}
+                          {selectedMeta.date ? ngDateTimeWAT(selectedMeta.date) : ''}
                         </p>
                       </div>
                     </div>

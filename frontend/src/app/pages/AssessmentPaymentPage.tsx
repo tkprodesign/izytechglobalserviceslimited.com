@@ -3,6 +3,7 @@ import { AlertCircle, CheckCircle, FileImage, Loader2, Upload } from "lucide-rea
 import { useParams } from "react-router";
 import { PageLayout } from "../components/PageLayout";
 import { uploadAssessmentImage, type AssessmentAttachment } from "../components/SiteAssessmentForm";
+import { ngDateTime } from "../../lib/ngtime";
 
 const API = import.meta.env.VITE_API_URL ?? "";
 
@@ -34,8 +35,7 @@ const statusLabels: Record<string, string> = {
 };
 
 function formatDate(value: string | null) {
-  if (!value) return "";
-  return new Date(value).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+  return ngDateTime(value);
 }
 
 export function AssessmentPaymentPage() {

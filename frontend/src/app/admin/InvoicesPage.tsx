@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { DashboardLayout } from './DashboardLayout';
 import { getToken, removeToken } from '../../lib/auth';
+import { ngDate, ngDateTime } from '../../lib/ngtime';
 import { jsPDF } from 'jspdf';
 import {
   FileText, Plus, Trash2, Send, Eye, Edit2, Pencil, ChevronDown, X, Download,
@@ -80,10 +81,7 @@ function naira(n: number): string {
 }
 
 function fmtDate(d: string | null) {
-  if (!d) return '';
-  const dt = new Date(d);
-  if (isNaN(dt.getTime())) return d;
-  return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return ngDate(d);
 }
 
 function statusColor(status: string) {
@@ -198,7 +196,7 @@ async function generateInvoicePdf(inv: Invoice) {
   doc.setTextColor(100, 116, 139);
   doc.text('Date:', col2X, y);
   doc.setTextColor(15, 23, 46);
-  doc.text(new Date(inv.created_at).toLocaleDateString('en-GB'), col2X + 22, y);
+  doc.text(ngDate(inv.created_at), col2X + 22, y);
   if (inv.due_date) {
     y += 5;
     doc.setTextColor(100, 116, 139);
@@ -652,7 +650,7 @@ export function InvoicesPage() {
 
                   <div className="mt-2 flex items-baseline justify-between gap-3">
                     <p className="text-base font-bold" style={{ color: '#0f172a' }}>{naira(inv.total)}</p>
-                    <p className="text-xs" style={{ color: '#94a3b8' }}>Created {new Date(inv.created_at).toLocaleDateString('en-GB')}</p>
+                    <p className="text-xs" style={{ color: '#94a3b8' }}>Created {ngDate(inv.created_at)}</p>
                   </div>
                   {Number(inv.discount) > 0 && (
                     <p className="text-xs mt-0.5" style={{ color: '#dc2626' }}>-{naira(inv.discount)} discount</p>
@@ -735,7 +733,7 @@ export function InvoicesPage() {
                       {Number(inv.discount) > 0 && <p className="text-xxs mt-0.5" style={{ color: '#dc2626' }}>-{naira(inv.discount)} discount</p>}
                     </td>
                     <td className="px-5 py-3 text-right hidden md:table-cell">
-                      <p className="text-xs" style={{ color: '#94a3b8' }}>{new Date(inv.created_at).toLocaleDateString('en-GB')}</p>
+                      <p className="text-xs" style={{ color: '#94a3b8' }}>{ngDate(inv.created_at)}</p>
                     </td>
                     <td className="px-5 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
