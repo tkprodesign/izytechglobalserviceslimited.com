@@ -16,6 +16,7 @@ import {
   FolderOpen,
   MessageSquare,
   Eye,
+  Mail,
 } from 'lucide-react';
 
 interface Props {
