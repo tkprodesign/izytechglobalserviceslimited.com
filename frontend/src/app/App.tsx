@@ -166,6 +166,9 @@ export default function App() {
       <Route path="/admin/testimonials" element={
         <ProtectedRoute><TestimonialsManagerPage /></ProtectedRoute>
       } />
+      <Route path="/admin/email" element={
+        <ProtectedRoute><EmailPage /></ProtectedRoute>
+      } />
 
       {/* Company content — both roles */}
       <Route path="/admin/milestones" element={

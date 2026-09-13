@@ -72,6 +72,7 @@ const quickAccessItems = [
   { to: '/admin/enquiries', label: 'Store Enquiries', description: 'Respond to product interest', icon: ClipboardList, color: '#8b5cf6' },
   { to: '/admin/products', label: 'Store Products', description: 'Manage the product catalogue', icon: ShoppingBag, color: '#0f766e' },
   { to: '/admin/projects', label: 'Projects', description: 'Update published work', icon: FolderOpen, color: '#2563eb' },
+  { to: '/admin/email', label: 'Email Manager', description: 'Monitor inbound email', icon: Mail, color: '#8b5cf6' },
 ];
 
 export function AdminDashboard() {

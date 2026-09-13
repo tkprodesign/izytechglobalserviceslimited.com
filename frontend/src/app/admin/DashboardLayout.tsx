@@ -71,6 +71,7 @@ export function DashboardLayout({ children }: Props) {
     { to: '/admin/enquiries', label: 'Store Enquiries', icon: ClipboardList },
     { to: '/admin/projects', label: 'Projects', icon: FolderOpen },
     { to: '/admin/testimonials', label: 'Testimonials', icon: MessageSquare },
+    { to: '/admin/email', label: 'Email Manager', icon: Mail },
   ];
 
 
