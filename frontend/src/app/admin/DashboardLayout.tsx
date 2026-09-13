@@ -6,19 +6,15 @@ import {
   Mail,
   FileText,
   LogOut,
-  Share2,
   ShoppingBag,
   ClipboardList,
   ClipboardCheck,
-  Milestone,
-  UserCircle,
   Menu,
   X,
   PanelLeftClose,
   PanelLeftOpen,
   FolderOpen,
   MessageSquare,
-  MapPin,
   Eye,
 } from 'lucide-react';
 
@@ -71,14 +67,10 @@ export function DashboardLayout({ children }: Props) {
     { to: '/admin/contacts', label: 'Contacts', icon: Mail },
     { to: '/admin/quotes', label: 'Quote Requests', icon: FileText },
     { to: '/admin/assessments', label: 'Site Assessments', icon: ClipboardCheck },
-    { to: '/admin/socials', label: 'Social Media', icon: Share2 },
-    { to: '/admin/company-contact', label: 'Company Address', icon: MapPin },
     { to: '/admin/products', label: 'Store Products', icon: ShoppingBag },
     { to: '/admin/enquiries', label: 'Store Enquiries', icon: ClipboardList },
     { to: '/admin/projects', label: 'Projects', icon: FolderOpen },
     { to: '/admin/testimonials', label: 'Testimonials', icon: MessageSquare },
-    { to: '/admin/milestones', label: 'Milestones', icon: Milestone },
-    { to: '/admin/founder', label: 'Founder Profile', icon: UserCircle },
   ];
 
 

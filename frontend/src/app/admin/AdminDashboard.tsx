@@ -11,10 +11,6 @@ import {
   ShoppingBag,
   ClipboardList,
   FolderOpen,
-  Share2,
-  MapPin,
-  Milestone,
-  UserCircle,
   ArrowUpRight,
 } from 'lucide-react';
 
@@ -76,10 +72,6 @@ const quickAccessItems = [
   { to: '/admin/enquiries', label: 'Store Enquiries', description: 'Respond to product interest', icon: ClipboardList, color: '#8b5cf6' },
   { to: '/admin/products', label: 'Store Products', description: 'Manage the product catalogue', icon: ShoppingBag, color: '#0f766e' },
   { to: '/admin/projects', label: 'Projects', description: 'Update published work', icon: FolderOpen, color: '#2563eb' },
-  { to: '/admin/socials', label: 'Social Media', description: 'Manage public social links', icon: Share2, color: '#db2777' },
-  { to: '/admin/company-contact', label: 'Company Address', description: 'Update contact details', icon: MapPin, color: '#d97706' },
-  { to: '/admin/milestones', label: 'Milestones', description: 'Manage company milestones', icon: Milestone, color: '#0891b2' },
-  { to: '/admin/founder', label: 'Founder Profile', description: 'Update the leadership profile', icon: UserCircle, color: '#7c3aed' },
 ];
 
 export function AdminDashboard() {

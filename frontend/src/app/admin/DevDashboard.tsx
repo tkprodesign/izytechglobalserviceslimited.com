@@ -12,10 +12,6 @@ import {
   ShoppingBag,
   ClipboardList,
   FolderOpen,
-  Share2,
-  MapPin,
-  Milestone,
-  UserCircle,
   ArrowUpRight,
   CheckCircle,
   XCircle,
@@ -129,10 +125,6 @@ const quickAccessItems = [
   { to: '/admin/testimonials', label: 'Testimonials', description: 'Manage client reviews', icon: MessageSquare, color: '#db2777' },
   { to: '/admin/products', label: 'Store Products', description: 'Manage the catalogue', icon: ShoppingBag, color: '#0f766e' },
   { to: '/admin/enquiries', label: 'Store Enquiries', description: 'Respond to product interest', icon: ClipboardList, color: '#7c3aed' },
-  { to: '/admin/socials', label: 'Social Media', description: 'Manage public social links', icon: Share2, color: '#db2777' },
-  { to: '/admin/company-contact', label: 'Company Address', description: 'Update contact details', icon: MapPin, color: '#d97706' },
-  { to: '/admin/milestones', label: 'Milestones', description: 'Manage company milestones', icon: Milestone, color: '#0891b2' },
-  { to: '/admin/founder', label: 'Founder Profile', description: 'Update leadership profile', icon: UserCircle, color: '#7c3aed' },
 ];
 
 export function DevDashboard() {

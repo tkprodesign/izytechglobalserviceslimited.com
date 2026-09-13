@@ -8,12 +8,9 @@ import {
   Terminal,
   LogOut,
   Activity,
-  Share2,
   ShoppingBag,
   ClipboardList,
   ClipboardCheck,
-  Milestone,
-  UserCircle,
   Menu,
   X,
   PanelLeftClose,
@@ -21,7 +18,6 @@ import {
   FolderOpen,
   Wrench,
   MessageSquare,
-  MapPin,
   Eye,
   Server,
   Database,
@@ -83,12 +79,8 @@ export function DevDashboardLayout({ children }: Props) {
     { to: '/admin/assessments', label: 'Site Assessments', icon: ClipboardCheck },
     { to: '/admin/projects', label: 'Projects', icon: FolderOpen },
     { to: '/admin/testimonials', label: 'Testimonials', icon: MessageSquare },
-    { to: '/admin/socials', label: 'Social Media', icon: Share2 },
     { to: '/admin/products', label: 'Store Products', icon: ShoppingBag },
     { to: '/admin/enquiries', label: 'Store Enquiries', icon: ClipboardList },
-    { to: '/admin/company-contact', label: 'Company Address', icon: MapPin },
-    { to: '/admin/milestones', label: 'Milestones', icon: Milestone },
-    { to: '/admin/founder', label: 'Founder Profile', icon: UserCircle },
   ];
 
   const navBase = 'flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all';
