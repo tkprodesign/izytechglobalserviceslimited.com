@@ -1,9 +1,3 @@
-// Load environment variables from the repo-root .env file (Freebuff workspace).
-// Replit injected secrets automatically; here we read them from the file instead.
-require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
-// Also honour a backend-local .env if one exists.
-require('dotenv').config({ path: require('path').resolve(__dirname, '.env') });
-
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
@@ -84,6 +78,35 @@ db.connect()
     console.error('Failed to connect to database:', err.message);
     process.exit(1);
   });
+
+async function initInvoicesTable() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS invoices (
+      id               SERIAL PRIMARY KEY,
+      invoice_number   TEXT NOT NULL UNIQUE,
+      customer_name    TEXT NOT NULL,
+      customer_email   TEXT NOT NULL,
+      customer_phone   TEXT NOT NULL DEFAULT '',
+      customer_address TEXT NOT NULL DEFAULT '',
+      line_items       JSONB NOT NULL DEFAULT '[]',
+      subtotal         NUMERIC(12,2) NOT NULL DEFAULT 0,
+      tax_rate         NUMERIC(5,2) NOT NULL DEFAULT 7.50,
+      tax_label        TEXT NOT NULL DEFAULT 'VAT (7.5%)',
+      tax_amount       NUMERIC(12,2) NOT NULL DEFAULT 0,
+      discount         NUMERIC(12,2) NOT NULL DEFAULT 0,
+      total            NUMERIC(12,2) NOT NULL DEFAULT 0,
+      notes            TEXT NOT NULL DEFAULT '',
+      status           TEXT NOT NULL DEFAULT 'unpaid'
+        CHECK (status IN ('unpaid', 'paid', 'overdue', 'cancelled')),
+      due_date         DATE,
+      paid_date        TIMESTAMPTZ,
+      created_by       TEXT NOT NULL DEFAULT '',
+      created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  console.log('Invoices table ready');
+}
 
 async function initTestimonialsTable() {
   await db.query(`
@@ -1852,7 +1875,7 @@ app.put('/api/admin/founder', requireAuth, async (req, res) => {
 });
 
 // ── Dev: Email management ─────────────────────────────────────────────────────
-app.use('/api/dev/email', requireAuth, emailRoutes);
+app.use('/api/dev/email', requireDev, emailRoutes);
 
 // ── Dev: System info ──────────────────────────────────────────────────────────
 app.get('/api/dev/system', requireDev, (_req, res) => {
