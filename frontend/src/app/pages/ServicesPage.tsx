@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { ArrowRight, CheckCircle } from "lucide-react";
 import { PageLayout } from "../components/PageLayout";
+import { SiteAssessmentForm } from "../components/SiteAssessmentForm";
 import { Link } from "react-router";
 import { serviceContent, withServiceIcons } from "../data/services";
 import { api } from "../../lib/api";
@@ -106,7 +107,7 @@ export function ServicesPage() {
                   </ul>
 
                   <Link
-                    to={`/?service=${encodeURIComponent(s.title)}#quote-form`}
+                    to={`/services?service=${encodeURIComponent(s.title)}#quote-form`}
                     className="self-start flex items-center gap-2 text-xs font-bold tracking-widest uppercase transition-opacity hover:opacity-70"
                     style={{ fontFamily: "var(--font-ui)", color: s.color }}
                   >
@@ -119,24 +120,30 @@ export function ServicesPage() {
         </div>
       </div>
 
-      {/* CTA */}
-      <div className="py-20" style={{ background: "#041627" }}>
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-white mb-4" style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.8rem,3.5vw,2.8rem)", fontWeight: 800, letterSpacing: "-0.025em" }}>
-            Not sure which service you need?
-          </h2>
-          <p className="text-white/40 mb-8 text-sm" style={{ fontFamily: "var(--font-body)" }}>
-            Our team will assess your site, understand your goals and recommend the right solution.
-          </p>
-          <Link
-            to="/#quote-form"
-            className="inline-flex items-center gap-3 px-9 py-4 font-bold text-[#041627] text-sm tracking-wider transition-all hover:opacity-90"
-            style={{ background: "linear-gradient(135deg,#F0A20E 0%,#FFB830 100%)", fontFamily: "var(--font-ui)", letterSpacing: "0.08em" }}
-          >
-            START A PROJECT ENQUIRY <ArrowRight size={15} />
-          </Link>
+      {/* Quote form */}
+      <section id="quote-form" className="py-20" style={{ background: "#041627" }}>
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid lg:grid-cols-5 gap-10 items-start">
+            <div className="lg:col-span-2 pt-4">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-6 h-px" style={{ background: "#F0A20E" }} />
+                <span className="text-xs font-semibold tracking-widest uppercase" style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}>
+                  Start a Project
+                </span>
+              </div>
+              <h2 className="text-white mb-4" style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.8rem,3.5vw,2.8rem)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.08 }}>
+                Not sure which service you need?
+              </h2>
+              <p className="text-white/40 text-sm leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                Tell us about your project and our team will assess your requirements, understand your goals and recommend the right solution.
+              </p>
+            </div>
+            <div className="lg:col-span-3 p-8 border border-white/8" style={{ background: "rgba(255,255,255,0.04)" }}>
+              <SiteAssessmentForm dark />
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
     </PageLayout>
   );
 }
