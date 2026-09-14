@@ -24,12 +24,15 @@ interface LineItem {
 interface Invoice {
   id: number;
   invoice_number: string;
+  title: string;
   customer_name: string;
   customer_email: string;
   customer_phone: string;
   customer_address: string;
   line_items: LineItem[];
   subtotal: number;
+  logistics: number;
+  service_charge: number;
   tax_rate: number;
   tax_label: string;
   tax_amount: number;
@@ -39,38 +42,53 @@ interface Invoice {
   status: 'unpaid' | 'paid' | 'overdue' | 'cancelled';
   due_date: string;
   paid_date: string;
+  bank_account_name: string;
+  bank_account_number: string;
+  bank_name: string;
   created_by: string;
   created_at: string;
   updated_at: string;
 }
 
 type FormState = {
+  title: string;
   customer_name: string;
   customer_email: string;
   customer_phone: string;
   customer_address: string;
   line_items: LineItem[];
+  logistics: string;
+  service_charge: string;
   tax_rate: string;
   tax_label: string;
   discount: string;
   notes: string;
   due_date: string;
   status: string;
+  bank_account_name: string;
+  bank_account_number: string;
+  bank_name: string;
 };
 
 function defaultValue(): FormState {
   return {
+    title: 'Invoice',
     customer_name: '',
     customer_email: '',
     customer_phone: '',
     customer_address: '',
     line_items: [{ description: '', quantity: 1, unit_price: 0, amount: 0 }],
+    logistics: '0',
+    service_charge: '0',
     tax_rate: '7.50',
     tax_label: 'VAT (7.5%)',
     discount: '0',
     notes: '',
     due_date: '',
     status: 'unpaid',
+    bank_account_name: 'Izy Technologies Global services Ltd',
+    bank_account_number: '0512121038',
+    bank_name: 'Alternative Bank',
   };
 }
 
@@ -126,12 +144,12 @@ async function generateInvoicePdf(inv: Invoice) {
   // Invoice title & number
   doc.setTextColor(15, 23, 46);
   doc.setFont('Helvetica', 'bold');
-  doc.setFontSize(22);
-  doc.text('INVOICE', pageW - margin, 20, { align: 'right' });
-  doc.setFontSize(10);
+  doc.setFontSize(13);
+  doc.text((inv.title || 'Invoice').toUpperCase(), pageW - margin, 18, { align: 'right' });
+  doc.setFontSize(9);
   doc.setFont('Helvetica', 'normal');
   doc.setTextColor(100, 116, 139);
-  doc.text('Invoice #' + inv.invoice_number, pageW - margin, 26, { align: 'right' });
+  doc.text('Invoice #' + inv.invoice_number, pageW - margin, 27, { align: 'right' });
 
   // Divider
   doc.setDrawColor(226, 232, 240);
@@ -269,6 +287,14 @@ async function generateInvoicePdf(inv: Invoice) {
   doc.text(naira(inv.subtotal), pageW - margin, y, { align: 'right' });
   y += 6;
 
+  doc.text('Logistics', totalStartX, y);
+  doc.text(naira(inv.logistics), pageW - margin, y, { align: 'right' });
+  y += 6;
+
+  doc.text('Service Charge', totalStartX, y);
+  doc.text(naira(inv.service_charge), pageW - margin, y, { align: 'right' });
+  y += 6;
+
   doc.text(inv.tax_label, totalStartX, y);
   doc.text(naira(inv.tax_amount), pageW - margin, y, { align: 'right' });
   y += 6;
@@ -291,6 +317,22 @@ async function generateInvoicePdf(inv: Invoice) {
   doc.setTextColor(15, 23, 46);
   doc.text('TOTAL DUE', totalStartX, y);
   doc.text(naira(inv.total), pageW - margin, y, { align: 'right' });
+
+  // Payment details
+  let paymentY = y + 16;
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  doc.text('PAYMENT DETAILS', x, paymentY);
+  paymentY += 12;
+  doc.setFont('Helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  doc.text('Account Name: ' + (inv.bank_account_name || ''), x, paymentY);
+  paymentY += 11;
+  doc.text('Account Number: ' + (inv.bank_account_number || ''), x, paymentY);
+  paymentY += 11;
+  doc.text('Bank: ' + (inv.bank_name || ''), x, paymentY);
 
   // Footer
   const footerY = 270;
@@ -408,17 +450,23 @@ export function InvoicesPage() {
 
   function openEdit(inv: Invoice) {
     setForm({
+      title: inv.title || 'Invoice',
       customer_name: inv.customer_name,
       customer_email: inv.customer_email,
       customer_phone: inv.customer_phone,
       customer_address: inv.customer_address,
       line_items: JSON.parse(JSON.stringify(inv.line_items || [])),
+      logistics: String(inv.logistics ?? 0),
+      service_charge: String(inv.service_charge ?? 0),
       tax_rate: String(inv.tax_rate ?? 7.5),
       tax_label: inv.tax_label || 'VAT (7.5%)',
       discount: String(inv.discount ?? 0),
       notes: inv.notes || '',
       due_date: inv.due_date || '',
       status: inv.status,
+      bank_account_name: inv.bank_account_name || 'Izy Technologies Global services Ltd',
+      bank_account_number: inv.bank_account_number || '0512121038',
+      bank_name: inv.bank_name || 'Alternative Bank',
     });
     setEditing(true);
     setEditingId(inv.id);
@@ -431,17 +479,23 @@ export function InvoicesPage() {
     );
 
     const payload = {
+      title: form.title.trim() || 'Invoice',
       customer_name: form.customer_name.trim(),
       customer_email: form.customer_email.trim(),
       customer_phone: form.customer_phone.trim(),
       customer_address: form.customer_address.trim(),
       line_items: lineItems,
+      logistics: parseFloat(form.logistics) || 0,
+      service_charge: parseFloat(form.service_charge) || 0,
       tax_rate: parseFloat(form.tax_rate) || 7.5,
       tax_label: form.tax_label.trim() || 'VAT (7.5%)',
       discount: parseFloat(form.discount) || 0,
       notes: form.notes.trim(),
       due_date: form.due_date || null,
       status: form.status,
+      bank_account_name: form.bank_account_name.trim(),
+      bank_account_number: form.bank_account_number.trim(),
+      bank_name: form.bank_name.trim(),
     };
 
     try {
@@ -540,10 +594,12 @@ export function InvoicesPage() {
 
   // Calculate form totals
   const formSubtotal = form.line_items.reduce((s, i) => s + i.amount, 0);
+  const formLogistics = parseFloat(form.logistics) || 0;
+  const formServiceCharge = parseFloat(form.service_charge) || 0;
   const formTaxRate = parseFloat(form.tax_rate) || 7.5;
-  const formTaxAmount = Math.round(formSubtotal * formTaxRate) / 100;
+  const formTaxAmount = Math.round((formSubtotal + formLogistics + formServiceCharge) * formTaxRate) / 100;
   const formDiscount = parseFloat(form.discount) || 0;
-  const formTotal = formSubtotal + formTaxAmount - formDiscount;
+  const formTotal = formSubtotal + formLogistics + formServiceCharge + formTaxAmount - formDiscount;
 
   return (
     <DashboardLayout>
@@ -827,6 +883,18 @@ export function InvoicesPage() {
           </div>
 
           <div className="p-5 space-y-5 overflow-y-auto max-h-[calc(100vh-20rem)]">
+            {/* Invoice title */}
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#94a3b8' }}>Invoice Title</label>
+              <input
+                value={form.title}
+                onChange={e => setField('title', e.target.value)}
+                placeholder="e.g. Proforma Invoice for Solar Installation"
+                className="w-full px-3 py-2.5 text-sm rounded-lg border outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
+                style={{ borderColor: '#e2e8f0', background: '#f8fafc', color: '#0f172a' }}
+              />
+            </div>
+
             {/* Customer details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -1002,6 +1070,45 @@ export function InvoicesPage() {
               </div>
             </div>
 
+            {/* Additional charges */}
+            <div className="rounded-xl border p-4" style={{ background: '#f8fafc', borderColor: '#e2e8f0' }}>
+              <div className="flex items-center gap-2 mb-3">
+                <PlusCircle size={14} style={{ color: '#2563eb' }} />
+                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#475569' }}>Additional Charges</span>
+              </div>
+              <p className="text-xs mb-3" style={{ color: '#64748b' }}>
+                These charges are added to the item subtotal before VAT is calculated.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#64748b' }}>Logistics (₦)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.logistics}
+                    onChange={e => setField('logistics', e.target.value)}
+                    placeholder="0"
+                    className="w-full px-3 py-2.5 text-sm rounded-lg border outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
+                    style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#64748b' }}>Service Charge (₦)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.service_charge}
+                    onChange={e => setField('service_charge', e.target.value)}
+                    placeholder="0"
+                    className="w-full px-3 py-2.5 text-sm rounded-lg border outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
+                    style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Discount */}
             <div className="flex gap-3">
               <div className="flex-1">
@@ -1030,6 +1137,45 @@ export function InvoicesPage() {
               </div>
             </div>
 
+            {/* Bank details */}
+            <div className="rounded-xl border p-4" style={{ background: '#f8fafc', borderColor: '#e2e8f0' }}>
+              <div className="flex items-center gap-2 mb-3">
+                <FileText size={14} style={{ color: '#2563eb' }} />
+                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#475569' }}>Payment Details</span>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#64748b' }}>Account Name</label>
+                  <input
+                    value={form.bank_account_name}
+                    onChange={e => setField('bank_account_name', e.target.value)}
+                    className="w-full px-3 py-2.5 text-sm rounded-lg border outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
+                    style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#64748b' }}>Account Number</label>
+                    <input
+                      value={form.bank_account_number}
+                      onChange={e => setField('bank_account_number', e.target.value)}
+                      className="w-full px-3 py-2.5 text-sm rounded-lg border outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
+                      style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#64748b' }}>Bank</label>
+                    <input
+                      value={form.bank_name}
+                      onChange={e => setField('bank_name', e.target.value)}
+                      className="w-full px-3 py-2.5 text-sm rounded-lg border outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
+                      style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Summary */}
             <div className="rounded-xl border p-4" style={{ background: '#f8fafc', borderColor: '#e2e8f0' }}>
               <p className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: '#94a3b8' }}>Summary</p>
@@ -1037,6 +1183,14 @@ export function InvoicesPage() {
                 <div className="flex justify-between">
                   <span className="text-sm" style={{ color: '#64748b' }}>Subtotal</span>
                   <span className="text-sm font-semibold" style={{ color: '#0f172a' }}>{naira(formSubtotal)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm" style={{ color: '#64748b' }}>Logistics</span>
+                  <span className="text-sm font-semibold" style={{ color: '#0f172a' }}>{naira(formLogistics)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm" style={{ color: '#64748b' }}>Service Charge</span>
+                  <span className="text-sm font-semibold" style={{ color: '#0f172a' }}>{naira(formServiceCharge)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm" style={{ color: '#64748b' }}>{form.tax_label}</span>

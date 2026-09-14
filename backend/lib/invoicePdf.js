@@ -103,10 +103,15 @@ function generateInvoicePdf(inv) {
       .text(COMPANY.address, tx, logoY + 42, { width: W - tx - 150 });
 
     // Invoice number block (top right)
+    const invoiceTitle = String(inv.title || 'Invoice').toUpperCase();
     doc.fillColor(MUTED).font('body').fontSize(7.5)
-      .text('INVOICE NO.', RIGHT - 130, logoY + 2, { width: 130, align: 'right', characterSpacing: 1 });
+      .text('INVOICE TITLE', RIGHT - 180, logoY + 2, { width: 180, align: 'right', characterSpacing: 1 });
+    doc.fillColor('#ffffff').font('bold').fontSize(10.5)
+      .text(invoiceTitle, RIGHT - 180, logoY + 13, { width: 180, align: 'right', lineGap: 1 });
+    doc.fillColor(MUTED).font('body').fontSize(7.5)
+      .text('INVOICE NO.', RIGHT - 130, logoY + 38, { width: 130, align: 'right', characterSpacing: 1 });
     doc.fillColor('#ffffff').font('bold').fontSize(13)
-      .text(inv.invoice_number, RIGHT - 130, logoY + 13, { width: 130, align: 'right' });
+      .text(inv.invoice_number, RIGHT - 130, logoY + 49, { width: 130, align: 'right' });
 
     // Gold accent bar
     doc.rect(0, 122, W, 3).fill(GOLD);
@@ -213,8 +218,10 @@ function generateInvoicePdf(inv) {
     };
 
     totalRow('Subtotal', naira(inv.subtotal));
-    if (Number(inv.discount) > 0) totalRow('Discount', '-' + naira(inv.discount), { color: '#dc2626' });
+    totalRow('Logistics', naira(inv.logistics));
+    totalRow('Service Charge', naira(inv.service_charge));
     totalRow(inv.tax_label || 'VAT', naira(inv.tax_amount));
+    if (Number(inv.discount) > 0) totalRow('Discount', '-' + naira(inv.discount), { color: '#dc2626' });
 
     doc.moveTo(totLabelX, ty).lineTo(RIGHT, ty).lineWidth(1).stroke(NAVY);
     ty += 12;
@@ -227,6 +234,24 @@ function generateInvoicePdf(inv) {
         .text('NOTES', M, ty, { characterSpacing: 1 });
       doc.fillColor(SLATE).font('body').fontSize(9)
         .text(String(inv.notes), M, ty + 14, { width: W - M * 2, lineGap: 2 });
+      ty += 30;
+    }
+
+    if (inv.bank_account_name || inv.bank_account_number || inv.bank_name) {
+      ty += 10;
+      doc.fillColor(MUTED).font('bold').fontSize(8)
+        .text('PAYMENT DETAILS', M, ty, { characterSpacing: 1 });
+      doc.fillColor(SLATE).font('body').fontSize(9);
+      ty += 14;
+      if (inv.bank_account_name) {
+        doc.text('Account Name: ' + String(inv.bank_account_name), M, ty);
+        ty += 13;
+      }
+      if (inv.bank_account_number) {
+        doc.text('Account Number: ' + String(inv.bank_account_number), M, ty);
+        ty += 13;
+      }
+      if (inv.bank_name) doc.text('Bank: ' + String(inv.bank_name), M, ty);
     }
 
     /* ── Footer on every page ────────────────────────────────── */

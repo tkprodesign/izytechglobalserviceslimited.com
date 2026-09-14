@@ -291,6 +291,7 @@ function invoiceEmail({ invoice, bodyHtml }) {
 
       <div style="display:flex;justify-content:space-between;align-items:center;margin:0 0 18px 0">
         <div>
+          <p style="margin:0 0 4px;font-size:15px;color:#041627;font-weight:700">${escHtml(inv.title || 'Invoice')}</p>
           <p style="margin:0;font-size:11px;color:#8fadc8;font-weight:600;letter-spacing:0.08em">INVOICE ${escHtml(inv.invoice_number)}</p>
           <p style="margin:4px 0 0;font-size:13px;color:#5a6a82">Issued ${fmtDate(inv.created_at)}${inv.due_date ? ' &middot; Due ' + fmtDate(inv.due_date) : ''}</p>
         </div>
@@ -309,13 +310,21 @@ function invoiceEmail({ invoice, bodyHtml }) {
         <tbody>${itemRows}</tbody>
         <tfoot>
           <tr><td colspan="2" style="padding:8px 14px;font-size:12px;color:#5a6a82">Subtotal</td><td colspan="2" style="padding:8px 14px;font-size:12px;color:#041627;text-align:right">${naira(inv.subtotal)}</td></tr>
-          ${Number(inv.discount) > 0 ? `<tr><td colspan="2" style="padding:4px 14px;font-size:12px;color:#dc2626">Discount</td><td colspan="2" style="padding:4px 14px;font-size:12px;color:#dc2626;text-align:right">-${naira(inv.discount)}</td></tr>` : ''}
+           <tr><td colspan="2" style="padding:4px 14px;font-size:12px;color:#5a6a82">Logistics</td><td colspan="2" style="padding:4px 14px;font-size:12px;color:#041627;text-align:right">${naira(inv.logistics)}</td></tr>
+           <tr><td colspan="2" style="padding:4px 14px;font-size:12px;color:#5a6a82">Service Charge</td><td colspan="2" style="padding:4px 14px;font-size:12px;color:#041627;text-align:right">${naira(inv.service_charge)}</td></tr>
           <tr><td colspan="2" style="padding:4px 14px;font-size:12px;color:#5a6a82">${escHtml(inv.tax_label || 'VAT')}</td><td colspan="2" style="padding:4px 14px;font-size:12px;color:#041627;text-align:right">${naira(inv.tax_amount)}</td></tr>
+           ${Number(inv.discount) > 0 ? `<tr><td colspan="2" style="padding:4px 14px;font-size:12px;color:#dc2626">Discount</td><td colspan="2" style="padding:4px 14px;font-size:12px;color:#dc2626;text-align:right">-${naira(inv.discount)}</td></tr>` : ''}
           <tr style="background:#f8faff"><td colspan="2" style="padding:12px 14px;font-size:14px;color:#041627;font-weight:700;border-top:2px solid #041627">TOTAL</td><td colspan="2" style="padding:12px 14px;font-size:14px;color:#041627;font-weight:700;text-align:right;border-top:2px solid #041627">${naira(inv.total)}</td></tr>
         </tfoot>
       </table>
 
       ${inv.notes ? `<div class="info-box" style="margin-top:18px"><p style="font-size:13px;color:#3a4a5c;margin:0"><strong>Note:</strong> ${escHtml(inv.notes)}</p></div>` : ''}
+       <div style="margin-top:18px;padding:14px 16px;border:1px solid #eef1f6;border-radius:10px;background:#f8faff">
+         <p style="margin:0 0 8px;font-size:11px;color:#5a6a82;font-weight:700;letter-spacing:0.06em;text-transform:uppercase">Payment Details</p>
+         <p style="margin:3px 0;font-size:12px;color:#3a4a5c">Account Name: ${escHtml(inv.bank_account_name || '')}</p>
+         <p style="margin:3px 0;font-size:12px;color:#3a4a5c">Account Number: ${escHtml(inv.bank_account_number || '')}</p>
+         <p style="margin:3px 0;font-size:12px;color:#3a4a5c">Bank: ${escHtml(inv.bank_name || '')}</p>
+       </div>
 
       <hr class="divider"/>
       <p class="body-text" style="font-size:13px">${paid
