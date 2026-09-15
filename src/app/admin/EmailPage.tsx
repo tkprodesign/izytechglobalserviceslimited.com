@@ -451,7 +451,7 @@ export function EmailPage() {
   return (
     <DashboardLayout>
       <div
-        className="flex min-h-0 h-[calc(100dvh-3.5rem)] overflow-hidden md:h-[100dvh]"
+        className="flex min-h-0 h-full overflow-hidden"
         style={{ background: '#f5f7fb' }}
       >
 

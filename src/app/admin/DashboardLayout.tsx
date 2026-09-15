@@ -105,7 +105,7 @@ export function DashboardLayout({ children }: Props) {
 
   return (
     <div
-      className="admin-shell flex min-h-screen"
+      className="admin-shell flex h-screen overflow-hidden"
       data-sidebar-collapsed={sidebarCollapsed}
       style={{ background: '#f0f3f8' }}
     >
@@ -216,7 +216,7 @@ export function DashboardLayout({ children }: Props) {
         </div>
       </aside>
 
-      <main className="min-h-0 min-w-0 flex-1 overflow-auto">
+      <main className="min-h-0 min-w-0 flex-1 overflow-hidden flex flex-col">
         <header className="admin-mobile-header sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-white px-4 md:hidden" style={{ borderColor: '#eef1f6' }}>
           <button
             type="button"
@@ -230,7 +230,9 @@ export function DashboardLayout({ children }: Props) {
             <p className="text-[11px]" style={{ color: '#8fadc8' }}>CEO Access</p>
           </div>
         </header>
-        {children}
+        <div className="flex-1 min-h-0 overflow-auto">
+          {children}
+        </div>
       </main>
     </div>
   );
