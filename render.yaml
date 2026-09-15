@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: izytech-api
+    runtime: node
+    rootDir: /
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Database, auth, email, and Cloudflare secrets must be set
+      # in the Render dashboard → Environment tab.
