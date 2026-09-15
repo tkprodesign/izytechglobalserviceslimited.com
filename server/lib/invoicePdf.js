@@ -23,9 +23,9 @@ const LOGO_PATH = path.join(__dirname, '..', 'assets', 'izy-icon.png');
 const FONT_REG = path.join(__dirname, '..', 'assets', 'fonts', 'DejaVuSans.ttf');
 const FONT_BOLD = path.join(__dirname, '..', 'assets', 'fonts', 'DejaVuSans-Bold.ttf');
 
-function naira(n) {
+function naira(n, prefix = '\u20A6') {
   const v = Number(n) || 0;
-  return '\u20A6' + v.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return prefix + v.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function fmtDate(d) {
@@ -56,6 +56,7 @@ function generateInvoicePdf(inv) {
     // Fall back to built-in Helvetica if the bundled files are missing so
     // invoice emails never hard-fail — naira renders as "N" in that case.
     const hasFontFiles = fs.existsSync(FONT_REG) && fs.existsSync(FONT_BOLD);
+    let currencyPrefix = '\u20A6';
     try {
       if (hasFontFiles) {
         doc.registerFont('body', FONT_REG);
@@ -64,12 +65,15 @@ function generateInvoicePdf(inv) {
         console.warn('Invoice PDF font files missing, using Helvetica fallback');
         doc.registerFont('body', 'Helvetica');
         doc.registerFont('bold', 'Helvetica-Bold');
+        currencyPrefix = 'NGN ';
       }
     } catch (fontErr) {
       console.error('Invoice PDF font registration failed:', fontErr.message);
       doc.registerFont('body', 'Helvetica');
       doc.registerFont('bold', 'Helvetica-Bold');
+      currencyPrefix = 'NGN ';
     }
+    const money = value => naira(value, currencyPrefix);
 
     const W = doc.page.width;   // 595.28
     const H = doc.page.height;  // 841.89
@@ -107,14 +111,20 @@ function generateInvoicePdf(inv) {
     // with the company name or legal address.
     const invoiceTitle = String(inv.title || 'Invoice').toUpperCase();
     const detailX = RIGHT - 168;
+    const detailW = 168;
     doc.fillColor(MUTED).font('body').fontSize(7.5)
-      .text('INVOICE TITLE', detailX, 27, { width: 168, align: 'right', characterSpacing: 1 });
-    doc.fillColor('#ffffff').font('bold').fontSize(10.5)
-      .text(invoiceTitle, detailX, 40, { width: 168, align: 'right', lineGap: 1, height: 32 });
+      .text('INVOICE TITLE', detailX, 27, { width: detailW, align: 'right', characterSpacing: 1 });
+    doc.fillColor('#ffffff').font('bold').fontSize(10.5);
+    const titleHeight = Math.min(
+      58,
+      Math.max(13, doc.heightOfString(invoiceTitle, { width: detailW, lineGap: 1 })),
+    );
+    doc.text(invoiceTitle, detailX, 40, { width: detailW, align: 'right', lineGap: 1, height: titleHeight });
+    const invoiceNoLabelY = Math.min(105, 40 + titleHeight + 9);
     doc.fillColor(MUTED).font('body').fontSize(7.5)
-      .text('INVOICE NO.', detailX, 91, { width: 168, align: 'right', characterSpacing: 1 });
+      .text('INVOICE NO.', detailX, invoiceNoLabelY, { width: detailW, align: 'right', characterSpacing: 1 });
     doc.fillColor('#ffffff').font('bold').fontSize(13)
-      .text(inv.invoice_number, detailX, 103, { width: 168, align: 'right' });
+      .text(inv.invoice_number, detailX, invoiceNoLabelY + 12, { width: detailW, align: 'right' });
 
     // Gold accent bar
     doc.rect(0, headerH, W, 3).fill(GOLD);
@@ -198,9 +208,9 @@ function generateInvoicePdf(inv) {
       doc.fillColor(NAVY).text(desc, descX, baseline, { width: descW, lineGap: 1 });
       doc.fillColor(SLATE)
         .text(String(item.quantity ?? ''), qtyX, baseline, { width: qtyW, align: 'center' })
-        .text(naira(item.unit_price), unitX, baseline, { width: unitW, align: 'right' });
+        .text(money(item.unit_price), unitX, baseline, { width: unitW, align: 'right' });
       doc.fillColor(NAVY).font('bold')
-        .text(naira(item.amount), amtX, baseline, { width: amtW, align: 'right' });
+        .text(money(item.amount), amtX, baseline, { width: amtW, align: 'right' });
 
       doc.moveTo(M, ty + rowH).lineTo(RIGHT, ty + rowH).lineWidth(0.5).stroke(LINE);
       ty += rowH;
@@ -220,24 +230,26 @@ function generateInvoicePdf(inv) {
       ty += (opts.size || 10) + 10;
     };
 
-    totalRow('Subtotal', naira(inv.subtotal));
-    totalRow('Logistics', naira(inv.logistics));
-    totalRow('Service Charge', naira(inv.service_charge));
-    totalRow(inv.tax_label || 'VAT', naira(inv.tax_amount));
-    if (Number(inv.discount) > 0) totalRow('Discount', '-' + naira(inv.discount), { color: '#dc2626' });
+    totalRow('Subtotal', money(inv.subtotal));
+    totalRow('Logistics', money(inv.logistics));
+    totalRow('Service Charge', money(inv.service_charge));
+    totalRow(inv.tax_label || 'VAT', money(inv.tax_amount));
+    if (Number(inv.discount) > 0) totalRow('Discount', '-' + money(inv.discount), { color: '#dc2626' });
 
     doc.moveTo(totLabelX, ty).lineTo(RIGHT, ty).lineWidth(1).stroke(NAVY);
     ty += 12;
-    totalRow('TOTAL', naira(inv.total), { bold: true, size: 14 });
+    totalRow('TOTAL', money(inv.total), { bold: true, size: 14 });
 
     /* ── Notes ───────────────────────────────────────────────── */
     if (inv.notes) {
       ty += 10;
       doc.fillColor(MUTED).font('bold').fontSize(8)
         .text('NOTES', M, ty, { characterSpacing: 1 });
+      const notesText = String(inv.notes);
+      const notesWidth = W - M * 2;
       doc.fillColor(SLATE).font('body').fontSize(9)
-        .text(String(inv.notes), M, ty + 14, { width: W - M * 2, lineGap: 2 });
-      ty += 30;
+        .text(notesText, M, ty + 14, { width: notesWidth, lineGap: 2 });
+      ty += 14 + doc.heightOfString(notesText, { width: notesWidth, lineGap: 2 });
     }
 
     if (inv.bank_account_name || inv.bank_account_number || inv.bank_name) {
@@ -246,15 +258,18 @@ function generateInvoicePdf(inv) {
         .text('PAYMENT DETAILS', M, ty, { characterSpacing: 1 });
       doc.fillColor(SLATE).font('body').fontSize(9);
       ty += 14;
+      const paymentWidth = W - M * 2;
+      const paymentLine = text => {
+        doc.text(text, M, ty, { width: paymentWidth, lineGap: 1 });
+        ty += doc.heightOfString(text, { width: paymentWidth, lineGap: 1 }) + 4;
+      };
       if (inv.bank_account_name) {
-        doc.text('Account Name: ' + String(inv.bank_account_name), M, ty);
-        ty += 13;
+        paymentLine('Account Name: ' + String(inv.bank_account_name));
       }
       if (inv.bank_account_number) {
-        doc.text('Account Number: ' + String(inv.bank_account_number), M, ty);
-        ty += 13;
+        paymentLine('Account Number: ' + String(inv.bank_account_number));
       }
-      if (inv.bank_name) doc.text('Bank: ' + String(inv.bank_name), M, ty);
+      if (inv.bank_name) paymentLine('Bank: ' + String(inv.bank_name));
     }
 
     /* ── Footer on every page ────────────────────────────────── */
