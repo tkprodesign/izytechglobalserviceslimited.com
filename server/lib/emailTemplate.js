@@ -272,6 +272,7 @@ function invoiceEmail({ invoice, bodyHtml }) {
 
   const paid = inv.status === 'paid';
   const overdue = inv.status === 'overdue';
+  const hasPaymentDetails = Boolean(inv.bank_account_name || inv.bank_account_number || inv.bank_name);
   const pillColor = paid ? '#16a34a' : overdue ? '#dc2626' : inv.status === 'cancelled' ? '#6b7280' : '#b45309';
   const pillLabel = paid ? 'PAID' : overdue ? 'OVERDUE' : inv.status === 'cancelled' ? 'CANCELLED' : 'UNPAID';
 
@@ -289,14 +290,18 @@ function invoiceEmail({ invoice, bodyHtml }) {
         ? 'Please find your payment confirmation and receipt for the invoice below. A PDF copy is attached for your records.'
         : 'Please find invoice <strong>' + escHtml(inv.invoice_number) + '</strong> below for your kind attention. The complete invoice is attached to this email as a PDF document.'}</p>
 
-      <div style="display:flex;justify-content:space-between;align-items:center;margin:0 0 18px 0">
-        <div>
-          <p style="margin:0 0 4px;font-size:15px;color:#041627;font-weight:700">${escHtml(inv.title || 'Invoice')}</p>
-          <p style="margin:0;font-size:11px;color:#8fadc8;font-weight:600;letter-spacing:0.08em">INVOICE ${escHtml(inv.invoice_number)}</p>
-          <p style="margin:4px 0 0;font-size:13px;color:#5a6a82">Issued ${fmtDate(inv.created_at)}${inv.due_date ? ' &middot; Due ' + fmtDate(inv.due_date) : ''}</p>
-        </div>
-        <span style="font-size:12px;font-weight:700;color:#ffffff;background:${pillColor};padding:5px 14px;border-radius:20px;letter-spacing:0.08em">${pillLabel}</span>
-      </div>
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 18px 0">
+        <tr>
+          <td style="vertical-align:top;padding-right:12px">
+            <p style="margin:0 0 4px;font-size:15px;color:#041627;font-weight:700">${escHtml(inv.title || 'Invoice')}</p>
+            <p style="margin:0;font-size:11px;color:#8fadc8;font-weight:600;letter-spacing:0.08em">INVOICE ${escHtml(inv.invoice_number)}</p>
+            <p style="margin:4px 0 0;font-size:13px;color:#5a6a82">Issued ${fmtDate(inv.created_at)}${inv.due_date ? ' &middot; Due ' + fmtDate(inv.due_date) : ''}</p>
+          </td>
+          <td style="vertical-align:top;text-align:right;white-space:nowrap">
+            <span style="display:inline-block;font-size:12px;font-weight:700;color:#ffffff;background:${pillColor};padding:5px 14px;border-radius:20px;letter-spacing:0.08em">${pillLabel}</span>
+          </td>
+        </tr>
+      </table>
 
       <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #eef1f6;border-radius:10px;overflow:hidden">
         <thead>
@@ -319,12 +324,12 @@ function invoiceEmail({ invoice, bodyHtml }) {
       </table>
 
       ${inv.notes ? `<div class="info-box" style="margin-top:18px"><p style="font-size:13px;color:#3a4a5c;margin:0"><strong>Note:</strong> ${escHtml(inv.notes)}</p></div>` : ''}
-       <div style="margin-top:18px;padding:14px 16px;border:1px solid #eef1f6;border-radius:10px;background:#f8faff">
+       ${hasPaymentDetails ? `<div style="margin-top:18px;padding:14px 16px;border:1px solid #eef1f6;border-radius:10px;background:#f8faff">
          <p style="margin:0 0 8px;font-size:11px;color:#5a6a82;font-weight:700;letter-spacing:0.06em;text-transform:uppercase">Payment Details</p>
          <p style="margin:3px 0;font-size:12px;color:#3a4a5c">Account Name: ${escHtml(inv.bank_account_name || '')}</p>
          <p style="margin:3px 0;font-size:12px;color:#3a4a5c">Account Number: ${escHtml(inv.bank_account_number || '')}</p>
          <p style="margin:3px 0;font-size:12px;color:#3a4a5c">Bank: ${escHtml(inv.bank_name || '')}</p>
-       </div>
+       </div>` : ''}
 
       <hr class="divider"/>
       <p class="body-text" style="font-size:13px">${paid

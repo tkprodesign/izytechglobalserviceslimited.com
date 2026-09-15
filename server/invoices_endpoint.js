@@ -98,12 +98,16 @@ function generateInvoiceNumber() {
 
 function parseRate(tax_rate) {
   const n = Number(tax_rate);
-  return Number.isFinite(n) ? n : 7.5;
+  return Number.isFinite(n) && n >= 0 && n <= 100 ? n : 7.5;
 }
 
 function parseMoney(value) {
   const n = Number(value);
   return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
 }
 
 /**
@@ -157,6 +161,21 @@ router.get('/api/admin/invoices/:id', requireAuth, async (req, res) => {
   }
 });
 
+router.get('/api/admin/invoices/:id/pdf', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT * FROM invoices WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Invoice not found' });
+    const invoice = rows[0];
+    const pdf = await generateInvoicePdf(invoice);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${invoice.invoice_number}.pdf"`);
+    res.send(pdf);
+  } catch (err) {
+    console.error('Invoice PDF error:', err.message);
+    res.status(500).json({ error: 'Could not generate invoice PDF: ' + err.message });
+  }
+});
+
 router.post('/api/admin/invoices', requireAuth, async (req, res) => {
   const {
     title, customer_name, customer_email, customer_phone, customer_address,
@@ -164,7 +183,8 @@ router.post('/api/admin/invoices', requireAuth, async (req, res) => {
     notes, due_date, status, bank_account_name, bank_account_number, bank_name,
   } = req.body || {};
   if (!customer_name || !customer_email) return res.status(400).json({ error: 'Customer name and email are required' });
-  if (!line_items || !line_items.length) return res.status(400).json({ error: 'At least one line item is required' });
+  if (!isValidEmail(customer_email)) return res.status(400).json({ error: 'Enter a valid customer email address' });
+  if (!Array.isArray(line_items) || !line_items.length) return res.status(400).json({ error: 'At least one line item is required' });
 
   const items = line_items.map(item => ({
     description: item.description || '',
@@ -180,6 +200,7 @@ router.post('/api/admin/invoices', requireAuth, async (req, res) => {
   const taxableSubtotal = subtotal + logisticsAmount + serviceCharge;
   const taxAmt = Math.round(taxableSubtotal * rate) / 100;
   const disc = parseMoney(discount);
+  if (disc > taxableSubtotal) return res.status(400).json({ error: 'Discount cannot exceed the invoice subtotal and charges' });
   const total = taxableSubtotal + taxAmt - disc;
   const invoice_number = generateInvoiceNumber();
   const user = req.user;
@@ -239,6 +260,9 @@ router.put('/api/admin/invoices/:id', requireAuth, async (req, res) => {
     line_items, logistics, service_charge, tax_rate, tax_label, discount,
     notes, due_date, status, bank_account_name, bank_account_number, bank_name,
   } = req.body || {};
+  if (!customer_name || !customer_email) return res.status(400).json({ error: 'Customer name and email are required' });
+  if (!isValidEmail(customer_email)) return res.status(400).json({ error: 'Enter a valid customer email address' });
+  if (!Array.isArray(line_items) || !line_items.length) return res.status(400).json({ error: 'At least one line item is required' });
   const items = (line_items || []).map(item => ({
     description: item.description || '',
     quantity: Number(item.quantity) || 1,
@@ -252,6 +276,7 @@ router.put('/api/admin/invoices/:id', requireAuth, async (req, res) => {
   const taxableSubtotal = subtotal + logisticsAmount + serviceCharge;
   const taxAmt = Math.round(taxableSubtotal * rate) / 100;
   const disc = parseMoney(discount);
+  if (disc > taxableSubtotal) return res.status(400).json({ error: 'Discount cannot exceed the invoice subtotal and charges' });
   const total = taxableSubtotal + taxAmt - disc;
 
   try {

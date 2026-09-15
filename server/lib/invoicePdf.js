@@ -77,11 +77,12 @@ function generateInvoicePdf(inv) {
     const RIGHT = W - M;
 
     /* ── Header band with logo ───────────────────────────────── */
-    doc.rect(0, 0, W, 122).fill(NAVY);
+    const headerH = 148;
+    doc.rect(0, 0, W, headerH).fill(NAVY);
 
     // Logo
     const logoSize = 56;
-    const logoY = 33;
+    const logoY = 38;
     if (fs.existsSync(LOGO_PATH)) {
       try {
         doc.image(LOGO_PATH, M, logoY, { width: logoSize, height: logoSize });
@@ -95,29 +96,31 @@ function generateInvoicePdf(inv) {
 
     // Brand text next to the logo
     const tx = M + logoSize + 16;
-    doc.fillColor(GOLD).font('bold').fontSize(19)
-      .text(COMPANY.name.toUpperCase(), tx, logoY + 2, { characterSpacing: 1 });
+    doc.fillColor(GOLD).font('bold').fontSize(17)
+      .text(COMPANY.name.toUpperCase(), tx, logoY + 1, { width: 245, characterSpacing: 0.8 });
     doc.fillColor('#ffffff').font('body').fontSize(9.5)
-      .text(COMPANY.legal.toUpperCase(), tx, logoY + 26, { characterSpacing: 1.4 });
+      .text(COMPANY.legal.toUpperCase(), tx, logoY + 25, { width: 245, characterSpacing: 0.8 });
     doc.fillColor(MUTED).font('body').fontSize(8)
-      .text(COMPANY.address, tx, logoY + 42, { width: W - tx - 150 });
+      .text(COMPANY.address, tx, logoY + 43, { width: 245, lineGap: 1 });
 
-    // Invoice number block (top right)
+    // Invoice details occupy their own column so long titles never collide
+    // with the company name or legal address.
     const invoiceTitle = String(inv.title || 'Invoice').toUpperCase();
+    const detailX = RIGHT - 168;
     doc.fillColor(MUTED).font('body').fontSize(7.5)
-      .text('INVOICE TITLE', RIGHT - 180, logoY + 2, { width: 180, align: 'right', characterSpacing: 1 });
+      .text('INVOICE TITLE', detailX, 27, { width: 168, align: 'right', characterSpacing: 1 });
     doc.fillColor('#ffffff').font('bold').fontSize(10.5)
-      .text(invoiceTitle, RIGHT - 180, logoY + 13, { width: 180, align: 'right', lineGap: 1 });
+      .text(invoiceTitle, detailX, 40, { width: 168, align: 'right', lineGap: 1, height: 32 });
     doc.fillColor(MUTED).font('body').fontSize(7.5)
-      .text('INVOICE NO.', RIGHT - 130, logoY + 38, { width: 130, align: 'right', characterSpacing: 1 });
+      .text('INVOICE NO.', detailX, 91, { width: 168, align: 'right', characterSpacing: 1 });
     doc.fillColor('#ffffff').font('bold').fontSize(13)
-      .text(inv.invoice_number, RIGHT - 130, logoY + 49, { width: 130, align: 'right' });
+      .text(inv.invoice_number, detailX, 103, { width: 168, align: 'right' });
 
     // Gold accent bar
-    doc.rect(0, 122, W, 3).fill(GOLD);
+    doc.rect(0, headerH, W, 3).fill(GOLD);
 
     /* ── Meta row: dates (left) + status pill (right) ────────── */
-    let y = 152;
+    let y = headerH + 30;
     doc.font('body').fontSize(9);
     const metaRows = [
       ['ISSUE DATE', fmtDate(inv.created_at)],
@@ -205,7 +208,7 @@ function generateInvoicePdf(inv) {
 
     /* ── Totals (fixed two-column block, right-aligned) ──────── */
     ty += 18;
-    const totLabelW = 120, totValW = 120, totGap = 12;
+    const totLabelW = 92, totValW = 155, totGap = 12;
     const totValX = RIGHT - totValW;
     const totLabelX = totValX - totGap - totLabelW;
 

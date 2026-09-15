@@ -616,8 +616,24 @@ export function InvoicesPage() {
   async function handleDownloadPdf(inv: Invoice) {
     setGeneratingPdf(true);
     try {
-      const doc = await generateInvoicePdf(inv);
-      doc.save('Invoice_' + inv.invoice_number + '.pdf');
+      // Use the same server-generated PDF that is attached to the invoice
+      // email so downloads and emailed documents never diverge.
+      const res = await fetch(API + '/api/admin/invoices/' + inv.id + '/pdf', {
+        headers: { Authorization: 'Bearer ' + token },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'PDF generation failed');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Invoice_' + inv.invoice_number + '.pdf';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
     } catch (err) {
       setError('PDF generation failed: ' + (err instanceof Error ? err.message : ''));
     } finally {
