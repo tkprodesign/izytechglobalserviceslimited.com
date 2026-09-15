@@ -2,46 +2,54 @@
 
 Official website and digital platform for IZY Technologies Global Services Limited — Nigeria's premier energy solutions provider.
 
-## Repository Structure
+## Architecture — single full Next.js app
+
+One Next.js project at the repo root contains **both the site and the API**:
 
 ```
-/
-├── frontend/     React + Vite website (TypeScript, Tailwind CSS, Framer Motion)
-├── backend/      API server (Render)
-├── docs/         Site guide, design guidelines, attributions
-└── .github/      CI/CD workflows
+/                       Next.js app root (next build → node server.js)
+├── app/                App Router: layout + catch-all page serving the SPA
+├── pages/api/          API catch-all bridging every /api/* request to Express
+├── src/                The React app (site, admin & dev panels) — unchanged
+├── public/             Static assets (images, videos, favicon)
+├── server/             Express API library (all routes, DB, email, PDF)
+├── server.js           Production entry: one process serves pages + API
+├── next.config.js      Next.js configuration
+└── Dockerfile          Container build for any Docker host
 ```
+
+- **Site**: client-side React app (react-router) mounted by `app/[[...path]]/page.tsx` — every URL renders exactly as before.
+- **API**: `pages/api/[[...path]].ts` hands every `/api/*` request to the Express app in `server/expressApp.js`. Real Node request/response objects, no translation layer.
+- **One deployment**: pages and API ship together; no separate backend service.
 
 ## Quick Start
 
-> **Package manager:** This project uses [pnpm](https://pnpm.io). Install it once with `npm install -g pnpm` if you don't have it.
-
 ```bash
-cd frontend
-pnpm install
-pnpm run dev       # starts dev server on http://localhost:5000
+npm install
+npm run dev        # http://localhost:3000 (API included)
 ```
 
-## Production Build
+## Production
 
 ```bash
-cd frontend
-pnpm run build     # output → frontend/dist/
+npm run build      # next build
+npm start          # node server.js  (serves pages + API on $PORT)
 ```
 
-## Deployment Stack
+Docker: `docker build -t izy . && docker run -p 3000:3000 izy`
 
-| Layer    | Service          |
-|----------|------------------|
-| Frontend | Cloudflare Pages |
-| Backend  | Render           |
-| Database | Neon PostgreSQL  |
-| Repo     | GitHub — `tkprodesign/izytechglobalserviceslimited.com` |
+## Environment
+
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | Neon PostgreSQL connection string (required) |
+| `SESSION_SECRET` | JWT signing secret for admin/dev auth |
+| `RESEND_API_KEY` | Email delivery (invoices, contact, notifications) |
+| `NEXT_PUBLIC_VITE_API_URL` | Optional: absolute API base for the SPA; leave unset for same-origin `/api` |
 
 ## Docs
 
-- [Site Guide](docs/SITE_GUIDE.md) — every section, editable content tables, glossary
-- [Design Guidelines](docs/DESIGN_GUIDELINES.md) — typography, colour system, component notes
-- [Attributions](docs/ATTRIBUTIONS.md) — open-source licences and asset credits
-- [Projects Feature](docs/PROJECTS_FEATURE.md) — full implementation record for the DB-backed Projects feature
+- [Site Guide](docs/SITE_GUIDE.md) — every section, editable content tables
+- [Design Guidelines](docs/DESIGN_GUIDELINES.md) — typography, colour system
+- [Projects Feature](docs/PROJECTS_FEATURE.md) — DB-backed Projects implementation record
 - [Changelog](CHANGELOG.md) — history of significant changes

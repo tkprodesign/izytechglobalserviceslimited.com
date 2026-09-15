@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+dist
+frontend
+backend
+.git
+.github
+attached_assets
+docs
+*.log
+.env
+.env.local
