@@ -17,6 +17,7 @@ import {
   MessageSquare,
   Eye,
   Mail,
+  Inbox,
 } from 'lucide-react';
 
 interface Props {
@@ -73,6 +74,7 @@ export function DashboardLayout({ children }: Props) {
     { to: '/admin/projects', label: 'Projects', icon: FolderOpen },
     { to: '/admin/testimonials', label: 'Testimonials', icon: MessageSquare },
     { to: '/admin/invoices', label: 'Invoices', icon: Receipt },
+    { to: '/admin/email', label: 'Email Manager', icon: Inbox },
   ];
 
 

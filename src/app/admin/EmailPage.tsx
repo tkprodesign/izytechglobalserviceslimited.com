@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import { DashboardLayout } from './DashboardLayout';
 import { getToken, removeToken, isDeveloper } from '../../lib/auth';
 import { ngSmartDate, ngDateTimeWAT } from '../../lib/ngtime';
@@ -129,7 +129,7 @@ function ComposeModal({
     setSending(true);
     setError('');
     try {
-      const res = await fetch(`${API}/api/dev/email/send`, {
+      const res = await fetch(`${API}${apiBase}/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -273,7 +273,13 @@ function ComposeModal({
 export function EmailPage() {
   const token = getToken();
   const navigate = useNavigate();
+  const location = useLocation();
   const dev = isDeveloper();
+
+  // The same page is mounted at /dev/email (developer panel) and /admin/email
+  // (admin panel). API base follows the mount point — the backend mirrors the
+  // router at both /api/dev/email and /api/admin/email.
+  const apiBase = location.pathname.startsWith('/admin/') ? '/api/admin/email' : '/api/dev/email';
 
   // Data
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -318,7 +324,7 @@ export function EmailPage() {
 
   // Load accounts on mount
   useEffect(() => {
-    fetch(`${API}/api/dev/email/accounts`, { headers })
+    fetch(`${API}${apiBase}/accounts`, { headers })
       .then(r => {
         if (r.status === 401 || r.status === 403) { handleUnauth(); return null; }
         return r.json();
@@ -340,7 +346,7 @@ export function EmailPage() {
     setLoadingInbox(true);
     try {
       const res = await fetch(
-        `${API}/api/dev/email/messages/${acct.id}/${encodeURIComponent(folder.key)}`,
+        `${API}${apiBase}/messages/${acct.id}/${encodeURIComponent(folder.key)}`,
         { headers }
       );
       const data = await res.json();
@@ -377,7 +383,7 @@ export function EmailPage() {
     setLoadingMsg(true);
     try {
       const res = await fetch(
-        `${API}/api/dev/email/message/${activeAccount.id}/${encodeURIComponent(msg.uid)}?source=${msg.source}`,
+        `${API}${apiBase}/message/${activeAccount.id}/${encodeURIComponent(msg.uid)}?source=${msg.source}`,
         { headers }
       );
       const data = await res.json();
@@ -410,7 +416,7 @@ export function EmailPage() {
     setArchiveError('');
     try {
       const res = await fetch(
-        `${API}/api/dev/email/archive/${activeAccount.id}/${encodeURIComponent(selectedMeta.uid)}`,
+        `${API}${apiBase}/archive/${activeAccount.id}/${encodeURIComponent(selectedMeta.uid)}`,
         {
           method: 'PATCH',
           headers: { ...headers, 'Content-Type': 'application/json' },
