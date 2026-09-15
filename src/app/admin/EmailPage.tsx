@@ -6,7 +6,7 @@ import { ngSmartDate, ngDateTimeWAT } from '../../lib/ngtime';
 import {
   Mail, Send, RefreshCw, PenSquare, X, ChevronLeft,
   Inbox, Archive, ArchiveRestore, AlertCircle, Loader2, Reply,
-  Search, Trash2, MoreHorizontal, Star, Clock,
+  Search, Clock,
 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
@@ -452,97 +452,90 @@ export function EmailPage() {
     <DashboardLayout>
       <div
         className="flex min-h-0 h-[calc(100dvh-3.5rem)] overflow-hidden md:h-[100dvh]"
-        style={{ background: '#f8fafc' }}
+        style={{ background: '#f5f7fb' }}
       >
 
-        {/* ═══ SIDEBAR: Accounts ═══ */}
-        <div className="hidden md:flex w-56 flex-shrink-0 flex-col border-r" style={{ background: '#fff', borderColor: '#f1f5f9' }}>
-          {/* Compose button */}
-          <div className="px-3 pt-4 pb-3">
+        {/* ═══ MAILROOM RAIL ═══ */}
+        <aside className="hidden md:flex w-[248px] flex-shrink-0 flex-col p-3 text-white" style={{ background: '#071b2d' }}>
+          <div className="px-3 py-3 mb-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs" style={{ background: '#f0a20e', color: '#071b2d' }}>
+                IZY
+              </div>
+              <div>
+                <p className="text-sm font-bold tracking-tight">Mailroom</p>
+                <p className="text-[10px] tracking-widest uppercase text-white/40">Company communications</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-1 pb-4">
             <button
               onClick={() => { setComposeDefaults({ to: '', subject: '' }); setCompose(true); }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:shadow-lg active:scale-[0.98]"
-              style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all hover:shadow-lg active:scale-[0.98]"
+              style={{ background: '#f0a20e', color: '#071b2d' }}
             >
               <PenSquare size={15} />
-              Compose
+              New message
             </button>
           </div>
 
-          {/* Accounts */}
-          <div className="px-3 pb-2">
-            <p className="text-[10px] font-bold uppercase tracking-widest px-2 mb-2" style={{ color: '#94a3b8' }}>
-              Mailboxes
-            </p>
-            <div className="space-y-0.5">
+          <div className="px-1 pb-3">
+            <div className="flex items-center justify-between px-3 mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Mailboxes</p>
+              <span className="text-[10px] text-white/30">{accounts.length} active</span>
+            </div>
+            <div className="space-y-1">
               {[ALL_MAIL, ...accounts].map(acct => {
                 const isActive = activeAccount?.id === acct.id;
                 return (
                   <button
                     key={acct.id}
                     onClick={() => switchAccount(acct)}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all text-left group"
-                    style={{
-                      background: isActive ? `${acct.color}10` : 'transparent',
-                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left group"
+                    style={{ background: isActive ? 'rgba(240,162,14,0.14)' : 'transparent' }}
                   >
                     <div
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0 transition-transform group-hover:scale-105"
-                      style={{ background: acct.color }}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0 transition-transform group-hover:scale-105"
+                      style={{ background: acct.isVirtual ? '#596579' : acct.color }}
                     >
                       {acct.isVirtual ? <Mail size={13} /> : acct.label[0]}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p
-                        className="text-[13px] font-medium truncate"
-                        style={{ color: isActive ? acct.color : '#334155' }}
-                      >
+                      <p className="text-[13px] font-semibold truncate" style={{ color: isActive ? '#f0a20e' : '#e2e8f0' }}>
                         {acct.label}
                       </p>
-                      <p className="text-[11px] truncate" style={{ color: '#94a3b8' }}>
-                        {acct.isVirtual ? 'All mail' : acct.sendOnly ? 'Send only' : acct.email}
+                      <p className="text-[10px] truncate text-white/35">
+                        {acct.isVirtual ? 'Every mailbox' : acct.sendOnly ? 'Send only' : acct.email}
                       </p>
                     </div>
-                    {isActive && (
-                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: acct.color }} />
-                    )}
+                    {isActive && <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: '#f0a20e' }} />}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Folders */}
-          <div className="px-3 pt-3 mt-auto border-t" style={{ borderColor: '#f1f5f9' }}>
-            <p className="text-[10px] font-bold uppercase tracking-widest px-2 mb-2" style={{ color: '#94a3b8' }}>
-              Folders
+          <div className="px-1 pt-4 border-t border-white/10">
+            <p className="text-[10px] font-bold uppercase tracking-widest px-3 mb-2 text-white/40">
+              Views
             </p>
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {visibleFolders.map(folder => {
                 const isActive = activeFolder.key === folder.key;
                 return (
                   <button
                     key={folder.key}
                     onClick={() => setActiveFolder(folder)}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all text-left"
-                    style={{
-                      background: isActive ? '#f1f5f9' : 'transparent',
-                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left"
+                    style={{ background: isActive ? 'rgba(255,255,255,0.1)' : 'transparent' }}
                   >
-                    <span style={{ color: isActive ? '#2563eb' : '#94a3b8' }}>
-                      {folder.icon}
-                    </span>
-                    <span
-                      className="text-[13px] flex-1"
-                      style={{ color: isActive ? '#0f172a' : '#64748b', fontWeight: isActive ? 600 : 400 }}
-                    >
+                    <span style={{ color: isActive ? '#f0a20e' : '#94a3b8' }}>{folder.icon}</span>
+                    <span className="text-[13px] flex-1" style={{ color: isActive ? '#fff' : '#94a3b8', fontWeight: isActive ? 600 : 400 }}>
                       {folder.name}
                     </span>
                     {folder.key === 'INBOX' && unreadCount > 0 && (
-                      <span
-                        className="px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white"
-                        style={{ background: '#2563eb', minWidth: '18px', textAlign: 'center' }}
-                      >
+                      <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold" style={{ background: '#f0a20e', color: '#071b2d', minWidth: '18px', textAlign: 'center' }}>
                         {unreadCount}
                       </span>
                     )}
@@ -551,54 +544,71 @@ export function EmailPage() {
               })}
             </div>
           </div>
-        </div>
+
+          <div className="mt-auto mx-1 p-3 rounded-xl border border-white/10" style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-[11px] font-semibold text-white/70">Mail sync active</span>
+            </div>
+            <p className="text-[10px] leading-relaxed text-white/35">Messages are fetched from Resend and organized here for the team.</p>
+          </div>
+        </aside>
 
         {/* ═══ MESSAGE LIST ═══ */}
-        <div className={`min-h-0 flex-1 md:max-w-sm flex flex-col border-r ${mobileView === 'detail' ? 'hidden md:flex' : 'flex'}`} style={{ background: '#fff', borderColor: '#f1f5f9' }}>
+        <div className={`min-h-0 flex-1 md:flex-[0_0_370px] flex flex-col border-r ${mobileView === 'detail' ? 'hidden md:flex' : 'flex'}`} style={{ background: '#fff', borderColor: '#e7ecf3' }}>
           {/* Header */}
-          <div className="px-4 pt-4 pb-3 border-b" style={{ borderColor: '#f1f5f9' }}>
+          <div className="px-5 pt-5 pb-4 border-b" style={{ borderColor: '#e7ecf3' }}>
             {/* Mobile back to mailboxes */}
             <div className="md:hidden mb-3">
               <button
-                onClick={() => {
-                  // On mobile, cycle: detail -> list -> show account selector
-                  if (mobileView === 'list') {
-                    setMobileView('list');
-                  }
-                }}
-                className="flex items-center gap-1 text-xs font-medium" style={{ color: '#2563eb' }}
+                onClick={() => navigate(dev ? '/dev/dashboard' : '/admin/dashboard')}
+                className="flex items-center gap-1 text-xs font-semibold" style={{ color: '#2563eb' }}
               >
-                <ChevronLeft size={14} /> Mailboxes
+                <ChevronLeft size={14} /> Dashboard
               </button>
             </div>
 
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h2 className="text-sm font-bold" style={{ color: '#0f172a' }}>
-                  {activeAccount?.label || 'Select account'}
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: '#94a3b8' }}>
+                  Workspace
+                </p>
+                <h2 className="text-lg font-bold tracking-tight" style={{ color: '#0f172a' }}>
+                  {activeAccount?.label || 'Select mailbox'}
                 </h2>
-                <p className="text-[11px]" style={{ color: '#94a3b8' }}>
-                  {activeFolder.name}
-                  {inboxNote && ` · ${inboxNote}`}
+                <p className="text-[11px] mt-0.5 truncate max-w-[240px]" style={{ color: '#94a3b8' }}>
+                  {activeAccount?.email || 'Choose a mailbox to begin'}
                 </p>
               </div>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => activeAccount && loadFolder(activeAccount, activeFolder)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-slate-100 transition-colors"
                   title="Refresh"
                 >
-                  <RefreshCw size={14} style={{ color: '#64748b' }} className={loadingInbox ? 'animate-spin' : ''} />
+                  <RefreshCw size={15} style={{ color: '#64748b' }} className={loadingInbox ? 'animate-spin' : ''} />
                 </button>
                 <button
                   onClick={() => { setComposeDefaults({ to: '', subject: '' }); setCompose(true); }}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-blue-50 transition-colors md:hidden"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-blue-50 transition-colors md:hidden"
                   title="Compose"
                 >
                   <PenSquare size={14} style={{ color: '#2563eb' }} />
                 </button>
               </div>
             </div>
+
+            <select
+              value={activeAccount?.id || ''}
+              onChange={e => {
+                const acct = [ALL_MAIL, ...accounts].find(a => a.id === e.target.value);
+                if (acct) switchAccount(acct);
+              }}
+              className="md:hidden w-full mb-3 px-3 py-2.5 text-sm rounded-xl border outline-none"
+              style={{ borderColor: '#e2e8f0', color: '#334155', background: '#f8fafc' }}
+            >
+              {[ALL_MAIL, ...accounts].map(acct => <option key={acct.id} value={acct.id}>{acct.label}</option>)}
+            </select>
 
             {/* Search */}
             <div className="relative">
@@ -608,7 +618,7 @@ export function EmailPage() {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search messages…"
-                className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border outline-none transition-all focus:border-blue-300 focus:ring-2 focus:ring-blue-50"
+                className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border outline-none transition-all focus:border-blue-300 focus:ring-2 focus:ring-blue-50"
                 style={{ borderColor: '#e2e8f0', background: '#f8fafc', color: '#0f172a' }}
               />
               {searchQuery && (
@@ -620,6 +630,23 @@ export function EmailPage() {
                 </button>
               )}
             </div>
+
+            <div className="flex items-center gap-1 mt-3 overflow-x-auto">
+              {visibleFolders.map(folder => (
+                <button
+                  key={folder.key}
+                  onClick={() => setActiveFolder(folder)}
+                  className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors"
+                  style={{
+                    background: activeFolder.key === folder.key ? '#eaf2ff' : 'transparent',
+                    color: activeFolder.key === folder.key ? '#2563eb' : '#94a3b8',
+                  }}
+                >
+                  {folder.name}
+                </button>
+              ))}
+            </div>
+            {inboxNote && <p className="text-[10px] mt-2 text-slate-400">{inboxNote}</p>}
           </div>
 
           {/* Message list */}
@@ -664,24 +691,24 @@ export function EmailPage() {
                     <button
                       key={msg.uid}
                       onClick={() => openMessage(msg)}
-                      className="w-full text-left px-4 py-3 border-b transition-all hover:bg-gray-50/80 active:bg-gray-100"
+                      className="w-full text-left px-5 py-3.5 border-b transition-all hover:bg-slate-50 active:bg-slate-100"
                       style={{
-                        borderColor: '#f1f5f9',
-                        background: isActive ? '#eff6ff' : undefined,
+                        borderColor: '#edf1f5',
+                        background: isActive ? '#f5f9ff' : undefined,
                         borderLeft: isActive ? '3px solid #2563eb' : '3px solid transparent',
                       }}
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-3.5">
                         {/* Avatar */}
                         <div
-                          className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5"
+                          className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5"
                           style={{ background: msg.source === 'sent' ? '#6366f1' : '#2563eb' }}
                         >
                           {msg.source === 'sent' ? <Send size={13} /> : senderInitial(msg.from)}
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-2 mb-0.5">
+                          <div className="flex items-center justify-between gap-2 mb-1">
                             <span
                               className="text-[13px] truncate"
                               style={{ color: '#0f172a', fontWeight: msg.seen ? 400 : 600 }}
@@ -692,16 +719,16 @@ export function EmailPage() {
                               {fmtDate(msg.date)}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 mb-1">
                             {!msg.seen && (
                               <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: '#2563eb' }} />
                             )}
-                            <p className="text-xs truncate" style={{ color: msg.seen ? '#94a3b8' : '#475569' }}>
+                            <p className="text-[13px] truncate" style={{ color: msg.seen ? '#64748b' : '#334155', fontWeight: msg.seen ? 500 : 700 }}>
                               {msg.subject || '(no subject)'}
                             </p>
                           </div>
                           {partyAddr && (
-                            <p className="text-[11px] truncate mt-0.5" style={{ color: '#cbd5e1' }}>
+                            <p className="text-[11px] truncate" style={{ color: '#a8b4c4' }}>
                               {partyAddr}
                             </p>
                           )}
@@ -718,13 +745,13 @@ export function EmailPage() {
         {/* ═══ MESSAGE DETAIL ═══ */}
         <div className={`min-h-0 flex-1 flex-col overflow-hidden ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
           {!selectedMeta ? (
-            <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: '#f1f5f9' }}>
-                <Mail size={28} style={{ color: '#cbd5e1' }} />
+            <div className="flex-1 flex flex-col items-center justify-center gap-5 px-6">
+              <div className="w-20 h-20 rounded-3xl flex items-center justify-center" style={{ background: '#eaf2ff' }}>
+                <Mail size={30} style={{ color: '#2563eb' }} />
               </div>
               <div className="text-center">
-                <p className="text-sm font-semibold" style={{ color: '#64748b' }}>Select a message to read</p>
-                <p className="text-xs mt-1" style={{ color: '#94a3b8' }}>Or compose a new message to get started</p>
+                <p className="text-base font-bold" style={{ color: '#0f172a' }}>Your reading space</p>
+                <p className="text-sm mt-1 max-w-xs" style={{ color: '#94a3b8' }}>Select a message from {activeAccount?.label || 'a mailbox'} to read, reply, or archive it.</p>
               </div>
               <button
                 onClick={() => { setComposeDefaults({ to: '', subject: '' }); setCompose(true); }}
@@ -737,7 +764,7 @@ export function EmailPage() {
           ) : (
             <div className="flex h-full flex-col overflow-hidden">
               {/* Mobile back button */}
-              <div className="md:hidden px-4 py-2 border-b" style={{ borderColor: '#f1f5f9' }}>
+              <div className="md:hidden px-4 py-2 border-b bg-white" style={{ borderColor: '#e7ecf3' }}>
                 <button
                   onClick={() => { setMobileView('list'); setSelected(null); setSelectedMeta(null); }}
                   className="flex items-center gap-1 text-xs font-medium" style={{ color: '#2563eb' }}
@@ -747,9 +774,23 @@ export function EmailPage() {
               </div>
 
               {/* Message header */}
-              <div className="px-6 py-4 border-b bg-white" style={{ borderColor: '#f1f5f9' }}>
+              <div className="px-5 md:px-8 py-5 border-b bg-white" style={{ borderColor: '#e7ecf3' }}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span
+                        className="px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider"
+                        style={{
+                          background: selectedMeta.source === 'sent' ? '#f0edff' : '#eaf2ff',
+                          color: selectedMeta.source === 'sent' ? '#6366f1' : '#2563eb',
+                        }}
+                      >
+                        {selectedMeta.source === 'sent' ? 'Sent message' : 'Incoming message'}
+                      </span>
+                      <span className="text-[11px] flex items-center gap-1" style={{ color: '#94a3b8' }}>
+                        <Clock size={11} /> {selectedMeta.date ? ngSmartDate(selectedMeta.date) : ''}
+                      </span>
+                    </div>
                     <h2 className="text-base font-bold leading-snug" style={{ color: '#0f172a' }}>
                       {selectedMeta.subject || '(no subject)'}
                     </h2>
@@ -781,7 +822,7 @@ export function EmailPage() {
                     <button
                       onClick={handleReply}
                       disabled={loadingMsg || !selected}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-blue-50 disabled:opacity-40"
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-blue-50 disabled:opacity-40"
                       style={{ color: '#2563eb' }}
                     >
                       <Reply size={14} /> <span className="hidden sm:inline">Reply</span>
@@ -789,7 +830,7 @@ export function EmailPage() {
                     <button
                       onClick={toggleArchive}
                       disabled={archiving || loadingMsg || !selected}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-amber-50 disabled:opacity-40"
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors hover:bg-amber-50 disabled:opacity-40"
                       style={{ color: '#d97706' }}
                     >
                       {selectedMeta.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
@@ -809,14 +850,14 @@ export function EmailPage() {
               )}
 
               {/* Body */}
-              <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex-1 overflow-y-auto p-5 md:p-8">
                 {loadingMsg ? (
                   <div className="flex flex-col items-center justify-center h-48 gap-3">
                     <Loader2 size={22} className="animate-spin" style={{ color: '#2563eb' }} />
                     <p className="text-xs" style={{ color: '#94a3b8' }}>Loading message…</p>
                   </div>
                 ) : selected ? (
-                  <div className="bg-white rounded-2xl shadow-sm border overflow-hidden" style={{ borderColor: '#f1f5f9' }}>
+                  <div className="max-w-4xl bg-white rounded-2xl shadow-sm border overflow-hidden" style={{ borderColor: '#e7ecf3' }}>
                     {selected.html && (
                       <div className="flex items-center justify-between px-4 py-2.5 border-b" style={{ borderColor: '#f1f5f9' }}>
                         <span className="text-[11px] font-medium" style={{ color: '#94a3b8' }}>Content</span>
