@@ -1,0 +1,31 @@
+@import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap");
+
+:root {
+  --izy-navy: #0d1b2e;
+  --izy-blue: #1a5fab;
+  --izy-orange: #f26522;
+  --izy-yellow: #ffc425;
+  --font-body: "Barlow", sans-serif;
+  --font-ui: "Inter", sans-serif;
+}
+
+.email-workspace {
+  font-family: var(--font-body);
+}
+
+.email-workspace button,
+.email-workspace input,
+.email-workspace textarea,
+.email-workspace select {
+  font-family: var(--font-body);
+}
+
+.email-workspace ::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.email-workspace ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
