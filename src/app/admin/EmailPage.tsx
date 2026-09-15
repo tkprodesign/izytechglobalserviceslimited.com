@@ -101,6 +101,7 @@ function truncate(text: string, max: number) {
 
 function ComposeModal({
   accounts,
+  apiBase,
   defaultAccount,
   defaultTo = '',
   defaultSubject = '',
@@ -108,6 +109,7 @@ function ComposeModal({
   onClose,
 }: {
   accounts: Account[];
+  apiBase: string;
   defaultAccount: string;
   defaultTo?: string;
   defaultSubject?: string;
@@ -866,6 +868,7 @@ export function EmailPage() {
       {compose && (
         <ComposeModal
           accounts={accounts}
+          apiBase={apiBase}
           defaultAccount={composeAccountId()}
           defaultTo={composeDefaults.to}
           defaultSubject={composeDefaults.subject}

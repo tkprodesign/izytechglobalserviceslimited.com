@@ -1,6 +1,6 @@
 # IZY Technologies Global Services Limited
 
-Official digital platform — React/Vite frontend + Node.js/Express backend + Neon PostgreSQL.
+Official digital platform — a Next.js app serving the React site, Express API, and admin panel from one process.
 
 **Brand naming:** The full legal name is **Izy Technologies Global Services Limited**. The preferred short alias is **Izy Tech Services**. Avoid using “IZY” as a standalone company reference in customer-facing copy.
 
@@ -9,40 +9,38 @@ Official digital platform — React/Vite frontend + Node.js/Express backend + Ne
 > ## ⚠️ AGENT RULE — READ BEFORE ANY WORK ⚠️
 >
 > **The admin panel and dev panel share business/content management features.**
-> Technical tools are developer-only. The Email Manager (`EmailPage.tsx`) is under `/dev/email` and is available only to the developer role.
+> Technical tools are developer-only. The Email Manager is available to authenticated admins at `/admin/email` and to developers at `/dev/email`.
 >
 > Changes to shared business/content features apply to both roles. Changes to technical tools must remain developer-only unless explicitly requested otherwise.
 >
 > Shared control-panel features include:
 > - Dashboard, Contacts, Quotes, Social Media, Store Products, Store Enquiries
-> - Sidebar navigation (`frontend/src/app/admin/DashboardLayout.tsx`)
+> - Sidebar navigation (`src/app/admin/DashboardLayout.tsx`)
 >
-> The developer sidebar also includes system status, system info, services content, and Email Manager. Admins must be redirected away from developer routes and receive a `403` from developer-only API endpoints.
+> The developer sidebar also includes system status, system info, services content, and Email Manager. Admins must be redirected away from developer-only routes and receive a `403` from developer-only API endpoints.
 > Do NOT create separate admin and dev versions of shared features unless explicitly told to.
 
 ---
 
 ## How to run on Replit
 
-Two workflows are configured:
+The application runs as one workflow:
 
 | Workflow | Command | Port | Purpose |
 |---|---|---|---|
-| **Start application** | `cd frontend && pnpm run dev` | 5000 | React frontend (webview) |
-| **Backend API** | `cd backend && node server.js` | 3000 | Express REST API |
+| **Start application** | `PORT=5000 npm run dev` | 5000 | Next.js site, admin panel, and API |
 
-Both start automatically. The preview pane shows the frontend.
+It starts automatically. The preview pane shows the site and admin panel, while `/api/*` is handled by the same server.
 
 Install dependencies before first run:
 ```
-cd frontend && pnpm install
-cd backend && npm install
+npm ci
 ```
 
 ## Stack
 
-- **Frontend**: React 18, Vite, TypeScript, Tailwind CSS v4, Framer Motion, Radix UI
-- **Backend**: Node.js, Express, PostgreSQL (`pg`), JWT auth
+- **App**: Next.js, React 18, TypeScript, Tailwind CSS v4, Framer Motion, Radix UI
+- **API**: Node.js, Express, PostgreSQL (`pg`), JWT auth
 - **Database**: Neon PostgreSQL (connection via `DATABASE_URL` secret)
 
 ## Environment secrets
@@ -70,7 +68,7 @@ All secrets are stored in Replit's secret manager and are automatically availabl
 | `NOREPLY_EMAIL` | No-reply send-only address |
 | `RESEND_API_KEY` | Resend API for receiving and delivery from all managed mailboxes |
 
-The Email Manager reads inbound messages from Resend Receiving and sends through Resend over HTTPS. Resend provides one Inbox per managed address; it does not provide IMAP folders or persistent read/unread state. Receiving remains pending until the domain's root MX records are changed to the exact values shown in the Resend Receiving dashboard. The email account registry is defined in `backend/routes/email.js`.
+The Email Manager reads inbound messages from Resend Receiving and sends through Resend over HTTPS. Resend provides one Inbox per managed address; it does not provide IMAP folders or persistent read/unread state. Receiving remains pending until the domain's root MX records are changed to the exact values shown in the Resend Receiving dashboard. The email account registry is defined in `server/routes/email.js`.
 
 ### Cloudflare (product image uploads)
 | Secret | Purpose |
@@ -87,19 +85,20 @@ The Email Manager reads inbound messages from Resend Receiving and sends through
 
 ## Database
 
-Initial schema lives in `backend/migrations/001_initial.sql` (tables: `contact_submissions`, `quote_requests`). Already applied to the Neon database.
+Initial schema lives in `server/migrations/001_initial.sql` (tables: `contact_submissions`, `quote_requests`). Already applied to the Neon database.
 
 ## Production deployment
 
-- **Frontend**: Cloudflare Pages (built from GitHub)
-- **Backend**: Render (`backend/` root directory)
+- **Application**: Next.js deployment (site and API together)
 - **Database**: Neon PostgreSQL
 
 ## Project structure
 
 ```
-frontend/   React + Vite app
-backend/    Express API server
+app/        Next.js route shell
+src/        React site, admin, and developer panels
+server/     Express API library and database initialization
+pages/api/  Next.js bridge for the Express API
 docs/       Design system, guides, attributions
 ```
 
