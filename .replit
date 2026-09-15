@@ -47,9 +47,8 @@ localPort = 23636
 externalPort = 3002
 
 [deployment]
-deploymentTarget = "static"
-build = ["bash", "-c", "cd frontend && pnpm run build"]
-publicDir = "frontend/dist"
+deploymentTarget = "cloudrun"
+run = ["npm", "run", "start"]
 
 [userenv]
 
