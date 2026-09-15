@@ -129,50 +129,55 @@ async function generateInvoicePdf(inv: Invoice) {
   const margin = 20;
   const contentW = pageW - margin * 2;
   const x = margin;
+  const RC_NUMBER = 'RC: 8705481';
 
-  // Header stripe
+  // ── Header stripe ──────────────────────────────────────────────────────
   doc.setFillColor(15, 23, 46);
-  doc.rect(0, 0, pageW, 35, 'F');
+  doc.rect(0, 0, pageW, 36, 'F');
+
+  // Company name — top-left
   doc.setTextColor(255, 255, 255);
   doc.setFont('Helvetica', 'bold');
   doc.setFontSize(18);
-  doc.text('IZY TECH SERVICES', x, 20);
+  doc.text('IZY TECH SERVICES', x, 18);
   doc.setFont('Helvetica', 'normal');
   doc.setFontSize(10);
-  doc.text('Technology and Energy Solutions', x, 26);
+  doc.text('Technology and Energy Solutions', x, 24);
 
-  // Invoice title & number
+  // RC number — prominent, right-aligned in header
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text(RC_NUMBER, pageW - margin, 14, { align: 'right' });
+
+  // Invoice title — below RC number in header, right-aligned
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text((inv.title || 'Invoice').toUpperCase(), pageW - margin, 28, { align: 'right' });
+
+  // ── Below header: invoice number + status badge ────────────────────────
   doc.setTextColor(15, 23, 46);
   doc.setFont('Helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.text((inv.title || 'Invoice').toUpperCase(), pageW - margin, 18, { align: 'right' });
-  doc.setFontSize(9);
-  doc.setFont('Helvetica', 'normal');
-  doc.setTextColor(100, 116, 139);
-  doc.text('Invoice #' + inv.invoice_number, pageW - margin, 27, { align: 'right' });
+  doc.setFontSize(10);
+  doc.text(inv.invoice_number, x, 46);
 
-  // Divider
-  doc.setDrawColor(226, 232, 240);
-  doc.setLineWidth(0.5);
-  doc.line(x, 40, pageW - margin, 40);
-
-  // Status badge
-  const statusY = 46;
-  const statusColorNum = (inv.status === 'paid' ? [22, 163, 74] : inv.status === 'overdue' ? [220, 38, 38] : [180, 83, 9]);
+  // Status badge — right-aligned
+  const statusBadgeY = 39;
+  const statusColorNum: [number, number, number] = (inv.status === 'paid' ? [22, 163, 74] : inv.status === 'overdue' ? [220, 38, 38] : [180, 83, 9]);
   doc.setFillColor(...statusColorNum);
-  doc.roundedRect(pageW - margin - 40, statusY - 3, 40, 8, 1.5, 1.5, 'F');
+  doc.roundedRect(pageW - margin - 40, statusBadgeY, 40, 9, 1.5, 1.5, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('Helvetica', 'bold');
   doc.setFontSize(8);
-  doc.text(statusLabel(inv.status).toUpperCase(), pageW - margin - 20, statusY + 1.5, { align: 'center' });
+  doc.text(statusLabel(inv.status).toUpperCase(), pageW - margin - 20, statusBadgeY + 5.5, { align: 'center' });
 
-  // Bill to / Details
-  doc.setTextColor(51, 65, 81);
-  doc.setFont('Helvetica', 'normal');
-  doc.setFontSize(9);
+  // Divider below invoice number
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.5);
+  doc.line(x, 50, pageW - margin, 50);
 
+  // ── Bill To / Invoice Details ──────────────────────────────────────────
   const col2X = x + contentW / 2 + 8;
-  let y = 62;
+  let y = 58;
 
   // Bill to
   doc.setFont('Helvetica', 'bold');
@@ -195,36 +200,37 @@ async function generateInvoicePdf(inv: Invoice) {
     addrLines.forEach(line => { doc.text(line, x, y); y += 4.5; });
   }
 
-  // Details
-  y = 62;
+  // Invoice details (right column)
+  let detailY = 58;
   doc.setFont('Helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(100, 116, 139);
-  doc.text('INVOICE DETAILS', col2X, y);
-  y += 5;
+  doc.text('INVOICE DETAILS', col2X, detailY);
+  detailY += 5;
   doc.setFont('Helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(100, 116, 139);
-  doc.text('Invoice:', col2X, y);
+  doc.text('Invoice:', col2X, detailY);
   doc.setTextColor(15, 23, 46);
   doc.setFont('Helvetica', 'bold');
-  doc.text(inv.invoice_number, col2X + 32, y);
-  y += 5;
+  doc.text(inv.invoice_number, col2X + 32, detailY);
+  detailY += 5;
   doc.setFont('Helvetica', 'normal');
   doc.setTextColor(100, 116, 139);
-  doc.text('Date:', col2X, y);
+  doc.text('Date:', col2X, detailY);
   doc.setTextColor(15, 23, 46);
-  doc.text(ngDate(inv.created_at), col2X + 22, y);
+  doc.text(ngDate(inv.created_at), col2X + 22, detailY);
   if (inv.due_date) {
-    y += 5;
+    detailY += 5;
     doc.setTextColor(100, 116, 139);
-    doc.text('Due:', col2X, y);
+    doc.text('Due:', col2X, detailY);
     doc.setTextColor(15, 23, 46);
-    doc.text(fmtDate(inv.due_date), col2X + 22, y);
+    doc.text(fmtDate(inv.due_date), col2X + 22, detailY);
   }
 
   // Divider
-  y = Math.max(doc.getY() + 14, 100);
+  const sectionBottom = Math.max(y, detailY);
+  y = sectionBottom + 10;
   doc.setDrawColor(226, 232, 240);
   doc.line(x, y, pageW - margin, y);
   y += 10;
@@ -259,7 +265,7 @@ async function generateInvoicePdf(inv: Invoice) {
     doc.text(naira(item.amount), colXPositions[3] + 2, y + descH / 2, { align: 'right' });
     doc.line(colXPositions[0], y + descH + 1, pageW - margin, y + descH + 1);
     y += descH + 4;
-    if (y > 250) {
+    if (y > 240) {
       doc.addPage();
       y = 20;
       doc.setFont('Helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(100, 116, 139);
@@ -313,37 +319,37 @@ async function generateInvoicePdf(inv: Invoice) {
   y += 8;
 
   doc.setFont('Helvetica', 'bold');
-  doc.setFontSize(14);
+  doc.setFontSize(13);
   doc.setTextColor(15, 23, 46);
   doc.text('TOTAL DUE', totalStartX, y);
   doc.text(naira(inv.total), pageW - margin, y, { align: 'right' });
 
-  // Payment details
+  // ── Payment details ────────────────────────────────────────────────────
   let paymentY = y + 16;
   doc.setFont('Helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(100, 116, 139);
   doc.text('PAYMENT DETAILS', x, paymentY);
-  paymentY += 12;
+  paymentY += 10;
   doc.setFont('Helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(100, 116, 139);
   doc.text('Account Name: ' + (inv.bank_account_name || ''), x, paymentY);
-  paymentY += 11;
+  paymentY += 10;
   doc.text('Account Number: ' + (inv.bank_account_number || ''), x, paymentY);
-  paymentY += 11;
+  paymentY += 10;
   doc.text('Bank: ' + (inv.bank_name || ''), x, paymentY);
 
-  // Footer
-  const footerY = 270;
+  // ── Footer ─────────────────────────────────────────────────────────────
+  const footerY = 280;
   doc.setDrawColor(226, 232, 240);
   doc.setLineWidth(0.5);
-  doc.line(x, footerY - 10, pageW - margin, footerY - 10);
+  doc.line(x, footerY - 8, pageW - margin, footerY - 8);
   doc.setFont('Helvetica', 'normal');
-  doc.setFontSize(8);
+  doc.setFontSize(7);
   doc.setTextColor(156, 163, 175);
   doc.text('Izy Technologies Global Services Limited', x, footerY);
-  doc.text('+234 810 126 2814  |  info@izytechglobalservices.com', x, footerY + 4);
+  doc.text('RC: 8705481  |  +234 810 126 2814  |  info@izytechglobalservices.com', x, footerY + 4);
   doc.text('Mon-Sat, 8am-6pm', x, footerY + 8);
 
   return doc;
