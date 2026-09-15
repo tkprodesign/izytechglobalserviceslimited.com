@@ -21,6 +21,7 @@ const nextConfig = {
   serverExternalPackages: ['express', 'pg', 'pdfkit'],
 
   webpack: (config, { isServer }) => {
+    config.resolve.alias['@'] = path.resolve(__dirname, './src');
     config.resolve.alias['@server'] = path.resolve(__dirname, './server');
 
     // The SPA was written for Vite and reads import.meta.env.VITE_API_URL.
