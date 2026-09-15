@@ -216,7 +216,7 @@ export function DashboardLayout({ children }: Props) {
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1 overflow-auto">
+      <main className="min-h-0 min-w-0 flex-1 overflow-auto">
         <header className="admin-mobile-header sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-white px-4 md:hidden" style={{ borderColor: '#eef1f6' }}>
           <button
             type="button"

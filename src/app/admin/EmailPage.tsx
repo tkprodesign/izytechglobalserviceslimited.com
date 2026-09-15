@@ -450,7 +450,10 @@ export function EmailPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden" style={{ background: '#f8fafc' }}>
+      <div
+        className="flex min-h-0 h-[calc(100dvh-3.5rem)] overflow-hidden md:h-[100dvh]"
+        style={{ background: '#f8fafc' }}
+      >
 
         {/* ═══ SIDEBAR: Accounts ═══ */}
         <div className="hidden md:flex w-56 flex-shrink-0 flex-col border-r" style={{ background: '#fff', borderColor: '#f1f5f9' }}>
@@ -551,7 +554,7 @@ export function EmailPage() {
         </div>
 
         {/* ═══ MESSAGE LIST ═══ */}
-        <div className={`flex-1 md:max-w-sm flex flex-col border-r ${mobileView === 'detail' ? 'hidden md:flex' : 'flex'}`} style={{ background: '#fff', borderColor: '#f1f5f9' }}>
+        <div className={`min-h-0 flex-1 md:max-w-sm flex flex-col border-r ${mobileView === 'detail' ? 'hidden md:flex' : 'flex'}`} style={{ background: '#fff', borderColor: '#f1f5f9' }}>
           {/* Header */}
           <div className="px-4 pt-4 pb-3 border-b" style={{ borderColor: '#f1f5f9' }}>
             {/* Mobile back to mailboxes */}
@@ -713,7 +716,7 @@ export function EmailPage() {
         </div>
 
         {/* ═══ MESSAGE DETAIL ═══ */}
-        <div className={`flex-1 flex-col overflow-hidden ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
+        <div className={`min-h-0 flex-1 flex-col overflow-hidden ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
           {!selectedMeta ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6">
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: '#f1f5f9' }}>
