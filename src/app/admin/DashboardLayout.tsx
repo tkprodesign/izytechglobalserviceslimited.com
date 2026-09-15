@@ -66,6 +66,7 @@ export function DashboardLayout({ children }: Props) {
 
   const managementItems: NavigationItem[] = [
     { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/admin/email', label: 'Email Manager', icon: Inbox },
     { to: '/admin/contacts', label: 'Contacts', icon: Mail },
     { to: '/admin/quotes', label: 'Quote Requests', icon: FileText },
     { to: '/admin/assessments', label: 'Site Assessments', icon: ClipboardCheck },
@@ -74,7 +75,6 @@ export function DashboardLayout({ children }: Props) {
     { to: '/admin/projects', label: 'Projects', icon: FolderOpen },
     { to: '/admin/testimonials', label: 'Testimonials', icon: MessageSquare },
     { to: '/admin/invoices', label: 'Invoices', icon: Receipt },
-    { to: '/admin/email', label: 'Email Manager', icon: Inbox },
   ];
 
 

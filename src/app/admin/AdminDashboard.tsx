@@ -69,6 +69,7 @@ function fmt(iso: string) {
 
 const quickAccessItems = [
   { to: '/admin/contacts', label: 'Contacts', description: 'Review incoming messages', icon: Mail, color: '#1d70c9' },
+  { to: '/admin/email', label: 'Email Manager', description: 'Send and manage company email', icon: Mail, color: '#2563eb' },
   { to: '/admin/quotes', label: 'Quote Requests', description: 'Follow up on new opportunities', icon: FileText, color: '#f26522' },
   { to: '/admin/assessments', label: 'Site Assessments', description: 'Track paid assessments', icon: ClipboardCheck, color: '#16a34a' },
   { to: '/admin/enquiries', label: 'Store Enquiries', description: 'Respond to product interest', icon: ClipboardList, color: '#8b5cf6' },
