@@ -63,24 +63,46 @@ All secrets are stored in Replit's secret manager and are automatically availabl
 |---|---|
 | `INFO_EMAIL` | Info mailbox (`info@izytechglobalservices.com`) |
 | `ADMIN_EMAIL` | Admin mailbox |
+| `CAREERS_EMAIL` | Careers mailbox |
+| `DEVELOPER_EMAIL` | Developer mailbox / developer-panel identity |
+| `INVOICE_EMAIL` | Invoice mailbox |
 | `SALES_EMAIL` | Sales mailbox |
 | `SUPPORT_EMAIL` | Support mailbox |
 | `NOREPLY_EMAIL` | No-reply send-only address |
+| `INFO_EMAIL_PASSWORD` | Info mailbox credential |
+| `ADMIN_EMAIL_PASSWORD` | Admin mailbox credential |
+| `CAREERS_EMAIL_PASSWORD` | Careers mailbox credential |
+| `DEVELOPER_EMAIL_PASSWORD` | Developer-panel login credential |
+| `INVOICE_EMAIL_PASSWORD` | Invoice mailbox credential |
+| `SALES_EMAIL_PASSWORD` | Sales mailbox credential |
+| `SUPPORT_EMAIL_PASSWORD` | Support mailbox credential |
 | `RESEND_API_KEY` | Resend API for receiving and delivery from all managed mailboxes |
 
 The Email Manager reads inbound messages from Resend Receiving and sends through Resend over HTTPS. Resend provides one Inbox per managed address; it does not provide IMAP folders or persistent read/unread state. Receiving remains pending until the domain's root MX records are changed to the exact values shown in the Resend Receiving dashboard. The email account registry is defined in `server/routes/email.js`.
 
-### Cloudflare (product image uploads)
+### Cloudflare Images
 | Secret | Purpose |
 |---|---|
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account for Images |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account identifier |
 | `CLOUDFLARE_API_TOKEN` | API token scoped to Cloudflare Images |
 | `CLOUDFLARE_IMAGE_HASH` | Delivery hash for the Cloudflare Images domain |
+| `CLOUDFLARE_API_NAME` | Cloudflare Images API name/configuration |
+
+### Cloudflare R2 (uploads)
+| Secret / variable | Purpose |
+|---|---|
+| `CLOUDFLARE_S3_API_ENDPOINT` | R2 S3-compatible API endpoint |
+| `CLOUDFLARE_ACCESS_KEY_ID` | R2 access key ID |
+| `CLOUDFLARE_SECRET_ACCESS_KEY` | R2 secret access key |
+| `CLOUDFLARE_PUBLIC_BUCKET` | Public bucket for site/project images (`izy-public-images`) |
+| `CLOUDFLARE_PRIVATE_BUCKET` | Private bucket for assessment attachments (`izy-private-assessments`) |
+| `CLOUDFLARE_R2_PUBLIC_URL` | Public R2 delivery base URL |
 
 ### Infrastructure
 | Secret | Purpose |
 |---|---|
 | `RENDER_API_KEY` | Render API key used for deployment administration from Replit |
+| `RENDER_SERVICE_ID` | Render service identifier |
 | `GITHUB_TOKEN` | GitHub token used to push approved changes to the canonical repository from Replit |
 
 ## Database
