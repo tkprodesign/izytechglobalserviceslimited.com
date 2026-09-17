@@ -43,9 +43,93 @@ function fmtDate(d) {
   });
 }
 
+const FOOTER_H = 58;
+const CONTENT_BOTTOM_GAP = 14;
+const ITEM_LINE_H = 11.5;
+
+function wrapTextByWidth(doc, value, width) {
+  const paragraphs = String(value || '').split(/\r?\n/);
+  const lines = [];
+
+  for (const paragraph of paragraphs) {
+    const words = paragraph.trim().split(/\s+/).filter(Boolean);
+    if (!words.length) {
+      lines.push('');
+      continue;
+    }
+
+    let current = '';
+    for (const word of words) {
+      // Split unusually long tokens so they cannot force PDFKit to create a
+      // page while trying to wrap a single unbroken string.
+      if (doc.widthOfString(word) > width) {
+        if (current) {
+          lines.push(current);
+          current = '';
+        }
+        let chunk = '';
+        for (const character of word) {
+          const candidate = chunk + character;
+          if (chunk && doc.widthOfString(candidate) > width) {
+            lines.push(chunk);
+            chunk = character;
+          } else {
+            chunk = candidate;
+          }
+        }
+        if (chunk) current = chunk;
+        continue;
+      }
+
+      const candidate = current ? current + ' ' + word : word;
+      if (current && doc.widthOfString(candidate) > width) {
+        lines.push(current);
+        current = word;
+      } else {
+        current = candidate;
+      }
+    }
+    if (current) lines.push(current);
+  }
+
+  return lines.length ? lines : ['\u2014'];
+}
+
+function drawInvoiceTableHeader(doc, geometry, y) {
+  const { M, RIGHT, qtyW, qtyX, unitW, unitX, amtW, amtX, descX } = geometry;
+  const headH = 26;
+  doc.rect(M, y, RIGHT - M, headH).fill('#f4f6fa');
+  doc.fillColor(MUTED).font('bold').fontSize(8);
+  doc.text('DESCRIPTION', descX, y + 9, { characterSpacing: 0.8 });
+  doc.text('QTY', qtyX, y + 9, { width: qtyW, align: 'center', characterSpacing: 0.8 });
+  doc.text('UNIT PRICE', unitX, y + 9, { width: unitW, align: 'right', characterSpacing: 0.8 });
+  doc.text('AMOUNT', amtX, y + 9, { width: amtW, align: 'right', characterSpacing: 0.8 });
+  return y + headH;
+}
+
 /**
- * Generates the official IZY invoice PDF with logo, ₦ support (DejaVu) and
- * a clean fixed-grid layout.
+ * Starts a continuation page. The first page carries the full customer or
+ * manager header; later pages carry a compact identifier and table header.
+ */
+function startContinuationPage(doc, inv, geometry, includeTableHeader) {
+  doc.addPage({ size: 'A4', margin: 0 });
+  const { W, M, RIGHT } = geometry;
+  doc.fillColor(NAVY).font('bold').fontSize(10)
+    .text('INVOICE CONTINUED', M, 34, { characterSpacing: 1 });
+  doc.fillColor(MUTED).font('body').fontSize(9)
+    .text(String(inv.invoice_number || 'Invoice'), RIGHT - 180, 35, {
+      width: 180,
+      align: 'right',
+    });
+  doc.rect(M, 55, W - M * 2, 1).fill(LINE);
+
+  let y = 72;
+  return includeTableHeader ? drawInvoiceTableHeader(doc, geometry, y) : y;
+}
+
+/**
+ * Generates the official IZY invoice PDF with logo, ₦ support (DejaVu), and
+ * safe multi-page layout for both customer invoices and manager letters.
  * @returns {Promise<Buffer>}
  */
 function generateInvoicePdf(inv, options = {}) {
@@ -80,9 +164,20 @@ function generateInvoicePdf(inv, options = {}) {
     const money = value => naira(value, currencyPrefix);
 
     const W = doc.page.width;   // 595.28
-    const H = doc.page.height;  // 841.89
     const M = 48;
     const RIGHT = W - M;
+    const geometry = {
+      W, M, RIGHT,
+      qtyW: 52,
+      unitW: 96,
+      amtW: 110,
+    };
+    geometry.qtyX = RIGHT - (geometry.amtW + geometry.unitW + geometry.qtyW);
+    geometry.unitX = geometry.qtyX + geometry.qtyW;
+    geometry.amtX = geometry.unitX + geometry.unitW;
+    geometry.descX = M + 12;
+    geometry.descW = geometry.qtyX - geometry.descX - 12;
+    const contentBottom = () => doc.page.height - FOOTER_H - CONTENT_BOTTOM_GAP;
 
     /* ── Header band with logo ───────────────────────────────── */
     const headerH = 148;
@@ -186,15 +281,7 @@ function generateInvoicePdf(inv, options = {}) {
       recipientBottom = by;
     }
 
-    /* ── Invoice title + items table (fixed grid) ─────────────── */
-    // Column geometry is computed once so headers and cells can never drift.
-    const qtyW = 52, unitW = 96, amtW = 110;
-    const qtyX = RIGHT - (amtW + unitW + qtyW);
-    const unitX = qtyX + qtyW;
-    const amtX = unitX + unitW;
-    const descX = M + 12;
-    const descW = qtyX - descX - 12;
-
+    /* ── Invoice title + items table ──────────────────────────── */
     let ty = Math.max(recipientBottom + 24, 300);
     const invoiceTitle = String(inv.title || 'Invoice');
     doc.fillColor(NAVY).font('bold').fontSize(18)
@@ -202,39 +289,87 @@ function generateInvoicePdf(inv, options = {}) {
     ty += doc.heightOfString(invoiceTitle, { width: W - M * 2 }) + 10;
     doc.moveTo(M + 180, ty).lineTo(RIGHT - 180, ty).lineWidth(1).stroke(GOLD);
     ty += 14;
+    ty = drawInvoiceTableHeader(doc, geometry, ty);
 
-    // Header row
-    const headH = 26;
-    doc.rect(M, ty, W - M * 2, headH).fill('#f4f6fa');
-    doc.fillColor(MUTED).font('bold').fontSize(8);
-    doc.text('DESCRIPTION', descX, ty + 9, { characterSpacing: 0.8 });
-    doc.text('QTY', qtyX, ty + 9, { width: qtyW, align: 'center', characterSpacing: 0.8 });
-    doc.text('UNIT PRICE', unitX, ty + 9, { width: unitW, align: 'right', characterSpacing: 0.8 });
-    doc.text('AMOUNT', amtX, ty + 9, { width: amtW, align: 'right', characterSpacing: 0.8 });
-    ty += headH;
-
-    // Body rows — cursor-based so multi-line descriptions stay aligned
+    // Rows are laid out against the usable page area. This prevents PDFKit's
+    // implicit text pagination from separating the row content from its
+    // background and from placing the footer between line items.
     (inv.line_items || []).forEach((item, i) => {
-      const desc = String(item.description || '\u2014');
       doc.font('body').fontSize(9.5);
-      const descH = doc.heightOfString(desc, { width: descW, lineGap: 1 });
-      const rowH = Math.max(28, descH + 16);
+      const desc = String(item.description || '\u2014');
+      const descriptionLines = wrapTextByWidth(doc, desc, geometry.descW);
+      let lineIndex = 0;
+      let firstChunk = true;
 
-      if (i % 2 === 1) doc.rect(M, ty, W - M * 2, rowH).fill('#fafbfd');
+      while (lineIndex < descriptionLines.length) {
+        if (ty + 28 > contentBottom()) {
+          ty = startContinuationPage(doc, inv, geometry, true);
+        }
 
-      const baseline = ty + 8;
-      doc.fillColor(NAVY).text(desc, descX, baseline, { width: descW, lineGap: 1 });
-      doc.fillColor(SLATE)
-        .text(String(item.quantity ?? ''), qtyX, baseline, { width: qtyW, align: 'center' })
-        .text(money(item.unit_price), unitX, baseline, { width: unitW, align: 'right' });
-      doc.fillColor(NAVY).font('bold')
-        .text(money(item.amount), amtX, baseline, { width: amtW, align: 'right' });
+        const availableLines = Math.max(
+          1,
+          Math.floor((contentBottom() - ty - 16) / ITEM_LINE_H),
+        );
+        const chunk = descriptionLines.slice(lineIndex, lineIndex + availableLines);
+        const rowH = Math.max(28, chunk.length * ITEM_LINE_H + 16);
 
-      doc.moveTo(M, ty + rowH).lineTo(RIGHT, ty + rowH).lineWidth(0.5).stroke(LINE);
-      ty += rowH;
+        if (i % 2 === 1) doc.rect(M, ty, RIGHT - M, rowH).fill('#fafbfd');
+
+        const baseline = ty + 8;
+        doc.fillColor(NAVY).font('body').fontSize(9.5);
+        chunk.forEach((line, lineOffset) => {
+          doc.text(line || ' ', geometry.descX, baseline + lineOffset * ITEM_LINE_H, {
+            width: geometry.descW,
+            lineBreak: false,
+          });
+        });
+
+        // Keep the numeric cells on the first part of a split description.
+        if (firstChunk) {
+          doc.fillColor(SLATE)
+            .text(String(item.quantity ?? ''), geometry.qtyX, baseline, {
+              width: geometry.qtyW,
+              align: 'center',
+              lineBreak: false,
+            })
+            .text(money(item.unit_price), geometry.unitX, baseline, {
+              width: geometry.unitW,
+              align: 'right',
+              lineBreak: false,
+            });
+          doc.fillColor(NAVY).font('bold')
+            .text(money(item.amount), geometry.amtX, baseline, {
+              width: geometry.amtW,
+              align: 'right',
+              lineBreak: false,
+            });
+        }
+
+        doc.moveTo(M, ty + rowH).lineTo(RIGHT, ty + rowH).lineWidth(0.5).stroke(LINE);
+        ty += rowH;
+        lineIndex += chunk.length;
+        firstChunk = false;
+
+        if (lineIndex < descriptionLines.length) {
+          ty = startContinuationPage(doc, inv, geometry, true);
+        }
+      }
     });
 
     /* ── Totals (fixed two-column block, right-aligned) ──────── */
+    const totalRows = [
+      ['Subtotal', money(inv.subtotal), 10],
+      ['Logistics', money(inv.logistics), 10],
+      ['Service Charge', money(inv.service_charge), 10],
+      [inv.tax_label || 'VAT', money(inv.tax_amount), 10],
+      ...(Number(inv.discount) > 0 ? [['Discount', '-' + money(inv.discount), 10]] : []),
+    ];
+    const totalBlockHeight = 18
+      + totalRows.reduce((sum, [, , size]) => sum + size + 10, 0)
+      + 12 + 14 + 10 + 10;
+    if (ty + totalBlockHeight > contentBottom()) {
+      ty = startContinuationPage(doc, inv, geometry, false);
+    }
     ty += 18;
     const totLabelW = 92, totValW = 155, totGap = 12;
     const totValX = RIGHT - totValW;
@@ -248,46 +383,56 @@ function generateInvoicePdf(inv, options = {}) {
       ty += (opts.size || 10) + 10;
     };
 
-    totalRow('Subtotal', money(inv.subtotal));
-    totalRow('Logistics', money(inv.logistics));
-    totalRow('Service Charge', money(inv.service_charge));
-    totalRow(inv.tax_label || 'VAT', money(inv.tax_amount));
-    if (Number(inv.discount) > 0) totalRow('Discount', '-' + money(inv.discount), { color: '#dc2626' });
+    for (const [label, value] of totalRows) {
+      totalRow(label, value, label === 'Discount' ? { color: '#dc2626' } : {});
+    }
 
     doc.moveTo(totLabelX, ty).lineTo(RIGHT, ty).lineWidth(1).stroke(NAVY);
     ty += 12;
     totalRow('TOTAL', money(inv.total), { bold: true, size: 14 });
 
     /* ── Notes ───────────────────────────────────────────────── */
-    if (inv.notes) {
+    doc.font('body').fontSize(9);
+    const notesText = String(inv.notes || '');
+    const notesLines = notesText ? wrapTextByWidth(doc, notesText, W - M * 2) : [];
+    if (notesLines.length) {
+      const notesBlockHeight = 10 + 14 + notesLines.length * ITEM_LINE_H;
+      if (ty + notesBlockHeight > contentBottom()) {
+        ty = startContinuationPage(doc, inv, geometry, false);
+      }
       ty += 10;
       doc.fillColor(MUTED).font('bold').fontSize(8)
         .text('NOTES', M, ty, { characterSpacing: 1 });
-      const notesText = String(inv.notes);
-      const notesWidth = W - M * 2;
-      doc.fillColor(SLATE).font('body').fontSize(9)
-        .text(notesText, M, ty + 14, { width: notesWidth, lineGap: 2 });
-      ty += 14 + doc.heightOfString(notesText, { width: notesWidth, lineGap: 2 });
+      doc.fillColor(SLATE).font('body').fontSize(9);
+      notesLines.forEach((line, index) => {
+        doc.text(line || ' ', M, ty + 14 + index * ITEM_LINE_H, {
+          width: W - M * 2,
+          lineBreak: false,
+        });
+      });
+      ty += 14 + notesLines.length * ITEM_LINE_H;
     }
 
     if (inv.bank_account_name || inv.bank_account_number || inv.bank_name) {
+      doc.font('body').fontSize(9);
+      const paymentLines = [
+        ...(inv.bank_account_name ? wrapTextByWidth(doc, 'Account Name: ' + String(inv.bank_account_name), W - M * 2) : []),
+        ...(inv.bank_account_number ? wrapTextByWidth(doc, 'Account Number: ' + String(inv.bank_account_number), W - M * 2) : []),
+        ...(inv.bank_name ? wrapTextByWidth(doc, 'Bank: ' + String(inv.bank_name), W - M * 2) : []),
+      ];
+      const paymentBlockHeight = 10 + 14 + paymentLines.length * (ITEM_LINE_H + 4);
+      if (ty + paymentBlockHeight > contentBottom()) {
+        ty = startContinuationPage(doc, inv, geometry, false);
+      }
       ty += 10;
       doc.fillColor(MUTED).font('bold').fontSize(8)
         .text('PAYMENT DETAILS', M, ty, { characterSpacing: 1 });
       doc.fillColor(SLATE).font('body').fontSize(9);
       ty += 14;
-      const paymentWidth = W - M * 2;
-      const paymentLine = text => {
-        doc.text(text, M, ty, { width: paymentWidth, lineGap: 1 });
-        ty += doc.heightOfString(text, { width: paymentWidth, lineGap: 1 }) + 4;
-      };
-      if (inv.bank_account_name) {
-        paymentLine('Account Name: ' + String(inv.bank_account_name));
+      for (const line of paymentLines) {
+        doc.text(line || ' ', M, ty, { width: W - M * 2, lineBreak: false });
+        ty += ITEM_LINE_H + 4;
       }
-      if (inv.bank_account_number) {
-        paymentLine('Account Number: ' + String(inv.bank_account_number));
-      }
-      if (inv.bank_name) paymentLine('Bank: ' + String(inv.bank_name));
     }
 
     /* ── Footer on every page ────────────────────────────────── */
@@ -295,18 +440,29 @@ function generateInvoicePdf(inv, options = {}) {
     for (let i = range.start; i < range.start + range.count; i++) {
       doc.switchToPage(i);
       const pageH = doc.page.height;
-      const footerH = 58;
-      const footerW = W - M * 2;
-      doc.rect(0, pageH - footerH, W, footerH).fill('#f8f9fb');
-      doc.rect(0, pageH - footerH, W, 1).fill(LINE);
+      doc.rect(0, pageH - FOOTER_H, W, FOOTER_H).fill('#f8f9fb');
+      doc.rect(0, pageH - FOOTER_H, W, 1).fill(LINE);
       // Keep each footer line intentional and non-wrapping. A wrapped footer
       // line at the bottom of the page makes PDFKit create a second page.
-      doc.fillColor(MUTED).font('body').fontSize(9.5)
-        .text(COMPANY.legal, M, pageH - 48, { width: footerW, align: 'center', lineBreak: false });
-      doc.fontSize(9)
-        .text(COMPANY.address, M, pageH - 35, { width: footerW, align: 'center', lineBreak: false });
-      doc.fontSize(8.75)
-        .text(COMPANY.registration + '  \u00b7  ' + COMPANY.phone + '  \u00b7  ' + COMPANY.email + '  \u00b7  ' + COMPANY.site, M, pageH - 22, { width: footerW, align: 'center', lineBreak: false });
+      // Calculate the x positions ourselves instead of passing a width to
+      // PDFKit. Its width wrapper can auto-create a new page when this loop
+      // is drawing near the bottom of a switched-to buffered page.
+      const centeredFooterLine = (text, fontSize, y) => {
+        doc.fontSize(fontSize);
+        doc.text(text, (W - doc.widthOfString(text)) / 2, y, { lineBreak: false });
+      };
+      doc.fillColor(MUTED).font('body');
+      centeredFooterLine(COMPANY.legal, 9.5, pageH - 48);
+      centeredFooterLine(COMPANY.address, 9, pageH - 35);
+      centeredFooterLine(
+        COMPANY.registration + '  \u00b7  ' + COMPANY.phone + '  \u00b7  ' + COMPANY.email + '  \u00b7  ' + COMPANY.site,
+        8.75,
+        pageH - 22,
+      );
+      const pageLabel = `Page ${i - range.start + 1} of ${range.count}`;
+      doc.fontSize(8).text(pageLabel, RIGHT - doc.widthOfString(pageLabel), pageH - 9, {
+        lineBreak: false,
+      });
     }
 
     doc.end();
