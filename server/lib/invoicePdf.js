@@ -20,11 +20,12 @@ const COMPANY = {
   registration: 'RC: 8705481',
 };
 
-// Keep the PDF logo beside the server assets. This survives production builds
-// that do not include the frontend's source-import tree at runtime.
-const LOGO_PATH = path.join(__dirname, '..', 'assets', 'izy-logo.png');
-const FONT_REG = path.join(__dirname, '..', 'assets', 'fonts', 'DejaVuSans.ttf');
-const FONT_BOLD = path.join(__dirname, '..', 'assets', 'fonts', 'DejaVuSans-Bold.ttf');
+// Resolve from the project root because Next bundles this module into its API
+// route at build time, changing __dirname away from server/lib in production.
+const SERVER_ASSETS = path.join(process.cwd(), 'server', 'assets');
+const LOGO_PATH = path.join(SERVER_ASSETS, 'izy-logo.png');
+const FONT_REG = path.join(SERVER_ASSETS, 'fonts', 'DejaVuSans.ttf');
+const FONT_BOLD = path.join(SERVER_ASSETS, 'fonts', 'DejaVuSans-Bold.ttf');
 
 function naira(n, prefix = '\u20A6') {
   const v = Number(n) || 0;
