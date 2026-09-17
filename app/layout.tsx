@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import '../src/styles/index.css';
 
 export const metadata: Metadata = {
@@ -21,6 +22,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body style={{ height: '100%', margin: 0 }}>
         {children}
+        <Script id="smartsupp-chat" strategy="afterInteractive">
+          {`var _smartsupp = _smartsupp || {};
+_smartsupp.key = '7b17927f5d4df272347f716050aeead77bfd9b6d';
+window.smartsupp || (function(d) {
+  var s, c, o = smartsupp = function() { o._.push(arguments); };
+  o._ = [];
+  s = d.getElementsByTagName('script')[0];
+  c = d.createElement('script');
+  c.type = 'text/javascript';
+  c.charset = 'utf-8';
+  c.async = true;
+  c.src = 'https://www.smartsuppchat.com/loader.js?';
+  s.parentNode.insertBefore(c, s);
+})(document);`}
+        </Script>
+        <noscript>
+          Powered by{' '}
+          <a href="https://www.smartsupp.com" target="_blank" rel="noreferrer">
+            Smartsupp
+          </a>
+        </noscript>
       </body>
     </html>
   );
