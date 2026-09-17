@@ -284,9 +284,9 @@ function generateInvoicePdf(inv) {
       const pageH = doc.page.height;
       doc.rect(0, pageH - 42, W, 42).fill('#f8f9fb');
       doc.rect(0, pageH - 42, W, 1).fill(LINE);
-      doc.fillColor(MUTED).font('body').fontSize(7.5)
+      doc.fillColor(MUTED).font('body').fontSize(8.5)
         .text(COMPANY.legal + '  \u00b7  ' + COMPANY.address, M, pageH - 29, { width: W - M * 2, align: 'center' });
-      doc.fillColor(MUTED).fontSize(7)
+      doc.fillColor(MUTED).fontSize(8)
         .text(COMPANY.registration + '  \u00b7  For invoice support  \u00b7  ' + COMPANY.phone + '  \u00b7  ' + COMPANY.email + '  \u00b7  ' + COMPANY.site, M, pageH - 17, { width: W - M * 2, align: 'center' });
     }
 
