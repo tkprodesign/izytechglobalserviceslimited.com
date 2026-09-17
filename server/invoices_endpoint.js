@@ -2,6 +2,7 @@ const express = require('express');
 const { sendResendEmail } = require('./lib/resend');
 const { invoiceEmail } = require('./lib/emailTemplate');
 const { generateInvoicePdf } = require('./lib/invoicePdf');
+const { generateAltBankLetterPdf } = require('./lib/altBankLetterPdf');
 
 // ── Invoices ────────────────────────────────────────────────────────────────
 
@@ -173,6 +174,21 @@ router.get('/api/admin/invoices/:id/pdf', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Invoice PDF error:', err.message);
     res.status(500).json({ error: 'Could not generate invoice PDF: ' + err.message });
+  }
+});
+
+router.get('/api/admin/invoices/:id/alt-bank-pdf', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT * FROM invoices WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Invoice not found' });
+    const invoice = rows[0];
+    const pdf = await generateAltBankLetterPdf(invoice);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="Alt_Bank_Funding_${invoice.invoice_number}.pdf"`);
+    res.send(pdf);
+  } catch (err) {
+    console.error('Alternative Bank letter PDF error:', err.message);
+    res.status(500).json({ error: 'Could not generate Alternative Bank letter PDF: ' + err.message });
   }
 });
 

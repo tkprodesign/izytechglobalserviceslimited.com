@@ -7,7 +7,7 @@ import { jsPDF } from 'jspdf';
 import {
   FileText, Plus, Trash2, Send, Eye, Edit2, Pencil, ChevronDown, X, Download,
   Loader2, CheckCircle, Clock, AlertCircle, Search, Filter,
-  Mail, PlusCircle,
+  Mail, PlusCircle, Landmark,
 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
@@ -434,6 +434,7 @@ export function InvoicesPage() {
   const [sent, setSent] = useState<number | null>(null);
   const [sendingError, setSendingError] = useState('');
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [generatingAltBank, setGeneratingAltBank] = useState(false);
   const [mobileView, setMobileView] = useState<'list' | 'editor'>('list');
 
   useEffect(() => {
@@ -641,6 +642,32 @@ export function InvoicesPage() {
     }
   }
 
+  async function handleDownloadAltBankLetter(inv: Invoice) {
+    setGeneratingAltBank(true);
+    try {
+      const res = await fetch(API + '/api/admin/invoices/' + inv.id + '/alt-bank-pdf', {
+        headers: { Authorization: 'Bearer ' + token },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Alternative Bank letter generation failed');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Alt_Bank_Funding_' + inv.invoice_number + '.pdf';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError('Alternative Bank letter generation failed: ' + (err instanceof Error ? err.message : ''));
+    } finally {
+      setGeneratingAltBank(false);
+    }
+  }
+
   function filteredInvoices() {
     let list = invoices;
     if (search.trim()) {
@@ -780,12 +807,20 @@ export function InvoicesPage() {
                   <div className="mt-3 flex items-center gap-2">
                     <button
                       onClick={() => handleDownloadPdf(inv)}
-                      disabled={generatingPdf}
+                       disabled={generatingPdf || generatingAltBank}
                       className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium transition-colors disabled:opacity-40 active:bg-blue-50"
                       style={{ borderColor: '#e2e8f0', color: '#2563eb' }}
                     >
                       <Download size={13} /> PDF
                     </button>
+                     <button
+                       onClick={() => handleDownloadAltBankLetter(inv)}
+                       disabled={generatingAltBank || generatingPdf}
+                       className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium transition-colors disabled:opacity-40 active:bg-cyan-50"
+                       style={{ borderColor: '#cce8f4', color: '#087ea4' }}
+                     >
+                       <Landmark size={13} /> Alt Bank
+                     </button>
                     <button
                       onClick={() => openEdit(inv)}
                       className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium transition-colors active:bg-gray-100"
@@ -860,11 +895,19 @@ export function InvoicesPage() {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => handleDownloadPdf(inv)}
-                          disabled={generatingPdf}
+                          disabled={generatingPdf || generatingAltBank}
                           className="p-2 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-40"
                           title="Download PDF"
                         >
                           <Download size={14} style={{ color: '#2563eb' }} />
+                        </button>
+                        <button
+                          onClick={() => handleDownloadAltBankLetter(inv)}
+                          disabled={generatingAltBank || generatingPdf}
+                          className="p-2 rounded-lg hover:bg-cyan-50 transition-colors disabled:opacity-40"
+                          title="Generate for Alternative Bank"
+                        >
+                          <Landmark size={14} style={{ color: '#087ea4' }} />
                         </button>
                         <button
                           onClick={() => openEdit(inv)}
@@ -1318,6 +1361,7 @@ export function InvoicesPage() {
         {sent && <p className="text-center text-sm mt-3 text-green-600 flex items-center justify-center gap-2"><CheckCircle size={14} /> Invoice emailed to the customer with PDF attached</p>}
         {sendingError && <p className="text-center text-sm mt-3 text-red-600 flex items-center justify-center gap-2"><AlertCircle size={14} /> {sendingError}</p>}
         {generatingPdf && <p className="text-center text-sm mt-3 text-blue-600">Generating PDF…</p>}
+        {generatingAltBank && <p className="text-center text-sm mt-3 text-cyan-700">Generating Alternative Bank funding letter…</p>}
       </div>
     </DashboardLayout>
   );
