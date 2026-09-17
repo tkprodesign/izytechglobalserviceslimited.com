@@ -162,6 +162,7 @@ function generateInvoicePdf(inv, options = {}) {
       currencyPrefix = 'NGN ';
     }
     const money = value => naira(value, currencyPrefix);
+    const includeStatusPill = options.includeStatusPill !== false;
 
     const W = doc.page.width;   // 595.28
     const M = 48;
@@ -239,18 +240,20 @@ function generateInvoicePdf(inv, options = {}) {
       y += 17;
     }
 
-    // Status pill — vertically centred against the meta rows
-    const pillLabel = inv.status === 'paid' ? 'PAID'
-      : inv.status === 'overdue' ? 'OVERDUE'
-      : inv.status === 'cancelled' ? 'CANCELLED' : 'UNPAID';
-    const pillColor = inv.status === 'paid' ? '#16a34a'
-      : inv.status === 'overdue' ? '#dc2626'
-      : inv.status === 'cancelled' ? '#6b7280' : '#b45309';
-    const pillW = 86, pillH = 24;
-    const pillY = metaStart + 4;
-    doc.roundedRect(RIGHT - pillW, pillY, pillW, pillH, 12).fill(pillColor);
-    doc.fillColor('#ffffff').font('bold').fontSize(9)
-      .text(pillLabel, RIGHT - pillW, pillY + 8, { width: pillW, align: 'center', characterSpacing: 1.5 });
+    if (includeStatusPill) {
+      // Status pill — vertically centred against the meta rows
+      const pillLabel = inv.status === 'paid' ? 'PAID'
+        : inv.status === 'overdue' ? 'OVERDUE'
+        : inv.status === 'cancelled' ? 'CANCELLED' : 'UNPAID';
+      const pillColor = inv.status === 'paid' ? '#16a34a'
+        : inv.status === 'overdue' ? '#dc2626'
+        : inv.status === 'cancelled' ? '#6b7280' : '#b45309';
+      const pillW = 86, pillH = 24;
+      const pillY = metaStart + 4;
+      doc.roundedRect(RIGHT - pillW, pillY, pillW, pillH, 12).fill(pillColor);
+      doc.fillColor('#ffffff').font('bold').fontSize(9)
+        .text(pillLabel, RIGHT - pillW, pillY + 8, { width: pillW, align: 'center', characterSpacing: 1.5 });
+    }
 
     /* ── Recipient ───────────────────────────────────────────── */
     y += 14;
