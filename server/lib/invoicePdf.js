@@ -17,9 +17,12 @@ const COMPANY = {
   email: 'info@izytechglobalservices.com',
   site: 'izytechglobalservices.com',
   address: '1 Pathfinder Close, Sandfield, Borikiri, Port Harcourt, Rivers State',
+  registration: 'RC: 8705481',
 };
 
-const LOGO_PATH = path.join(__dirname, '..', 'assets', 'izy-icon.png');
+// Use the tracked transparent brand mark so the PDF keeps the actual logo in
+// production builds instead of falling back to the text-only placeholder.
+const LOGO_PATH = path.join(__dirname, '..', '..', 'src', 'imports', 'izy-technologies_icon_v1.png');
 const FONT_REG = path.join(__dirname, '..', 'assets', 'fonts', 'DejaVuSans.ttf');
 const FONT_BOLD = path.join(__dirname, '..', 'assets', 'fonts', 'DejaVuSans-Bold.ttf');
 
@@ -109,6 +112,8 @@ function generateInvoicePdf(inv) {
       .text(COMPANY.tagline, tx, logoY + 20, { width: 300 });
     doc.fillColor(MUTED).font('body').fontSize(8)
       .text(COMPANY.address, tx, logoY + 35, { width: 300, lineGap: 1 });
+    doc.fillColor(MUTED).font('body').fontSize(7.5)
+      .text(COMPANY.registration, tx, logoY + 51, { width: 300 });
 
     // Keep the invoice number in the header; the invoice title belongs above
     // the items table where it reads like the document title.
@@ -281,7 +286,7 @@ function generateInvoicePdf(inv) {
       doc.fillColor(MUTED).font('body').fontSize(7.5)
         .text(COMPANY.legal + '  \u00b7  ' + COMPANY.address, M, pageH - 29, { width: W - M * 2, align: 'center' });
       doc.fillColor(MUTED).fontSize(7)
-        .text('Thank you for your business.  \u00b7  ' + COMPANY.phone + '  \u00b7  ' + COMPANY.email, M, pageH - 17, { width: W - M * 2, align: 'center' });
+        .text(COMPANY.registration + '  \u00b7  Thank you for your business.  \u00b7  ' + COMPANY.phone + '  \u00b7  ' + COMPANY.email, M, pageH - 17, { width: W - M * 2, align: 'center' });
     }
 
     doc.end();
