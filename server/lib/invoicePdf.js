@@ -14,7 +14,7 @@ const COMPANY = {
   legal: 'Izy Technologies Global Services Limited',
   tagline: 'Power the Future, Future-Ready Solutions, Today.',
   phone: '+234 810 126 2814',
-  email: 'info@izytechglobalservices.com',
+  email: 'invoice@izytechglobalservices.com',
   site: 'izytechglobalservices.com',
   address: '1 Pathfinder Close, Sandfield, Borikiri, Port Harcourt, Rivers State',
   registration: 'RC: 8705481',
@@ -287,7 +287,7 @@ function generateInvoicePdf(inv) {
       doc.fillColor(MUTED).font('body').fontSize(7.5)
         .text(COMPANY.legal + '  \u00b7  ' + COMPANY.address, M, pageH - 29, { width: W - M * 2, align: 'center' });
       doc.fillColor(MUTED).fontSize(7)
-        .text(COMPANY.registration + '  \u00b7  Thank you for your business.  \u00b7  ' + COMPANY.phone + '  \u00b7  ' + COMPANY.email, M, pageH - 17, { width: W - M * 2, align: 'center' });
+        .text(COMPANY.registration + '  \u00b7  Thank you for your business.  \u00b7  ' + COMPANY.phone + '  \u00b7  ' + COMPANY.email + '  \u00b7  ' + COMPANY.site, M, pageH - 17, { width: W - M * 2, align: 'center' });
     }
 
     doc.end();
