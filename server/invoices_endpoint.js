@@ -121,7 +121,7 @@ async function sendInvoiceEmail(inv) {
   const naira = n => '\u20A6' + (Number(n) || 0).toLocaleString('en-NG');
 
   await sendResendEmail({
-    from: process.env.INFO_EMAIL || 'info@izytechglobalservices.com',
+    from: process.env.INVOICE_EMAIL || 'invoice@izytechglobalservices.com',
     to: inv.customer_email,
     subject: `Invoice ${inv.invoice_number} from Izy Technologies Global Services Limited${inv.status === 'paid' ? ' \u2014 Paid' : ''}`,
     html,

@@ -287,7 +287,7 @@ function generateInvoicePdf(inv) {
       doc.fillColor(MUTED).font('body').fontSize(7.5)
         .text(COMPANY.legal + '  \u00b7  ' + COMPANY.address, M, pageH - 29, { width: W - M * 2, align: 'center' });
       doc.fillColor(MUTED).fontSize(7)
-        .text(COMPANY.registration + '  \u00b7  Thank you for your business.  \u00b7  ' + COMPANY.phone + '  \u00b7  ' + COMPANY.email + '  \u00b7  ' + COMPANY.site, M, pageH - 17, { width: W - M * 2, align: 'center' });
+        .text(COMPANY.registration + '  \u00b7  For invoice support  \u00b7  ' + COMPANY.phone + '  \u00b7  ' + COMPANY.email + '  \u00b7  ' + COMPANY.site, M, pageH - 17, { width: W - M * 2, align: 'center' });
     }
 
     doc.end();
