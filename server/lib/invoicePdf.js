@@ -20,9 +20,9 @@ const COMPANY = {
   registration: 'RC: 8705481',
 };
 
-// Use the tracked transparent brand mark so the PDF keeps the actual logo in
-// production builds instead of falling back to the text-only placeholder.
-const LOGO_PATH = path.join(__dirname, '..', '..', 'src', 'imports', 'izy-technologies_icon_v1.png');
+// Keep the PDF logo beside the server assets. This survives production builds
+// that do not include the frontend's source-import tree at runtime.
+const LOGO_PATH = path.join(__dirname, '..', 'assets', 'izy-logo.png');
 const FONT_REG = path.join(__dirname, '..', 'assets', 'fonts', 'DejaVuSans.ttf');
 const FONT_BOLD = path.join(__dirname, '..', 'assets', 'fonts', 'DejaVuSans-Bold.ttf');
 
