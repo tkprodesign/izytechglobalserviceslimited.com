@@ -121,12 +121,12 @@ export function DashboardLayout({ children }: Props) {
       />
 
       <aside
-        className={`admin-sidebar fixed inset-y-0 left-0 z-50 flex w-[min(16rem,calc(100vw-1rem))] flex-shrink-0 flex-col transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] md:relative md:z-auto md:w-64 md:translate-x-0 ${
+        className={`admin-sidebar fixed inset-y-0 left-0 z-50 flex h-screen max-h-screen w-[min(16rem,calc(100vw-1rem))] flex-shrink-0 flex-col overflow-hidden transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] md:relative md:z-auto md:w-64 md:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } ${
           sidebarCollapsed ? 'md:w-[72px]' : 'md:w-64'
         }`}
-        style={{ background: 'var(--izy-navy)', minHeight: '100vh' }}
+        style={{ background: 'var(--izy-navy)' }}
       >
         <div className="flex items-center justify-between border-b px-4 py-5 md:px-5 md:py-6" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <div className="flex min-w-0 items-center gap-2.5">          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white"
@@ -164,7 +164,7 @@ export function DashboardLayout({ children }: Props) {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4">
           <p className="admin-sidebar-label mb-2 px-4 text-xs font-semibold uppercase tracking-wider" style={{ color: '#4a6a85' }}>
             Business
           </p>
@@ -192,7 +192,7 @@ export function DashboardLayout({ children }: Props) {
 
         </nav>
 
-        <div className="border-t px-3 py-4" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <div className="flex-shrink-0 border-t bg-[var(--izy-navy)] px-3 py-4" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <div className="mb-1 flex items-center gap-3 px-4 py-2">
             <div
               className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
