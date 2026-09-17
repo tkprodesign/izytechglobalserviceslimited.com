@@ -15,3 +15,4 @@
 - [Render environment update safety](render-env-update-safety.md) — Update Render variables individually or verify the complete inventory after bulk changes
 - [LFS deployment blocker](lfs-deployment-blocker.md) — Unused Git LFS upload archives can exhaust quota and prevent Render/Cloudflare from cloning the repository
 - [Next.js Replit compatibility](nextjs-replit-compatibility.md) — This custom-webpack app uses Next's explicit webpack mode because Replit blocks the older vulnerable Next patch
+- [Invoice PDF pagination](invoice-pdf-pagination.md) — Customer and manager PDFs share explicit multi-page flow; avoid width-wrapped footer text on switched PDFKit pages
