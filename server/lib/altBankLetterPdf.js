@@ -10,7 +10,6 @@ const BLUE = '#0b8fc8';
 const SLATE = '#3a4a5c';
 const MUTED = '#64748b';
 const LINE = '#dbe4ec';
-const PALE_BLUE = '#f1f8fc';
 
 const COMPANY = {
   legal: 'Izy Technologies Global Services Limited',
@@ -53,8 +52,7 @@ function safe(value, fallback = '\u2014') {
 }
 
 /**
- * Generates a manager-facing funding support letter for customers who want
- * Alternative Bank to consider an instalment/asset-financing arrangement.
+ * Generates a manager-facing proforma invoice for Alternative Bank.
  * This is intentionally separate from the official customer invoice PDF.
  */
 function generateAltBankLetterPdf(inv) {
@@ -64,9 +62,9 @@ function generateAltBankLetterPdf(inv) {
       margin: 0,
       bufferPages: true,
       info: {
-        Title: `Alternative Bank Funding Support Letter - ${safe(inv.invoice_number, 'Invoice')}`,
+        Title: `Alternative Bank Proforma Invoice - ${safe(inv.invoice_number, 'Invoice')}`,
         Author: COMPANY.legal,
-        Subject: 'Customer funding support request',
+        Subject: 'Customer proforma invoice',
       },
     });
     const chunks = [];
@@ -120,16 +118,15 @@ function generateAltBankLetterPdf(inv) {
 
     function drawFooter() {
       const footerY = H - FOOTER_H;
-      doc.rect(0, footerY, W, FOOTER_H).fill(NAVY);
+      doc.rect(0, footerY, W, FOOTER_H).fill(BLUE);
       doc.rect(0, footerY, W, 3).fill(GOLD);
-      doc.fillColor('#ffffff').font('bold').fontSize(7.4)
-        .text(COMPANY.legal, M, footerY + 14, { width: CONTENT_W, align: 'center' });
-      doc.fillColor('#b8ccdc').font('body').fontSize(7)
-        .text(`${COMPANY.registration}  ·  ${COMPANY.address}`, M, footerY + 27, { width: CONTENT_W, align: 'center' });
-      doc.fillColor('#b8ccdc').fontSize(7)
-        .text(`${COMPANY.phone}  ·  ${COMPANY.email}  ·  ${COMPANY.site}`, M, footerY + 40, { width: CONTENT_W, align: 'center' });
-      doc.fillColor('#b8ccdc').fontSize(6.5)
-        .text(`Alternative Bank funding support reference: ${safe(inv.invoice_number)}`, M, footerY + 51, { width: CONTENT_W, align: 'center' });
+      doc.fillColor('#ffffff').font('bold').fontSize(8)
+        .text(`${COMPANY.phone}  ·  ${COMPANY.email}`, M, footerY + 18, {
+          width: CONTENT_W,
+          align: 'center',
+        });
+      doc.fillColor('#dff4ff').font('body').fontSize(7.2)
+        .text(COMPANY.site, M, footerY + 34, { width: CONTENT_W, align: 'center' });
     }
 
     function drawPageChrome(isFirstPage = false) {
@@ -138,7 +135,7 @@ function generateAltBankLetterPdf(inv) {
       drawFooter();
       if (!isFirstPage) {
         doc.fillColor(MUTED).font('body').fontSize(7.5)
-          .text(`FUNDING SUPPORT LETTER  ·  ${safe(inv.invoice_number)}`, M, 27, {
+          .text(`PROFORMA INVOICE  ·  ${safe(inv.invoice_number)}`, M, 27, {
             width: CONTENT_W,
             align: 'right',
             characterSpacing: 0.8,
@@ -199,9 +196,9 @@ function generateAltBankLetterPdf(inv) {
       .text(COMPANY.registration, M + logoSize + 14, headerY + 49, { width: 285 });
 
     doc.fillColor(NAVY).font('bold').fontSize(12)
-      .text('FUNDING SUPPORT', W - M - 170, headerY + 5, { width: 170, align: 'right', characterSpacing: 0.7 });
+      .text('PROFORMA INVOICE', W - M - 170, headerY + 5, { width: 170, align: 'right', characterSpacing: 0.7 });
     doc.fillColor(BLUE).font('bold').fontSize(8.5)
-      .text('ALTERNATIVE BANK REQUEST', W - M - 170, headerY + 25, { width: 170, align: 'right', characterSpacing: 0.5 });
+      .text('ALTERNATIVE BANK', W - M - 170, headerY + 25, { width: 170, align: 'right', characterSpacing: 0.5 });
     doc.fillColor(MUTED).font('body').fontSize(7.5)
       .text(`Ref. ${safe(inv.invoice_number)}`, W - M - 170, headerY + 42, { width: 170, align: 'right' });
 
@@ -219,37 +216,33 @@ function generateAltBankLetterPdf(inv) {
     doc.fillColor(NAVY).font('bold').fontSize(9.5).text('The Manager', recipientX, y + 13);
     doc.fillColor(SLATE).font('body').fontSize(9)
       .text('Alternative Bank\nPort Harcourt, Rivers State.', recipientX, y + 27, { lineGap: 2 });
-    y += 86;
-
-    doc.fillColor(NAVY).font('bold').fontSize(13)
-      .text('REQUEST FOR CUSTOMER ASSET FINANCING', M, y, { width: CONTENT_W, characterSpacing: 0.2 });
-    y += 25;
-    doc.moveTo(M, y).lineTo(M + 118, y).lineWidth(2).stroke(GOLD);
-    y += 18;
-
-    paragraph(
-      `We write at the request of ${safe(inv.customer_name)} to provide the attached quotation details for your consideration under a structured instalment payment arrangement. The customer has indicated a preference to pay in manageable instalments, and this document is provided to support Alternative Bank's assessment and funding process.`,
-      { size: 9.4, lineGap: 3.5, gapAfter: 14 }
-    );
-
-    // Customer and transaction summary.
-    ensureSpace(100);
-    doc.roundedRect(M, y, CONTENT_W, 82, 6).fill(PALE_BLUE);
-    doc.roundedRect(M, y, CONTENT_W, 82, 6).lineWidth(0.8).stroke('#cce8f4');
-    doc.fillColor(NAVY).font('bold').fontSize(9).text('CUSTOMER & REQUEST SUMMARY', M + 14, y + 13);
-    const summaryY = y + 34;
-    labelValue('Customer', inv.customer_name, M + 14, M + 84, summaryY, 156);
-    labelValue('Reference', inv.invoice_number, M + 14, M + 84, summaryY + 18, 156);
-    labelValue('Customer email', inv.customer_email, W / 2 + 4, W / 2 + 82, summaryY, 150);
-    labelValue('Customer phone', inv.customer_phone, W / 2 + 4, W / 2 + 82, summaryY + 18, 150);
-    y += 101;
+    y += 78;
 
     doc.fillColor(MUTED).font('bold').fontSize(7.5)
-      .text('PROJECT / PURCHASE DESCRIPTION', M, y, { characterSpacing: 0.7 });
-    y += 14;
-    doc.fillColor(NAVY).font('bold').fontSize(10.5)
-      .text(safe(inv.title, 'Energy solution equipment and installation'), M, y, { width: CONTENT_W });
-    y += 25;
+      .text('CUSTOMER', M, y, { characterSpacing: 0.7 });
+    doc.fillColor(NAVY).font('body').fontSize(9.2)
+      .text(safe(inv.customer_name), M, y + 13);
+    doc.fillColor(MUTED).font('bold').fontSize(7.5)
+      .text('CONTACT', W / 2 + 20, y, { characterSpacing: 0.7 });
+    doc.fillColor(NAVY).font('body').fontSize(8.8)
+      .text([inv.customer_phone, inv.customer_email].filter(Boolean).join('  ·  '), W / 2 + 20, y + 13, { width: W / 2 - M - 20 });
+    y += 42;
+
+    doc.fillColor(NAVY).font('bold').fontSize(13)
+      .text(`IZY TECH PROFORMA INVOICE FOR ${String(safe(inv.title, 'ENERGY SOLUTION EQUIPMENT AND INSTALLATION'))
+        .replace(/^proforma invoice\s*(for)?\s*/i, '')
+        .trim()
+        .toUpperCase()}`, M, y, {
+        width: CONTENT_W,
+        characterSpacing: 0.2,
+      });
+    const proformaTitle = `IZY TECH PROFORMA INVOICE FOR ${String(safe(inv.title, 'ENERGY SOLUTION EQUIPMENT AND INSTALLATION'))
+      .replace(/^proforma invoice\s*(for)?\s*/i, '')
+      .trim()
+      .toUpperCase()}`;
+    y += doc.heightOfString(proformaTitle, { width: CONTENT_W }) + 10;
+    doc.moveTo(M, y).lineTo(M + 118, y).lineWidth(2).stroke(GOLD);
+    y += 18;
 
     // Items table.
     ensureSpace(80);
@@ -313,21 +306,9 @@ function generateAltBankLetterPdf(inv) {
     doc.moveTo(totalsX, y).lineTo(totalsValueX, y).lineWidth(1).stroke(NAVY);
     y += 10;
     doc.fillColor(NAVY).font('bold').fontSize(11)
-      .text('TOTAL FUNDING VALUE', totalsX, y, { width: 135, align: 'right' })
+      .text('GRAND TOTAL', totalsX, y, { width: 135, align: 'right' })
       .text(money(inv.total), totalsValueX - 94, y, { width: 94, align: 'right' });
     y += 30;
-
-    ensureSpace(108);
-    const calloutY = y;
-    doc.roundedRect(M, calloutY, CONTENT_W, 88, 6).fill('#fff8e8');
-    doc.roundedRect(M, calloutY, CONTENT_W, 88, 6).lineWidth(0.8).stroke('#f4d58a');
-    doc.fillColor('#8a5a00').font('bold').fontSize(8).text('FUNDING PURPOSE', M + 14, calloutY + 14, { characterSpacing: 0.7 });
-    y = calloutY + 31;
-    paragraph(
-      `This document confirms the value and scope of the proposed supply and installation for ${safe(inv.customer_name)}. We respectfully request that Alternative Bank consider the customer's preferred pay-small-small option and contact the customer directly regarding its applicable financing terms, eligibility requirements, and repayment schedule.`,
-      { x: M + 14, width: CONTENT_W - 28, size: 8.8, color: '#5d4a22', lineGap: 3, gapAfter: 0 }
-    );
-    y = calloutY + 104;
 
     if (inv.notes) {
       ensureSpace(62);
@@ -352,14 +333,6 @@ function generateAltBankLetterPdf(inv) {
       doc.fillColor(SLATE).font('body').text(safe(value), M + 84, y);
       y += 14;
     });
-
-    ensureSpace(42);
-    y += 5;
-    doc.fillColor(SLATE).font('body').fontSize(8.8)
-      .text('Yours faithfully,', M, y);
-    y += 30;
-    doc.fillColor(NAVY).font('bold').fontSize(9.5)
-      .text('For: Izy Technologies Global Services Limited', M, y);
 
     doc.end();
   });
