@@ -12,7 +12,7 @@ const LINE = '#eef1f6';
 
 const COMPANY = {
   legal: 'Izy Technologies Global Services Limited',
-  tagline: 'Power The Future-Ready Solutions, Today',
+  tagline: 'Power the Future, Future-Ready Solutions, Today.',
   phone: '+234 810 126 2814',
   email: 'info@izytechglobalservices.com',
   site: 'izytechglobalservices.com',

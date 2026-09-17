@@ -1,7 +1,7 @@
 # IZY Technologies Website — Site Guide
 
 **Company:** IZY Technologies Global Services Limited  
-**Tagline:** Power The Future. Future Ready Solutions. Today.  
+**Tagline:** Power the Future, Future-Ready Solutions, Today.  
 **Stack:** React 18 · Vite 6 · TypeScript · Tailwind CSS 4 · Framer Motion  
 **Package manager:** pnpm (always run from inside `Website for Izy Tech/`)
 
@@ -290,7 +290,7 @@ pnpm run build
 | **Brand logo (horizontal)** | `src/imports/izy-technologies_logo-variation-horizontal_v1.png` |
 | **Button shimmer** | `.btn-shimmer` class in `micro.css` |
 | **CTA button labels** | Each section file, search for `GET A FREE QUOTE` |
-| **Company tagline** | `"Power The Future. Future Ready Solutions. Today."` |
+| **Company tagline** | `"Power the Future, Future-Ready Solutions, Today."` |
 | **Contact email** | `info@izytechnologies.com` — `Contact.tsx` + `Footer.tsx` |
 | **Contact phone** | `+234 800 000 0000` — `Navbar.tsx`, `Contact.tsx`, `Footer.tsx` |
 | **Counter animation** | `About.tsx` → `Counter` component at the top of the file |

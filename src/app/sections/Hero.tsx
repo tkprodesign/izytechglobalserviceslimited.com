@@ -18,8 +18,8 @@ const slides = [
   {
     id: "energy",
     eyebrow: "Technology and Energy Solutions Across Nigeria",
-    titleLines: [["Power", "The"], ["Future-Ready", "Solutions,", "Today"]],
-    accent: "Today",
+    titleLines: [["Power", "the"], ["Future,", "Future-Ready", "Solutions,", "Today."]],
+    accent: "Today.",
     description: "From solar energy systems to smart homes and industrial wiring — Izy Tech Services delivers cutting-edge solutions across Nigeria.",
     primaryLabel: "START A PROJECT ENQUIRY",
     secondaryLabel: "OUR SERVICES",

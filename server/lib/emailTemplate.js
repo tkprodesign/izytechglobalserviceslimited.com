@@ -5,7 +5,7 @@
 
 const EMAIL_LOGO_URL = 'https://izytechglobalservices.com/favicon.png';
 const COMPANY_LEGAL_NAME = 'Izy Technologies Global Services Limited';
-const COMPANY_TAGLINE = 'Power The Future-Ready Solutions, Today';
+const COMPANY_TAGLINE = 'Power the Future, Future-Ready Solutions, Today.';
 
 function buildEmail({ subject = '', preheader = '', bodyHtml = '', footerNote = '' } = {}) {
   return `<!DOCTYPE html>
