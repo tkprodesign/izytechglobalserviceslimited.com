@@ -48,7 +48,7 @@ function fmtDate(d) {
  * a clean fixed-grid layout.
  * @returns {Promise<Buffer>}
  */
-function generateInvoicePdf(inv) {
+function generateInvoicePdf(inv, options = {}) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 0, bufferPages: true });
     const chunks = [];
@@ -157,20 +157,33 @@ function generateInvoicePdf(inv) {
     doc.fillColor('#ffffff').font('bold').fontSize(9)
       .text(pillLabel, RIGHT - pillW, pillY + 8, { width: pillW, align: 'center', characterSpacing: 1.5 });
 
-    /* ── Bill to ─────────────────────────────────────────────── */
+    /* ── Recipient ───────────────────────────────────────────── */
     y += 14;
     const billToY = Math.max(y, 216);
+    const recipient = options.recipient;
+    let recipientBottom = billToY + 34;
     doc.fillColor(MUTED).font('body').fontSize(8)
-      .text('BILL TO', M, billToY, { characterSpacing: 1.2 });
-    doc.fillColor(NAVY).font('bold').fontSize(12)
-      .text(inv.customer_name || '', M, billToY + 15);
-    doc.font('body').fillColor(SLATE).fontSize(9.5);
-    let by = billToY + 34;
-    if (inv.customer_email) { doc.text(inv.customer_email, M, by); by += 14; }
-    if (inv.customer_phone) { doc.text(inv.customer_phone, M, by); by += 14; }
-    if (inv.customer_address) {
-      doc.text(inv.customer_address, M, by, { width: 300 });
-      by += 14 * Math.ceil((inv.customer_address.length / 46));
+      .text(recipient?.label || 'BILL TO', M, billToY, { characterSpacing: 1.2 });
+
+    if (recipient) {
+      const lines = Array.isArray(recipient.lines) ? recipient.lines : [recipient.lines];
+      const recipientText = lines.filter(Boolean).join('\n');
+      doc.fillColor(NAVY).font('bold').fontSize(12)
+        .text(recipientText, M, billToY + 15, { width: 300, lineGap: 1 });
+      recipientBottom = billToY + 15
+        + doc.heightOfString(recipientText, { width: 300, lineGap: 1 });
+    } else {
+      doc.fillColor(NAVY).font('bold').fontSize(12)
+        .text(inv.customer_name || '', M, billToY + 15);
+      doc.font('body').fillColor(SLATE).fontSize(9.5);
+      let by = billToY + 34;
+      if (inv.customer_email) { doc.text(inv.customer_email, M, by); by += 14; }
+      if (inv.customer_phone) { doc.text(inv.customer_phone, M, by); by += 14; }
+      if (inv.customer_address) {
+        doc.text(inv.customer_address, M, by, { width: 300 });
+        by += 14 * Math.ceil((inv.customer_address.length / 46));
+      }
+      recipientBottom = by;
     }
 
     /* ── Invoice title + items table (fixed grid) ─────────────── */
@@ -182,7 +195,7 @@ function generateInvoicePdf(inv) {
     const descX = M + 12;
     const descW = qtyX - descX - 12;
 
-    let ty = Math.max(by + 24, 300);
+    let ty = Math.max(recipientBottom + 24, 300);
     const invoiceTitle = String(inv.title || 'Invoice');
     doc.fillColor(NAVY).font('bold').fontSize(18)
       .text(invoiceTitle, M, ty, { width: W - M * 2, align: 'center' });
