@@ -11,8 +11,8 @@ const MUTED = '#8fadc8';
 const LINE = '#eef1f6';
 
 const COMPANY = {
-  name: 'Izy Tech Services',
   legal: 'Izy Technologies Global Services Limited',
+  tagline: 'Power The Future-Ready Solutions, Today',
   phone: '+234 810 126 2814',
   email: 'info@izytechglobalservices.com',
   site: 'izytechglobalservices.com',
@@ -87,9 +87,12 @@ function generateInvoicePdf(inv) {
     // Logo
     const logoSize = 56;
     const logoY = 38;
+    // Put the supplied mark on a light tile so it remains visible against the
+    // navy header in PDF viewers that handle transparent PNGs differently.
+    doc.roundedRect(M, logoY, logoSize, logoSize, 12).fill('#ffffff');
     if (fs.existsSync(LOGO_PATH)) {
       try {
-        doc.image(LOGO_PATH, M, logoY, { width: logoSize, height: logoSize });
+        doc.image(LOGO_PATH, M + 6, logoY + 6, { width: logoSize - 12, height: logoSize - 12 });
       } catch (_) {
         drawLogoFallback(doc, M, logoY, logoSize);
       }
@@ -98,33 +101,23 @@ function generateInvoicePdf(inv) {
       drawLogoFallback(doc, M, logoY, logoSize);
     }
 
-    // Brand text next to the logo
+    // Full legal name and site tagline next to the logo.
     const tx = M + logoSize + 16;
-    doc.fillColor(GOLD).font('bold').fontSize(17)
-      .text(COMPANY.name.toUpperCase(), tx, logoY + 1, { width: 245, characterSpacing: 0.8 });
-    doc.fillColor('#ffffff').font('body').fontSize(9.5)
-      .text(COMPANY.legal.toUpperCase(), tx, logoY + 25, { width: 245, characterSpacing: 0.8 });
+    doc.fillColor('#ffffff').font('bold').fontSize(11.5)
+      .text(COMPANY.legal, tx, logoY + 1, { width: 300 });
+    doc.fillColor(GOLD).font('body').fontSize(7.5)
+      .text(COMPANY.tagline, tx, logoY + 20, { width: 300 });
     doc.fillColor(MUTED).font('body').fontSize(8)
-      .text(COMPANY.address, tx, logoY + 43, { width: 245, lineGap: 1 });
+      .text(COMPANY.address, tx, logoY + 35, { width: 300, lineGap: 1 });
 
-    // Invoice details occupy their own column so long titles never collide
-    // with the company name or legal address.
-    const invoiceTitle = String(inv.title || 'Invoice').toUpperCase();
+    // Keep the invoice number in the header; the invoice title belongs above
+    // the items table where it reads like the document title.
     const detailX = RIGHT - 168;
     const detailW = 168;
     doc.fillColor(MUTED).font('body').fontSize(7.5)
-      .text('INVOICE TITLE', detailX, 27, { width: detailW, align: 'right', characterSpacing: 1 });
-    doc.fillColor('#ffffff').font('bold').fontSize(10.5);
-    const titleHeight = Math.min(
-      58,
-      Math.max(13, doc.heightOfString(invoiceTitle, { width: detailW, lineGap: 1 })),
-    );
-    doc.text(invoiceTitle, detailX, 40, { width: detailW, align: 'right', lineGap: 1, height: titleHeight });
-    const invoiceNoLabelY = Math.min(105, 40 + titleHeight + 9);
-    doc.fillColor(MUTED).font('body').fontSize(7.5)
-      .text('INVOICE NO.', detailX, invoiceNoLabelY, { width: detailW, align: 'right', characterSpacing: 1 });
+      .text('INVOICE NO.', detailX, 52, { width: detailW, align: 'right', characterSpacing: 1 });
     doc.fillColor('#ffffff').font('bold').fontSize(13)
-      .text(inv.invoice_number, detailX, invoiceNoLabelY + 12, { width: detailW, align: 'right' });
+      .text(inv.invoice_number, detailX, 65, { width: detailW, align: 'right' });
 
     // Gold accent bar
     doc.rect(0, headerH, W, 3).fill(GOLD);
@@ -174,7 +167,7 @@ function generateInvoicePdf(inv) {
       by += 14 * Math.ceil((inv.customer_address.length / 46));
     }
 
-    /* ── Items table (fixed grid) ────────────────────────────── */
+    /* ── Invoice title + items table (fixed grid) ─────────────── */
     // Column geometry is computed once so headers and cells can never drift.
     const qtyW = 52, unitW = 96, amtW = 110;
     const qtyX = RIGHT - (amtW + unitW + qtyW);
@@ -184,6 +177,12 @@ function generateInvoicePdf(inv) {
     const descW = qtyX - descX - 12;
 
     let ty = Math.max(by + 24, 300);
+    const invoiceTitle = String(inv.title || 'Invoice');
+    doc.fillColor(NAVY).font('bold').fontSize(18)
+      .text(invoiceTitle, M, ty, { width: W - M * 2, align: 'center' });
+    ty += doc.heightOfString(invoiceTitle, { width: W - M * 2 }) + 10;
+    doc.moveTo(M + 180, ty).lineTo(RIGHT - 180, ty).lineWidth(1).stroke(GOLD);
+    ty += 14;
 
     // Header row
     const headH = 26;

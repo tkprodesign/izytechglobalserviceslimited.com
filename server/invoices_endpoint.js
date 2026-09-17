@@ -6,7 +6,7 @@ const { generateInvoicePdf } = require('./lib/invoicePdf');
 // ── Invoices ────────────────────────────────────────────────────────────────
 
 const DEFAULT_INVOICE_TITLE = 'Invoice';
-const DEFAULT_BANK_ACCOUNT_NAME = 'Izy Technologies Global services Ltd';
+const DEFAULT_BANK_ACCOUNT_NAME = 'Izy Technologies Global Services Limited';
 const DEFAULT_BANK_ACCOUNT_NUMBER = '0512121038';
 const DEFAULT_BANK_NAME = 'Alternative Bank';
 
@@ -33,7 +33,7 @@ async function initInvoicesTable(db) {
       status          TEXT NOT NULL DEFAULT 'unpaid' CHECK (status IN ('unpaid', 'paid', 'overdue', 'cancelled')),
       due_date        DATE,
       paid_date       TIMESTAMPTZ,
-      bank_account_name   TEXT NOT NULL DEFAULT 'Izy Technologies Global services Ltd',
+      bank_account_name   TEXT NOT NULL DEFAULT 'Izy Technologies Global Services Limited',
       bank_account_number TEXT NOT NULL DEFAULT '0512121038',
       bank_name           TEXT NOT NULL DEFAULT 'Alternative Bank',
       created_by      TEXT NOT NULL DEFAULT '',
@@ -46,7 +46,7 @@ async function initInvoicesTable(db) {
       ADD COLUMN IF NOT EXISTS title TEXT NOT NULL DEFAULT 'Invoice',
       ADD COLUMN IF NOT EXISTS logistics NUMERIC(12,2) NOT NULL DEFAULT 0,
       ADD COLUMN IF NOT EXISTS service_charge NUMERIC(12,2) NOT NULL DEFAULT 0,
-      ADD COLUMN IF NOT EXISTS bank_account_name TEXT NOT NULL DEFAULT 'Izy Technologies Global services Ltd',
+      ADD COLUMN IF NOT EXISTS bank_account_name TEXT NOT NULL DEFAULT 'Izy Technologies Global Services Limited',
       ADD COLUMN IF NOT EXISTS bank_account_number TEXT NOT NULL DEFAULT '0512121038',
       ADD COLUMN IF NOT EXISTS bank_name TEXT NOT NULL DEFAULT 'Alternative Bank'
   `);
@@ -56,7 +56,7 @@ async function initInvoicesTable(db) {
       title = COALESCE(NULLIF(BTRIM(title), ''), 'Invoice'),
       logistics = COALESCE(logistics, 0),
       service_charge = COALESCE(service_charge, 0),
-      bank_account_name = COALESCE(NULLIF(BTRIM(bank_account_name), ''), 'Izy Technologies Global services Ltd'),
+      bank_account_name = COALESCE(NULLIF(BTRIM(bank_account_name), ''), 'Izy Technologies Global Services Limited'),
       bank_account_number = COALESCE(NULLIF(BTRIM(bank_account_number), ''), '0512121038'),
       bank_name = COALESCE(NULLIF(BTRIM(bank_name), ''), 'Alternative Bank')
     WHERE title IS NULL
@@ -78,7 +78,7 @@ async function initInvoicesTable(db) {
       ALTER COLUMN logistics SET NOT NULL,
       ALTER COLUMN service_charge SET DEFAULT 0,
       ALTER COLUMN service_charge SET NOT NULL,
-      ALTER COLUMN bank_account_name SET DEFAULT 'Izy Technologies Global services Ltd',
+      ALTER COLUMN bank_account_name SET DEFAULT 'Izy Technologies Global Services Limited',
       ALTER COLUMN bank_account_name SET NOT NULL,
       ALTER COLUMN bank_account_number SET DEFAULT '0512121038',
       ALTER COLUMN bank_account_number SET NOT NULL,
@@ -123,7 +123,7 @@ async function sendInvoiceEmail(inv) {
   await sendResendEmail({
     from: process.env.INFO_EMAIL || 'info@izytechglobalservices.com',
     to: inv.customer_email,
-    subject: `Invoice ${inv.invoice_number} from Izy Tech Services${inv.status === 'paid' ? ' \u2014 Paid' : ''}`,
+    subject: `Invoice ${inv.invoice_number} from Izy Technologies Global Services Limited${inv.status === 'paid' ? ' \u2014 Paid' : ''}`,
     html,
     text: `Invoice ${inv.invoice_number}\nBill to: ${inv.customer_name}\nTotal: ${naira(inv.total)} (${inv.status === 'paid' ? 'PAID' : 'UNPAID'})\n\nThe full invoice is attached as a PDF. Questions? Call +234 810 126 2814 or reply to this email.`,
     attachments: [

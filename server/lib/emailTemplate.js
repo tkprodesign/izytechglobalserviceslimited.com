@@ -4,6 +4,8 @@
  */
 
 const EMAIL_LOGO_URL = 'https://izytechglobalservices.com/favicon.png';
+const COMPANY_LEGAL_NAME = 'Izy Technologies Global Services Limited';
+const COMPANY_TAGLINE = 'Power The Future-Ready Solutions, Today';
 
 function buildEmail({ subject = '', preheader = '', bodyHtml = '', footerNote = '' } = {}) {
   return `<!DOCTYPE html>
@@ -68,8 +70,8 @@ function buildEmail({ subject = '', preheader = '', bodyHtml = '', footerNote = 
                           <td><img src="${EMAIL_LOGO_URL}" width="36" height="36" alt="IZY Technologies" style="display:block;width:36px;height:36px" /></td>
                           <td style="width:12px"></td>
                           <td>
-                            <p style="margin:0;font-size:14px;font-weight:700;color:#ffffff;font-family:'Inter',Arial,sans-serif;letter-spacing:0.025em;text-transform:uppercase">IZY TECHNOLOGIES</p>
-                            <p style="margin:3px 0 0;font-size:9px;color:rgba(255,255,255,0.5);font-family:'Inter',Arial,sans-serif;letter-spacing:0.18em;text-transform:uppercase">Global Services Limited</p>
+                            <p style="margin:0;font-size:12px;font-weight:700;color:#ffffff;font-family:'Inter',Arial,sans-serif">${COMPANY_LEGAL_NAME}</p>
+                            <p style="margin:4px 0 0;font-size:9px;color:#F0A20E;font-family:'Inter',Arial,sans-serif">${COMPANY_TAGLINE}</p>
                           </td>
                         </tr>
                       </table>
@@ -92,9 +94,9 @@ function buildEmail({ subject = '', preheader = '', bodyHtml = '', footerNote = 
       <!-- Footer -->
       <tr>
         <td class="footer">
-          <p class="footer-logo">IZY Technologies Global Services Limited</p>
+           <p class="footer-logo">${COMPANY_LEGAL_NAME}</p>
           <p class="footer-text">
-            Nigeria's premier technology and energy solutions provider.<br/>
+             ${COMPANY_TAGLINE}<br/>
             Solar energy systems · Smart homes · Industrial wiring
           </p>
           <div class="footer-links">
@@ -290,10 +292,9 @@ function invoiceEmail({ invoice, bodyHtml }) {
         ? 'Please find your payment confirmation and receipt for the invoice below. A PDF copy is attached for your records.'
         : 'Please find invoice <strong>' + escHtml(inv.invoice_number) + '</strong> below for your kind attention. The complete invoice is attached to this email as a PDF document.'}</p>
 
-      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 18px 0">
+       <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 18px 0">
         <tr>
           <td style="vertical-align:top;padding-right:12px">
-            <p style="margin:0 0 4px;font-size:15px;color:#041627;font-weight:700">${escHtml(inv.title || 'Invoice')}</p>
             <p style="margin:0;font-size:11px;color:#8fadc8;font-weight:600;letter-spacing:0.08em">INVOICE ${escHtml(inv.invoice_number)}</p>
             <p style="margin:4px 0 0;font-size:13px;color:#5a6a82">Issued ${fmtDate(inv.created_at)}${inv.due_date ? ' &middot; Due ' + fmtDate(inv.due_date) : ''}</p>
           </td>
@@ -302,6 +303,8 @@ function invoiceEmail({ invoice, bodyHtml }) {
           </td>
         </tr>
       </table>
+
+       <h2 style="margin:24px 0 14px;text-align:center;font-size:22px;line-height:1.25;color:#041627;font-weight:700">${escHtml(inv.title || 'Invoice')}</h2>
 
       <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #eef1f6;border-radius:10px;overflow:hidden">
         <thead>
@@ -339,12 +342,12 @@ function invoiceEmail({ invoice, bodyHtml }) {
       <p style="font-size:12px;color:#8fadc8;margin:16px 0 0">📎 PDF invoice attached \u2014 ${escHtml(inv.invoice_number)}.pdf</p>`;
 
   return buildEmail({
-    subject: `Invoice ${inv.invoice_number} from IZY Tech Services${paid ? ' \u2014 Paid' : ''}`,
+     subject: `Invoice ${inv.invoice_number} from Izy Technologies Global Services Limited${paid ? ' \u2014 Paid' : ''}`,
     preheader: paid
       ? `Payment confirmed for invoice ${inv.invoice_number} \u2014 ${naira(inv.total)}`
       : `Invoice ${inv.invoice_number} \u2014 ${naira(inv.total)}${inv.due_date ? ', due ' + fmtDate(inv.due_date) : ''}`,
     bodyHtml: body,
-    footerNote: 'This invoice was sent by Izy Technologies Global Services Limited. Reply to this email with any questions.',
+     footerNote: 'This invoice was sent by Izy Technologies Global Services Limited. Reply to this email with any questions.',
   });
 }
 
