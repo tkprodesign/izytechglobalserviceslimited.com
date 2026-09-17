@@ -69,6 +69,7 @@ db.connect()
   })
   .then(() => initSiteSettingsTable())
   .then(() => initEmailArchiveTable())
+  .then(() => initCoreTables())
   .then(() => initQuoteRequestFields())
   .then(() => initStoreTable())
   .then(() => initMilestonesTable())
@@ -284,6 +285,31 @@ async function initEmailArchiveTable() {
       archived_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       archived_by TEXT,
       PRIMARY KEY (source, provider_id)
+    )
+  `);
+}
+
+async function initCoreTables() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS contact_submissions (
+      id         SERIAL PRIMARY KEY,
+      name       TEXT        NOT NULL,
+      email      TEXT        NOT NULL,
+      subject    TEXT,
+      message    TEXT        NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS quote_requests (
+      id         SERIAL PRIMARY KEY,
+      name       TEXT        NOT NULL,
+      email      TEXT        NOT NULL,
+      company    TEXT,
+      service    TEXT        NOT NULL,
+      details    TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
 }
