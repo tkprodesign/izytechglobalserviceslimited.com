@@ -295,12 +295,18 @@ function generateInvoicePdf(inv, options = {}) {
     for (let i = range.start; i < range.start + range.count; i++) {
       doc.switchToPage(i);
       const pageH = doc.page.height;
-      doc.rect(0, pageH - 42, W, 42).fill('#f8f9fb');
-      doc.rect(0, pageH - 42, W, 1).fill(LINE);
-      doc.fillColor(MUTED).font('body').fontSize(8.5)
-        .text(COMPANY.legal + '  \u00b7  ' + COMPANY.address, M, pageH - 29, { width: W - M * 2, align: 'center' });
-      doc.fillColor(MUTED).fontSize(8)
-        .text(COMPANY.registration + '  \u00b7  For invoice support  \u00b7  ' + COMPANY.phone + '  \u00b7  ' + COMPANY.email + '  \u00b7  ' + COMPANY.site, M, pageH - 17, { width: W - M * 2, align: 'center' });
+      const footerH = 58;
+      const footerW = W - M * 2;
+      doc.rect(0, pageH - footerH, W, footerH).fill('#f8f9fb');
+      doc.rect(0, pageH - footerH, W, 1).fill(LINE);
+      // Keep each footer line intentional and non-wrapping. A wrapped footer
+      // line at the bottom of the page makes PDFKit create a second page.
+      doc.fillColor(MUTED).font('body').fontSize(9.5)
+        .text(COMPANY.legal, M, pageH - 48, { width: footerW, align: 'center', lineBreak: false });
+      doc.fontSize(9)
+        .text(COMPANY.address, M, pageH - 35, { width: footerW, align: 'center', lineBreak: false });
+      doc.fontSize(8.75)
+        .text(COMPANY.registration + '  \u00b7  ' + COMPANY.phone + '  \u00b7  ' + COMPANY.email + '  \u00b7  ' + COMPANY.site, M, pageH - 22, { width: footerW, align: 'center', lineBreak: false });
     }
 
     doc.end();
