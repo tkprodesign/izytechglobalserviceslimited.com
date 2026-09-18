@@ -25,6 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Script id="smartsupp-chat" strategy="afterInteractive">
           {`var _smartsupp = _smartsupp || {};
 _smartsupp.key = '7b17927f5d4df272347f716050aeead77bfd9b6d';
+_smartsupp.color = '#F0A20E'; // IZY brand gold — matches the site theme
+_smartsupp.ratingEnabled = true; // let visitors rate support (free feature)
+_smartsupp.cookieDomain = '.izytechglobalservices.com'; // keep chats alive across subdomains
 window.smartsupp || (function(d) {
   var s, c, o = smartsupp = function() { o._.push(arguments); };
   o._ = [];

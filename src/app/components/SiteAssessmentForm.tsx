@@ -2,6 +2,7 @@ import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { AlertCircle, CheckCircle, FileImage, Loader2, MapPin, Send, Upload } from "lucide-react";
 import { useSearchParams } from "react-router";
 import { api, type SiteAssessmentPayload } from "../../lib/api";
+import { identifyVisitorFromForm } from "../../lib/smartsupp";
 
 const API = import.meta.env.VITE_API_URL ?? "";
 
@@ -139,9 +140,21 @@ export function SiteAssessmentForm({ dark = false }: { dark?: boolean }) {
           subject: form.service ? `${form.service} enquiry` : "General website enquiry",
           message: form.details,
         });
+        identifyVisitorFromForm({
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          formType: "General enquiry",
+        });
         setSubmitted({ kind: "general" });
       } else {
         const result = await api.siteAssessment({ ...form, attachments });
+        identifyVisitorFromForm({
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          formType: "Site assessment",
+        });
         setSubmitted({ kind: "site_assessment", token: result.token });
       }
     } catch (submitError) {

@@ -105,6 +105,13 @@ The Email Manager reads inbound messages from Resend Receiving and sends through
 | `RENDER_SERVICE_ID` | Render service identifier |
 | `GITHUB_TOKEN` | GitHub token used to push approved changes to the canonical repository from Replit |
 
+### Live chat (Smartsupp)
+| Secret | Purpose |
+|---|---|
+| `SMARTSUPP_API` | Smartsupp REST API token (server-side only, never exposed to the browser). Verifies the account/agent state; agent profile photo and chat-box appearance are configured in the Smartsupp dashboard. |
+
+The public chat widget is loaded in `index.html` (Vite) and `app/layout.tsx` (Next.js) with the site key, brand color `#F0A20E`, rating enabled, and cross-subdomain cookies (`.izytechglobalservices.com`). Visitor identification is bridged in `src/lib/smartsupp.ts` and called after form submissions so agents see the visitor's name, email, phone and form type.
+
 ## Database
 
 Initial schema lives in `server/migrations/001_initial.sql` (tables: `contact_submissions`, `quote_requests`). Already applied to the Neon database.
