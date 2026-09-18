@@ -87,6 +87,7 @@ import { StoreEnquiryPage } from "./pages/StoreEnquiryPage";
 import { AssessmentPaymentPage } from "./pages/AssessmentPaymentPage";
 import { Store } from "./sections/Store";
 import { CartProvider } from "./contexts/CartContext";
+import { WhatsAppFloatingButton } from "./components/WhatsAppFloatingButton";
 
 function PublicSite() {
   return (
@@ -109,6 +110,16 @@ function PublicSite() {
       <Footer />
     </div>
   );
+}
+
+function PublicFloatingActions() {
+  const { pathname } = useLocation();
+
+  if (pathname.startsWith("/admin") || pathname.startsWith("/dev")) {
+    return null;
+  }
+
+  return <WhatsAppFloatingButton />;
 }
 
 export default function App() {
@@ -203,6 +214,7 @@ export default function App() {
       <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
       <Route path="/dev" element={<Navigate to="/dev/login" replace />} />
     </Routes>
+    <PublicFloatingActions />
     </CartProvider>
   );
 }
