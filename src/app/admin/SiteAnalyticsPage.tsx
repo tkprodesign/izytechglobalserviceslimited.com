@@ -60,6 +60,19 @@ interface AnalyticsReport {
   };
 }
 
+interface OnlineVisitor {
+  last_seen: string;
+  route: string;
+  device_type: string;
+  browser_family: string;
+  os_family: string;
+  language: string | null;
+  timezone: string | null;
+  screen_bucket: string | null;
+  viewport_bucket: string | null;
+  connection_type: string | null;
+}
+
 function MetricCard({
   icon: Icon,
   label,
@@ -131,6 +144,9 @@ function dayLabel(value: string) {
 export function SiteAnalyticsPage() {
   const [days, setDays] = useState(30);
   const [report, setReport] = useState<AnalyticsReport | null>(null);
+  const [onlineCount, setOnlineCount] = useState<number | null>(null);
+  const [onlineVisitors, setOnlineVisitors] = useState<OnlineVisitor[]>([]);
+  const [onlineError, setOnlineError] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -161,9 +177,35 @@ export function SiteAnalyticsPage() {
     }
   }, [navigate, token]);
 
+  const loadOnline = useCallback(async () => {
+    setOnlineError('');
+    try {
+      const response = await fetch(`${API}/api/dev/analytics/online`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.status === 401 || response.status === 403) {
+        removeToken();
+        navigate('/dev/login');
+        return;
+      }
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to load current users');
+      setOnlineCount(Number(data.online) || 0);
+      setOnlineVisitors(Array.isArray(data.visitors) ? data.visitors : []);
+    } catch (err) {
+      setOnlineError(err instanceof Error ? err.message : 'Unable to load current users');
+    }
+  }, [navigate, token]);
+
   useEffect(() => {
     load(days, true);
   }, [days, load]);
+
+  useEffect(() => {
+    loadOnline();
+    const timer = window.setInterval(loadOnline, 30_000);
+    return () => window.clearInterval(timer);
+  }, [loadOnline]);
 
   return (
     <DevDashboardLayout>
@@ -212,12 +254,58 @@ export function SiteAnalyticsPage() {
           <div className="rounded-2xl border border-red-100 bg-red-50 p-5 text-sm text-red-700">{error}</div>
         ) : report ? (
           <>
-            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              <MetricCard icon={Users} label="Currently online" value={onlineCount ?? '—'} detail="Consent-based, last 2 minutes" color="#16803c" />
               <MetricCard icon={Activity} label="Recorded visits" value={report.summary.visits} detail={`Last ${report.range.days} days`} color="#f26522" />
               <MetricCard icon={Users} label="Session groups" value={report.summary.session_groups} detail="Daily-rotated, not persistent" color="#1d70c9" />
               <MetricCard icon={Globe2} label="Routes reached" value={report.routes.length} detail="Top routes shown below" color="#16a34a" />
               <MetricCard icon={Clock3} label="Latest visit" value={report.recent[0] ? ngDateTime(report.recent[0].visited_at) : '—'} detail="Nigeria time (WAT)" color="#8b5cf6" />
             </div>
+
+            <section className="mb-6 overflow-hidden rounded-2xl bg-white shadow-sm">
+              <div className="flex flex-col gap-1 border-b border-[#eef1f6] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-sm font-semibold text-[#041627]">Currently online</h2>
+                  <p className="mt-1 text-xs text-[#8fadc8]">All consented visitors with a heartbeat in the last 2 minutes. Refreshes every 30 seconds.</p>
+                </div>
+                <span className="inline-flex w-fit items-center gap-2 rounded-full bg-[#eaf7ef] px-3 py-1 text-xs font-semibold text-[#16803c]">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-[#16803c]" />
+                  {onlineCount ?? '—'} online
+                </span>
+              </div>
+              {onlineError ? (
+                <p className="px-5 py-4 text-sm text-red-700">{onlineError}</p>
+              ) : onlineVisitors.length === 0 ? (
+                <p className="px-5 py-10 text-center text-sm text-[#8fadc8]">No consented visitors are online right now.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[780px] text-left text-xs">
+                    <thead className="bg-[#f8fafc] text-[10px] uppercase tracking-wide text-[#8fadc8]">
+                      <tr>
+                        <th className="px-5 py-3 font-semibold">Last signal</th>
+                        <th className="px-5 py-3 font-semibold">Route</th>
+                        <th className="px-5 py-3 font-semibold">Device</th>
+                        <th className="px-5 py-3 font-semibold">Browser / OS</th>
+                        <th className="px-5 py-3 font-semibold">Language / zone</th>
+                        <th className="px-5 py-3 font-semibold">Network</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#eef1f6]">
+                      {onlineVisitors.map((visitor, index) => (
+                        <tr key={`${visitor.last_seen}-${visitor.route}-${index}`} className="text-[#5a6a82]">
+                          <td className="whitespace-nowrap px-5 py-3 text-[#041627]">{ngDateTime(visitor.last_seen)}</td>
+                          <td className="px-5 py-3 font-mono text-[#041627]">{visitor.route}</td>
+                          <td className="px-5 py-3 capitalize">{visitor.device_type}<br /><span className="text-[10px] text-[#8fadc8]">{visitor.viewport_bucket || '—'} viewport</span></td>
+                          <td className="px-5 py-3">{visitor.browser_family}<br /><span className="text-[10px] text-[#8fadc8]">{visitor.os_family}</span></td>
+                          <td className="px-5 py-3">{visitor.language || '—'}<br /><span className="text-[10px] text-[#8fadc8]">{visitor.timezone || '—'}</span></td>
+                          <td className="px-5 py-3">{visitor.connection_type || 'network n/a'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
 
             <div className="mb-6 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
               <section className="rounded-2xl bg-white p-5 shadow-sm">

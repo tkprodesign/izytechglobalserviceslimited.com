@@ -51,3 +51,22 @@ ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT N
 CREATE UNIQUE INDEX IF NOT EXISTS quote_requests_public_token_idx
   ON quote_requests (public_token)
   WHERE public_token IS NOT NULL;
+
+-- Anonymous, consent-based presence for the developer dashboard.
+CREATE TABLE IF NOT EXISTS site_presence (
+  session_hash      TEXT PRIMARY KEY,
+  last_seen         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  route             TEXT NOT NULL,
+  device_type       TEXT NOT NULL CHECK (device_type IN ('mobile', 'tablet', 'desktop', 'unknown')),
+  browser_family    TEXT NOT NULL DEFAULT 'Other',
+  os_family         TEXT NOT NULL DEFAULT 'Other',
+  language          TEXT,
+  timezone          TEXT,
+  screen_bucket     TEXT,
+  viewport_bucket   TEXT,
+  connection_type   TEXT,
+  consent_version   TEXT NOT NULL DEFAULT 'v1'
+);
+
+CREATE INDEX IF NOT EXISTS site_presence_last_seen_idx
+  ON site_presence (last_seen DESC);

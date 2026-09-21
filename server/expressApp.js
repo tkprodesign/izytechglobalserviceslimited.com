@@ -76,7 +76,7 @@ db.connect()
   .then(() => initFounderTable())
   .then(() => initProjectsTable())
   .then(() => initInvoicesTable(db))
-    .then(() => initSiteAnalyticsTable())
+  .then(() => initSiteAnalyticsTable())
   .catch((err) => {
     console.error('Failed to connect to database:', err.message);
     process.exit(1);
@@ -350,6 +350,26 @@ async function initSiteAnalyticsTable() {
     CREATE INDEX IF NOT EXISTS site_visits_device_type_idx
     ON site_visits (device_type, visited_at DESC)
   `);
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS site_presence (
+      session_hash      TEXT PRIMARY KEY,
+      last_seen         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      route             TEXT NOT NULL,
+      device_type       TEXT NOT NULL CHECK (device_type IN ('mobile', 'tablet', 'desktop', 'unknown')),
+      browser_family    TEXT NOT NULL DEFAULT 'Other',
+      os_family         TEXT NOT NULL DEFAULT 'Other',
+      language          TEXT,
+      timezone          TEXT,
+      screen_bucket     TEXT,
+      viewport_bucket   TEXT,
+      connection_type   TEXT,
+      consent_version   TEXT NOT NULL DEFAULT 'v1'
+    )
+  `);
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS site_presence_last_seen_idx
+    ON site_presence (last_seen DESC)
+  `);
 }
 
 async function initQuoteRequestFields() {
@@ -440,6 +460,7 @@ const ANALYTICS_CONSENT_VERSION = 'v1';
 const ANALYTICS_ROUTE_PATTERN = /^\/[A-Za-z0-9/_:.~-]{0,159}$/;
 const ANALYTICS_CONNECTION_TYPES = new Set(['slow-2g', '2g', '3g', '4g']);
 const ANALYTICS_BUCKETS = new Set(['small', 'medium', 'large']);
+const ANALYTICS_ONLINE_WINDOW_SECONDS = 120;
 
 function normalizeAnalyticsRoute(value) {
   let route = String(value || '/').trim().split(/[?#]/, 1)[0] || '/';
@@ -1013,6 +1034,111 @@ app.post('/api/analytics/visit', async (req, res) => {
   } catch (err) {
     console.error('Site analytics write failed:', err.message);
     return res.status(503).json({ error: 'Analytics is temporarily unavailable' });
+  }
+});
+
+app.post('/api/analytics/presence', async (req, res) => {
+  const {
+    route,
+    referrerOrigin,
+    sessionId,
+    language,
+    timezone,
+    screenBucket,
+    viewportBucket,
+    connectionType,
+    consentVersion,
+  } = req.body || {};
+  const cleanRoute = normalizeAnalyticsRoute(route);
+  const cleanSessionId = String(sessionId || '').trim();
+
+  if (!cleanRoute || !/^[A-Za-z0-9_-]{16,128}$/.test(cleanSessionId)) {
+    return res.status(400).json({ error: 'A valid route and session are required' });
+  }
+  if (consentVersion !== ANALYTICS_CONSENT_VERSION) {
+    return res.status(400).json({ error: 'Analytics consent is required' });
+  }
+
+  const cleanLanguage = String(language || '').trim().slice(0, 16) || null;
+  const cleanTimezone = String(timezone || '').trim().slice(0, 16) || null;
+  const cleanConnectionType = ANALYTICS_CONNECTION_TYPES.has(connectionType)
+    ? connectionType
+    : null;
+  const sessionHash = analyticsSessionHash(cleanSessionId);
+
+  try {
+    await db.query(
+      `INSERT INTO site_presence (
+         session_hash, last_seen, route, device_type, browser_family, os_family,
+         language, timezone, screen_bucket, viewport_bucket, connection_type,
+         consent_version
+       ) VALUES ($1, NOW(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       ON CONFLICT (session_hash) DO UPDATE SET
+         last_seen = NOW(),
+         route = EXCLUDED.route,
+         device_type = EXCLUDED.device_type,
+         browser_family = EXCLUDED.browser_family,
+         os_family = EXCLUDED.os_family,
+         language = EXCLUDED.language,
+         timezone = EXCLUDED.timezone,
+         screen_bucket = EXCLUDED.screen_bucket,
+         viewport_bucket = EXCLUDED.viewport_bucket,
+         connection_type = EXCLUDED.connection_type,
+         consent_version = EXCLUDED.consent_version`,
+      [
+        sessionHash,
+        cleanRoute,
+        deviceType(req.get('user-agent')),
+        browserFamily(req.get('user-agent')),
+        osFamily(req.get('user-agent')),
+        cleanLanguage,
+        cleanTimezone,
+        analyticsBucket(screenBucket),
+        analyticsBucket(viewportBucket),
+        cleanConnectionType,
+        ANALYTICS_CONSENT_VERSION,
+      ],
+    );
+    await db.query(
+      `DELETE FROM site_presence
+       WHERE last_seen < NOW() - INTERVAL '1 day'`,
+    );
+    return res.status(204).end();
+  } catch (err) {
+    console.error('Site presence write failed:', err.message);
+    return res.status(503).json({ error: 'Analytics is temporarily unavailable' });
+  }
+});
+
+app.get('/api/dev/analytics/online', requireDev, async (_req, res) => {
+  try {
+    const [summary, visitors] = await Promise.all([
+      db.query(
+        `SELECT COUNT(*)::int AS online
+         FROM site_presence
+         WHERE last_seen >= NOW() - ($1::int * INTERVAL '1 second')`,
+        [ANALYTICS_ONLINE_WINDOW_SECONDS],
+      ),
+      db.query(
+        `SELECT last_seen, route, device_type, browser_family, os_family,
+                language, timezone, screen_bucket, viewport_bucket,
+                connection_type
+         FROM site_presence
+         WHERE last_seen >= NOW() - ($1::int * INTERVAL '1 second')
+         ORDER BY last_seen DESC
+         LIMIT 200`,
+        [ANALYTICS_ONLINE_WINDOW_SECONDS],
+      ),
+    ]);
+
+    res.json({
+      online: summary.rows[0]?.online || 0,
+      thresholdSeconds: ANALYTICS_ONLINE_WINDOW_SECONDS,
+      visitors: visitors.rows,
+    });
+  } catch (err) {
+    console.error('Site presence read failed:', err.message);
+    res.status(500).json({ error: 'Unable to load current site users' });
   }
 });
 

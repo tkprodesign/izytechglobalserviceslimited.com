@@ -116,6 +116,35 @@ function sendVisit(pathname: string) {
   });
 }
 
+function sendPresence(pathname: string) {
+  if (navigator.doNotTrack === '1') return;
+  const sessionId = getSessionId();
+  if (!sessionId) return;
+
+  const connection = (navigator as Navigator & {
+    connection?: { effectiveType?: string };
+  }).connection;
+
+  fetch(`${API}/api/analytics/presence`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      route: analyticsRoute(pathname),
+      referrerOrigin: getReferrerOrigin(),
+      sessionId,
+      language: navigator.language?.slice(0, 16) || null,
+      timezone: coarseTimezone(),
+      screenBucket: coarseBucket(window.screen?.width || window.innerWidth || 0),
+      viewportBucket: coarseBucket(window.innerWidth || 0),
+      connectionType: connection?.effectiveType || null,
+      consentVersion: ANALYTICS_CONSENT_VERSION,
+    }),
+    keepalive: true,
+  }).catch(() => {
+    // Analytics must never affect the visitor's page.
+  });
+}
+
 function PreferenceToggle({
   checked,
   title,
@@ -167,7 +196,11 @@ export function CookieConsent() {
   useEffect(() => {
     if (preferences?.analytics && !isPrivateRoute(pathname)) {
       sendVisit(pathname);
+      sendPresence(pathname);
+      const presenceTimer = window.setInterval(() => sendPresence(pathname), 30_000);
+      return () => window.clearInterval(presenceTimer);
     }
+    return undefined;
   }, [pathname, preferences]);
 
   if (isPrivateRoute(pathname)) return null;
