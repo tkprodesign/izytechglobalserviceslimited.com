@@ -342,6 +342,14 @@ async function initSiteAnalyticsTable() {
     CREATE INDEX IF NOT EXISTS site_visits_session_hash_idx
     ON site_visits (session_hash)
   `);
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS site_visits_route_idx
+    ON site_visits (route, visited_at DESC)
+  `);
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS site_visits_device_type_idx
+    ON site_visits (device_type, visited_at DESC)
+  `);
 }
 
 async function initQuoteRequestFields() {
@@ -426,6 +434,81 @@ function requireDev(req, res, next) {
     if (req.user.role !== 'developer') return res.status(403).json({ error: 'Developer access required' });
     next();
   });
+}
+
+const ANALYTICS_CONSENT_VERSION = 'v1';
+const ANALYTICS_ROUTE_PATTERN = /^\/[A-Za-z0-9/_:.~-]{0,159}$/;
+const ANALYTICS_CONNECTION_TYPES = new Set(['slow-2g', '2g', '3g', '4g']);
+const ANALYTICS_BUCKETS = new Set(['small', 'medium', 'large']);
+
+function normalizeAnalyticsRoute(value) {
+  let route = String(value || '/').trim().split(/[?#]/, 1)[0] || '/';
+  route = route.replace(/\/{2,}/g, '/');
+  if (route.length > 1) route = route.replace(/\/+$/, '');
+  if (!ANALYTICS_ROUTE_PATTERN.test(route)) return null;
+
+  // Assessment links contain a private access token. Keep the page category,
+  // never the token itself.
+  if (/^\/assessment\/[^/]+$/.test(route)) return '/assessment/:token';
+  return route;
+}
+
+function normalizeReferrerOrigin(value) {
+  if (!value) return null;
+  try {
+    const url = new URL(String(value).slice(0, 2048));
+    if (!['http:', 'https:'].includes(url.protocol)) return null;
+    return url.origin.slice(0, 200);
+  } catch {
+    return null;
+  }
+}
+
+function browserFamily(userAgent) {
+  const ua = String(userAgent || '');
+  if (/Edg\//i.test(ua)) return 'Edge';
+  if (/SamsungBrowser/i.test(ua)) return 'Samsung Internet';
+  if (/OPR\//i.test(ua)) return 'Opera';
+  if (/Firefox\//i.test(ua)) return 'Firefox';
+  if (/Chrome\//i.test(ua) && !/Chromium/i.test(ua)) return 'Chrome';
+  if (/Safari\//i.test(ua) && !/Chrome|Chromium|Android/i.test(ua)) return 'Safari';
+  return 'Other';
+}
+
+function osFamily(userAgent) {
+  const ua = String(userAgent || '');
+  if (/Windows/i.test(ua)) return 'Windows';
+  if (/Android/i.test(ua)) return 'Android';
+  if (/(iPhone|iPad|iPod)/i.test(ua)) return 'iOS';
+  if (/Mac OS X/i.test(ua)) return 'macOS';
+  if (/Linux/i.test(ua)) return 'Linux';
+  return 'Other';
+}
+
+function deviceType(userAgent) {
+  const ua = String(userAgent || '');
+  if (/(iPad|Tablet|Android(?!.*Mobile)|Kindle|Silk)/i.test(ua)) return 'tablet';
+  if (/(Mobile|iPhone|iPod|Android)/i.test(ua)) return 'mobile';
+  if (ua) return 'desktop';
+  return 'unknown';
+}
+
+function analyticsBucket(value) {
+  return ANALYTICS_BUCKETS.has(value) ? value : null;
+}
+
+function analyticsSessionHash(sessionId) {
+  const day = new Date().toISOString().slice(0, 10);
+  return crypto
+    .createHash('sha256')
+    .update(`${JWT_SECRET}:site-analytics:${day}:${sessionId}`)
+    .digest('hex');
+}
+
+function analyticsDays(value) {
+  const parsed = Number.parseInt(String(value || '30'), 10);
+  if (!Number.isFinite(parsed)) return 30;
+  return Math.min(Math.max(parsed, 7), 365);
 }
 
 app.use(createInvoiceRouter({ db, requireAuth }));
@@ -856,6 +939,198 @@ app.get('/api/health/db', async (_req, res) => {
     res.json({ status: 'ok', database: 'connected' });
   } catch (err) {
     res.status(503).json({ status: 'error', database: 'disconnected', error: err.message });
+  }
+});
+
+// ── Privacy-safe site analytics ───────────────────────────────────────────────
+// Collection is opt-in on the public site. The database stores coarse technical
+// metadata only; raw IP addresses and raw user-agent strings are never persisted.
+app.post('/api/analytics/visit', async (req, res) => {
+  const {
+    route,
+    referrerOrigin,
+    sessionId,
+    language,
+    timezone,
+    screenBucket,
+    viewportBucket,
+    connectionType,
+    consentVersion,
+  } = req.body || {};
+  const cleanRoute = normalizeAnalyticsRoute(route);
+  const cleanSessionId = String(sessionId || '').trim();
+
+  if (!cleanRoute || !/^[A-Za-z0-9_-]{16,128}$/.test(cleanSessionId)) {
+    return res.status(400).json({ error: 'A valid route and session are required' });
+  }
+  if (consentVersion !== ANALYTICS_CONSENT_VERSION) {
+    return res.status(400).json({ error: 'Analytics consent is required' });
+  }
+
+  const sessionHash = analyticsSessionHash(cleanSessionId);
+  const cleanLanguage = String(language || '').trim().slice(0, 16) || null;
+  const cleanTimezone = String(timezone || '').trim().slice(0, 16) || null;
+  const cleanConnectionType = ANALYTICS_CONNECTION_TYPES.has(connectionType)
+    ? connectionType
+    : null;
+
+  try {
+    // Keep repeated route refreshes from inflating visits while still allowing
+    // a returning visitor to create a new visit after a short period.
+    const recent = await db.query(
+      `SELECT 1
+       FROM site_visits
+       WHERE session_hash = $1
+         AND route = $2
+         AND visited_at >= NOW() - INTERVAL '30 minutes'
+       LIMIT 1`,
+      [sessionHash, cleanRoute],
+    );
+    if (recent.rows.length > 0) return res.status(204).end();
+
+    await db.query(
+      `INSERT INTO site_visits (
+         route, referrer_origin, device_type, browser_family, os_family,
+         language, timezone, screen_bucket, viewport_bucket, connection_type,
+         session_hash, consent_version
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [
+        cleanRoute,
+        normalizeReferrerOrigin(referrerOrigin),
+        deviceType(req.get('user-agent')),
+        browserFamily(req.get('user-agent')),
+        osFamily(req.get('user-agent')),
+        cleanLanguage,
+        cleanTimezone,
+        analyticsBucket(screenBucket),
+        analyticsBucket(viewportBucket),
+        cleanConnectionType,
+        sessionHash,
+        ANALYTICS_CONSENT_VERSION,
+      ],
+    );
+    return res.status(202).json({ recorded: true });
+  } catch (err) {
+    console.error('Site analytics write failed:', err.message);
+    return res.status(503).json({ error: 'Analytics is temporarily unavailable' });
+  }
+});
+
+app.get('/api/dev/analytics', requireDev, async (req, res) => {
+  const days = analyticsDays(req.query.days);
+  try {
+    const filter = `visited_at >= NOW() - ($1::int * INTERVAL '1 day')`;
+    const params = [days];
+    const [
+      summary,
+      daily,
+      routes,
+      devices,
+      browsers,
+      operatingSystems,
+      referrers,
+      recent,
+    ] = await Promise.all([
+      db.query(
+        `SELECT COUNT(*)::int AS visits,
+                COUNT(DISTINCT session_hash)::int AS session_groups
+         FROM site_visits
+         WHERE ${filter}`,
+        params,
+      ),
+      db.query(
+        `SELECT TO_CHAR(visited_at AT TIME ZONE 'Africa/Lagos', 'YYYY-MM-DD') AS day,
+                COUNT(*)::int AS visits,
+                COUNT(DISTINCT session_hash)::int AS session_groups
+         FROM site_visits
+         WHERE ${filter}
+         GROUP BY 1
+         ORDER BY 1`,
+        params,
+      ),
+      db.query(
+        `SELECT route, COUNT(*)::int AS visits
+         FROM site_visits
+         WHERE ${filter}
+         GROUP BY route
+         ORDER BY visits DESC, route ASC
+         LIMIT 12`,
+        params,
+      ),
+      db.query(
+        `SELECT device_type AS label, COUNT(*)::int AS visits
+         FROM site_visits
+         WHERE ${filter}
+         GROUP BY device_type
+         ORDER BY visits DESC, label ASC`,
+        params,
+      ),
+      db.query(
+        `SELECT browser_family AS label, COUNT(*)::int AS visits
+         FROM site_visits
+         WHERE ${filter}
+         GROUP BY browser_family
+         ORDER BY visits DESC, label ASC`,
+        params,
+      ),
+      db.query(
+        `SELECT os_family AS label, COUNT(*)::int AS visits
+         FROM site_visits
+         WHERE ${filter}
+         GROUP BY os_family
+         ORDER BY visits DESC, label ASC`,
+        params,
+      ),
+      db.query(
+        `SELECT COALESCE(referrer_origin, 'Direct / none') AS label,
+                COUNT(*)::int AS visits
+         FROM site_visits
+         WHERE ${filter}
+         GROUP BY 1
+         ORDER BY visits DESC, label ASC
+         LIMIT 12`,
+        params,
+      ),
+      db.query(
+        `SELECT visited_at, route, referrer_origin, device_type, browser_family,
+                os_family, language, timezone, screen_bucket, viewport_bucket,
+                connection_type
+         FROM site_visits
+         WHERE ${filter}
+         ORDER BY visited_at DESC
+         LIMIT 100`,
+        params,
+      ),
+    ]);
+
+    res.json({
+      range: {
+        days,
+        since: new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString(),
+      },
+      summary: summary.rows[0],
+      daily: daily.rows,
+      routes: routes.rows,
+      devices: devices.rows,
+      browsers: browsers.rows,
+      operatingSystems: operatingSystems.rows,
+      referrers: referrers.rows,
+      recent: recent.rows,
+      privacy: {
+        consentVersion: ANALYTICS_CONSENT_VERSION,
+        stored: [
+          'coarse route',
+          'timestamp',
+          'device, browser and operating-system family',
+          'language and coarse display/network buckets',
+          'referrer origin only',
+        ],
+        notStored: ['raw IP address', 'raw user-agent', 'form contents', 'persistent identifier'],
+      },
+    });
+  } catch (err) {
+    console.error('Site analytics read failed:', err.message);
+    res.status(500).json({ error: 'Unable to load site analytics' });
   }
 });
 

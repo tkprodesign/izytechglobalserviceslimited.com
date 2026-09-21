@@ -76,6 +76,7 @@ import { TestimonialsManagerPage } from "./admin/TestimonialsManagerPage";
 import { SiteAssessmentsPage } from "./admin/SiteAssessmentsPage";
 import { CompanyContactPage } from "./admin/CompanyContactPage";
 import { InvoicesPage } from "./admin/InvoicesPage";
+import { SiteAnalyticsPage } from "./admin/SiteAnalyticsPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ServicesPage } from "./pages/ServicesPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
@@ -88,6 +89,7 @@ import { AssessmentPaymentPage } from "./pages/AssessmentPaymentPage";
 import { Store } from "./sections/Store";
 import { CartProvider } from "./contexts/CartContext";
 import { WhatsAppFloatingButton } from "./components/WhatsAppFloatingButton";
+import { SiteAnalyticsConsent } from "./components/SiteAnalyticsConsent";
 
 function PublicSite() {
   return (
@@ -197,6 +199,9 @@ export default function App() {
       <Route path="/dev/dashboard" element={
         <ProtectedRoute requiredRole="developer"><DevDashboard /></ProtectedRoute>
       } />
+      <Route path="/dev/analytics" element={
+        <ProtectedRoute requiredRole="developer"><SiteAnalyticsPage /></ProtectedRoute>
+      } />
       <Route path="/dev/logs" element={
         <ProtectedRoute requiredRole="developer"><DevSystemPage /></ProtectedRoute>
       } />
@@ -215,6 +220,7 @@ export default function App() {
       <Route path="/dev" element={<Navigate to="/dev/login" replace />} />
     </Routes>
     <PublicFloatingActions />
+    <SiteAnalyticsConsent />
     </CartProvider>
   );
 }

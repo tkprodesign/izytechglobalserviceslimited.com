@@ -69,6 +69,7 @@ export function DevDashboardLayout({ children }: Props) {
 
   const systemItems: NavigationItem[] = [
     { to: '/dev/dashboard', label: 'Command Centre', icon: Eye, end: true },
+    { to: '/dev/analytics', label: 'Site Analytics', icon: Activity },
     { to: '/dev/logs', label: 'System Info', icon: Server },
     { to: '/dev/services', label: 'Services Content', icon: Wrench },
     { to: '/dev/email', label: 'Email Manager', icon: Mail },
