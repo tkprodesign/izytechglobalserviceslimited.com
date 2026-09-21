@@ -10,44 +10,38 @@ description: Governing charter for all development on the IZY Technologies websi
 - The old repo `izytechgsl/izytech-website` is dead — account suspended, history discarded. Never reference it.
 - Replit is the development assistant only; GitHub is authoritative.
 
-## Deployment Stack
+## Current Application Stack
 | Layer | Service |
 |---|---|
-| Frontend | Cloudflare Pages (direct GitHub integration — NO GitHub Actions) |
-| Backend | Render (`/backend` root directory) |
+| Web app | Root Next.js application with client-side React Router |
+| API | Express app bridged through `pages/api/[[...path]].ts` |
 | Database | Neon PostgreSQL |
 | Repo | GitHub (`tkprodesign/izytechglobalserviceslimited.com`) |
 | Dev assistant | Replit Agent |
 
-Custom domain: purchased, to be connected. Until then use Cloudflare Pages domain for production.
+The repository retains a Vite/Cloudflare Pages build path, but the Replit workflow and
+current production configuration use the root Next.js app and its API bridge.
 
-## Infrastructure Status (as of 2026-07-17)
+## Infrastructure Status
 - ✓ Repository recovered — fresh Git history at new repo
-- ✓ Cloudflare Pages configured
-- ✓ Render service configured
-- ✓ Neon database created
-- ✓ Render backend deployment — live from the GitHub `main` branch
-- ✓ Backend ↔ Neon connection — configured
-- ✓ Frontend ↔ Backend API — configured through Render
-- ⏳ Custom domain — pending
+- ✓ Neon database connection configured
+- ✓ Root Next.js app serves the site, developer/admin panels, and API bridge
 
-## Deployment Architecture (Authoritative)
+## Application Architecture (Authoritative)
 
 ```
 GitHub Repository
       ↓
-Cloudflare Pages (Frontend)
+Next.js application
        ↓
-Render (Backend)
-      ↓
-Neon PostgreSQL (Database)
+Express API bridge
+       ↓
+Neon PostgreSQL
 ```
 
 - GitHub is the single source of truth.
 - **Never deploy directly from Replit.** Every change must be committed to GitHub first.
-- Render and Cloudflare must always deploy from GitHub, never from local state.
 - Before making any infrastructure change, verify the current production configuration — never assume.
-- **Never recreate** Cloudflare Pages, Render services, or the Neon database unless explicitly instructed.
 
 ## .github/workflows — STRICT RULE
 **Never create, modify, or manage any files inside `.github/workflows/`.**
