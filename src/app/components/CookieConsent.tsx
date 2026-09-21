@@ -13,7 +13,6 @@ const API = import.meta.env.VITE_API_URL ?? '';
 
 const DEFAULT_PREFERENCES: CookiePreferences = {
   analytics: false,
-  support: false,
 };
 
 type LegacyConsent = 'granted' | 'denied' | null;
@@ -85,7 +84,7 @@ function getInitialPreferences() {
   // Migrate the previous analytics-only choice into the new cookie preferences.
   const legacy = readLegacyAnalyticsConsent();
   if (!legacy) return null;
-  return { analytics: legacy === 'granted', support: false };
+  return { analytics: legacy === 'granted' };
 }
 
 function sendVisit(pathname: string) {
@@ -115,29 +114,6 @@ function sendVisit(pathname: string) {
   }).catch(() => {
     // Analytics must never affect the visitor's page.
   });
-}
-
-function loadSupportChat() {
-  if (typeof window === 'undefined' || document.querySelector('[data-izy-smartsupp]')) return;
-
-  const win = window as Window & {
-    _smartsupp?: Record<string, unknown>;
-    smartsupp?: ((method: string, ...args: unknown[]) => void) & { _: unknown[] };
-  };
-  win._smartsupp = win._smartsupp || {};
-  Object.assign(win._smartsupp, {
-    key: '7b17927f5d4df272347f716050aeead77bfd9b6d',
-    color: '#F0A20E',
-    ratingEnabled: true,
-    cookieDomain: '.izytechglobalservices.com',
-  });
-
-  const script = document.createElement('script');
-  script.type = 'text/javascript';
-  script.async = true;
-  script.src = 'https://www.smartsuppchat.com/loader.js?';
-  script.dataset.izySmartsupp = 'true';
-  document.head.appendChild(script);
 }
 
 function PreferenceToggle({
@@ -192,9 +168,6 @@ export function CookieConsent() {
     if (preferences?.analytics && !isPrivateRoute(pathname)) {
       sendVisit(pathname);
     }
-    if (preferences?.support && !isPrivateRoute(pathname)) {
-      loadSupportChat();
-    }
   }, [pathname, preferences]);
 
   if (isPrivateRoute(pathname)) return null;
@@ -227,7 +200,7 @@ export function CookieConsent() {
             </button>
           </div>
           <p className="mt-3 text-sm leading-relaxed text-white/65">
-            Necessary storage is always active. Analytics and support chat are optional and can be changed at any time.
+            Necessary storage and support chat are always active. Analytics is optional and can be changed at any time.
           </p>
           <div className="mt-5 space-y-3">
             <PreferenceToggle
@@ -243,10 +216,10 @@ export function CookieConsent() {
               onChange={value => setDraft(current => ({ ...current, analytics: value }))}
             />
             <PreferenceToggle
-              checked={draft.support}
+              checked
+              disabled
               title="Support chat"
-              description="Loads Smartsupp so you can chat with our support team. The provider may set its own chat cookies."
-              onChange={value => setDraft(current => ({ ...current, support: value }))}
+              description="Smartsupp is always available so you can contact our support team. The provider may set its own chat cookies."
             />
           </div>
           <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -280,7 +253,7 @@ export function CookieConsent() {
         <div className="min-w-0">
           <p className="text-sm font-semibold">We use cookies and similar storage</p>
           <p className="mt-1 text-xs leading-relaxed text-white/65">
-            Necessary storage keeps the site working. With your permission, analytics helps us understand visits and support chat lets you contact our team.
+            Necessary storage and support chat are always active. With your permission, analytics helps us understand visits.
             {' '}<Link to="/cookies" className="font-semibold text-[#F0A20E] hover:text-[#ffb830]">See our cookie policy.</Link>
           </p>
         </div>
@@ -301,10 +274,10 @@ export function CookieConsent() {
           </button>
           <button
             type="button"
-            onClick={() => save({ analytics: true, support: true })}
+            onClick={() => save({ analytics: true })}
             className="rounded-lg bg-[#F0A20E] px-3 py-2 text-xs font-bold text-[#041627] transition hover:bg-[#ffb830]"
           >
-            Accept all
+            Allow analytics
           </button>
         </div>
       </div>

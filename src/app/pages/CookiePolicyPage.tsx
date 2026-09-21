@@ -21,8 +21,8 @@ const cookieRows = [
   {
     name: 'Smartsupp chat cookies',
     provider: 'Smartsupp',
-    purpose: 'Supports the optional live-chat widget and remembers chat-related state.',
-    category: 'Support chat',
+    purpose: 'Supports the live-chat widget and remembers chat-related state.',
+    category: 'Support chat (always active)',
     duration: 'Provider-managed',
   },
 ];
@@ -51,7 +51,7 @@ export function CookiePolicyPage() {
           <div className="grid gap-5 md:grid-cols-3">
             {[
               { icon: ShieldCheck, title: 'Necessary', text: 'Always active because the site cannot remember essential settings without it.' },
-              { icon: SlidersHorizontal, title: 'Optional choices', text: 'Analytics and support chat stay off until you allow them.' },
+              { icon: SlidersHorizontal, title: 'Optional choices', text: 'Analytics stays off until you allow it. Support chat is always available.' },
               { icon: Cookie, title: 'Change anytime', text: 'Use the settings button below to review or update your choice.' },
             ].map(({ icon: Icon, title, text }) => (
               <div key={title} className="border border-gray-100 bg-[#f8fafc] p-6">
@@ -69,7 +69,7 @@ export function CookiePolicyPage() {
             </div>
             <h2 className="text-3xl font-bold tracking-tight text-[#041627]">Cookies and similar storage</h2>
             <p className="mt-4 max-w-3xl text-sm leading-relaxed text-[#041627]/60">
-              We keep the list below limited to storage and services used by this site. Some optional services are operated by third parties and may set additional provider-managed cookies when you enable them.
+              We keep the list below limited to storage and services used by this site. Smartsupp is always available for support and may set provider-managed chat cookies.
             </p>
           </div>
 
@@ -109,7 +109,7 @@ export function CookiePolicyPage() {
           <section className="mt-12 flex flex-col items-start justify-between gap-5 border border-[#d9e8df] bg-[#f5fbf7] p-6 sm:flex-row sm:items-center">
             <div>
               <h2 className="text-base font-bold text-[#123b23]">Review your choices</h2>
-              <p className="mt-1 text-sm text-[#42624d]">You can allow or withdraw optional analytics and support chat consent at any time.</p>
+              <p className="mt-1 text-sm text-[#42624d]">You can allow or withdraw optional analytics consent at any time. Support chat remains available.</p>
             </div>
             <button
               type="button"
