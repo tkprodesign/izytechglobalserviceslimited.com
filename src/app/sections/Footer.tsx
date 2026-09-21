@@ -22,6 +22,7 @@ const quickLinks = [
   { label: "Our Projects", href: "/projects" },
   { label: "Store", href: "/store" },
   { label: "Get a Quote", href: "/contact" },
+  { label: "Cookie Policy", href: "/cookies" },
   { label: "Emergency Service", href: "tel:+2348101262814" },
 ];
 

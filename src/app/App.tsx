@@ -89,7 +89,8 @@ import { AssessmentPaymentPage } from "./pages/AssessmentPaymentPage";
 import { Store } from "./sections/Store";
 import { CartProvider } from "./contexts/CartContext";
 import { WhatsAppFloatingButton } from "./components/WhatsAppFloatingButton";
-import { SiteAnalyticsConsent } from "./components/SiteAnalyticsConsent";
+import { CookieConsent } from "./components/CookieConsent";
+import { CookiePolicyPage } from "./pages/CookiePolicyPage";
 
 function PublicSite() {
   return (
@@ -140,6 +141,7 @@ export default function App() {
       <Route path="/assessment/:token" element={<AssessmentPaymentPage />} />
       <Route path="/store" element={<StorePage />} />
       <Route path="/store/enquire" element={<StoreEnquiryPage />} />
+      <Route path="/cookies" element={<CookiePolicyPage />} />
 
       {/* Auth */}
       <Route path="/admin/login" element={<LoginPage />} />
@@ -220,7 +222,7 @@ export default function App() {
       <Route path="/dev" element={<Navigate to="/dev/login" replace />} />
     </Routes>
     <PublicFloatingActions />
-    <SiteAnalyticsConsent />
+    <CookieConsent />
     </CartProvider>
   );
 }
