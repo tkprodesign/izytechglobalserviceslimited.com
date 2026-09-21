@@ -76,6 +76,7 @@ db.connect()
   .then(() => initFounderTable())
   .then(() => initProjectsTable())
   .then(() => initInvoicesTable(db))
+    .then(() => initSiteAnalyticsTable())
   .catch((err) => {
     console.error('Failed to connect to database:', err.message);
     process.exit(1);
@@ -311,6 +312,35 @@ async function initCoreTables() {
       details    TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
+  `);
+}
+
+async function initSiteAnalyticsTable() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS site_visits (
+      id               BIGSERIAL PRIMARY KEY,
+      visited_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      route            TEXT NOT NULL,
+      referrer_origin  TEXT,
+      device_type      TEXT NOT NULL CHECK (device_type IN ('mobile', 'tablet', 'desktop', 'unknown')),
+      browser_family   TEXT NOT NULL DEFAULT 'Other',
+      os_family        TEXT NOT NULL DEFAULT 'Other',
+      language         TEXT,
+      timezone         TEXT,
+      screen_bucket    TEXT,
+      viewport_bucket  TEXT,
+      connection_type  TEXT,
+      session_hash     TEXT NOT NULL,
+      consent_version  TEXT NOT NULL DEFAULT 'v1'
+    )
+  `);
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS site_visits_visited_at_idx
+    ON site_visits (visited_at DESC)
+  `);
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS site_visits_session_hash_idx
+    ON site_visits (session_hash)
   `);
 }
 
