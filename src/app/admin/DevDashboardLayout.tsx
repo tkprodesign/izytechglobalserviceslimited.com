@@ -23,6 +23,7 @@ import {
   Database,
   Cog,
   Receipt,
+  FileOutput,
 } from 'lucide-react';
 
 interface Props {
@@ -73,6 +74,7 @@ export function DevDashboardLayout({ children }: Props) {
     { to: '/dev/logs', label: 'System Info', icon: Server },
     { to: '/dev/services', label: 'Services Content', icon: Wrench },
     { to: '/dev/email', label: 'Email Manager', icon: Mail },
+    { to: '/dev/documents', label: 'Letterhead PDFs', icon: FileOutput },
   ];
 
   const managementItems: NavigationItem[] = [

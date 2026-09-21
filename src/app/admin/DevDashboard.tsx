@@ -25,6 +25,7 @@ import {
   Wrench,
   MessageSquare,
   Zap,
+  FileOutput,
 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
@@ -119,6 +120,7 @@ function fmtMem(bytes: number) {
 const quickAccessItems = [
   { to: '/dev/services', label: 'Services Content', description: 'Manage service descriptions', icon: Wrench, color: '#f26522' },
   { to: '/dev/email', label: 'Email Manager', description: 'Monitor inbound email', icon: Mail, color: '#8b5cf6' },
+  { to: '/dev/documents', label: 'Letterhead PDFs', description: 'Create branded reports', icon: FileOutput, color: '#f26522' },
   { to: '/admin/contacts', label: 'Contacts', description: 'Review incoming messages', icon: FileText, color: '#1d70c9' },
   { to: '/admin/quotes', label: 'Quote Requests', description: 'Follow up on opportunities', icon: ClipboardList, color: '#f26522' },
   { to: '/admin/assessments', label: 'Site Assessments', description: 'Track paid assessments', icon: ClipboardCheck, color: '#16a34a' },

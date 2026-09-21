@@ -77,6 +77,7 @@ import { SiteAssessmentsPage } from "./admin/SiteAssessmentsPage";
 import { CompanyContactPage } from "./admin/CompanyContactPage";
 import { InvoicesPage } from "./admin/InvoicesPage";
 import { SiteAnalyticsPage } from "./admin/SiteAnalyticsPage";
+import { CustomPdfPage } from "./admin/CustomPdfPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ServicesPage } from "./pages/ServicesPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
@@ -215,6 +216,9 @@ export default function App() {
       } />
       <Route path="/dev/email" element={
         <ProtectedRoute requiredRole="developer"><EmailPage /></ProtectedRoute>
+      } />
+      <Route path="/dev/documents" element={
+        <ProtectedRoute requiredRole="developer"><CustomPdfPage /></ProtectedRoute>
       } />
 
       {/* Fallback */}

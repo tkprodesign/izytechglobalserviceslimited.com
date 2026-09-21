@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const emailRoutes = require('./routes/email');
 const { initInvoicesTable, createInvoiceRouter } = require('./invoices_endpoint');
+const { createCustomDocumentsRouter } = require('./custom_documents_endpoint');
 const {
   contactAutoReply,
   contactNotification,
@@ -533,6 +534,7 @@ function analyticsDays(value) {
 }
 
 app.use(createInvoiceRouter({ db, requireAuth }));
+app.use(createCustomDocumentsRouter({ requireDev }));
 
 async function initStoreTable() {
   await db.query(`
