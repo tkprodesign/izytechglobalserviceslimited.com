@@ -13,7 +13,9 @@ type FormState = {
   documentDate: string;
   title: string;
   system: string;
-  fault: string;
+  finding: string;
+  connectedLoads: string;
+  operatingHours: string;
   observation: string;
   recommendation: string;
   conclusion: string;
@@ -24,9 +26,11 @@ const INITIAL_FORM: FormState = {
   recipientOrganization: 'The Alternative Bank',
   recipientLocation: 'Port Harcourt, Rivers State.',
   documentDate: '2026-09-22',
-  title: 'SOLAR SYSTEM FAULT REPORT',
+  title: 'SOLAR SYSTEM AUDIT REPORT',
   system: '6 kW Hybrid Inverter / 10 kWh Lithium Battery',
-  fault: 'Undersized Solar Panel Array',
+  finding: 'Undersized Solar Panel Array',
+  connectedLoads: '- 5 Ceiling Fans\n- 2 Freezers\n- 1 HP Inverter Air Conditioner',
+  operatingHours: 'The system is used mainly during the daytime and evening hours. The connected appliances are not operated simultaneously, and the actual load varies depending on the appliances in use.',
   observation: 'During system inspection, it was observed that the installed solar panel capacity is inadequate for the 10 kWh lithium battery and 6 kW hybrid inverter.\n\nThe available PV generation is insufficient to provide effective battery charging during the available sunlight hours. This is causing extended charging time and reduced battery availability.',
   recommendation: 'The existing solar panel array should be upgraded by increasing the total PV capacity to a suitable level for the inverter and battery system. This will improve charging performance and ensure the battery can be adequately charged during normal solar hours.',
   conclusion: 'The low PV capacity is the main cause of the poor battery charging performance. PV array upgrade is recommended.',
@@ -44,7 +48,9 @@ const fields: Array<{
   { key: 'documentDate', label: 'Date' },
   { key: 'title', label: 'Document title', wide: true },
   { key: 'system', label: 'System', wide: true },
-  { key: 'fault', label: 'Fault', wide: true },
+  { key: 'finding', label: 'Primary finding', wide: true },
+  { key: 'connectedLoads', label: 'Connected loads', multiline: true, wide: true },
+  { key: 'operatingHours', label: 'Operating hours', multiline: true, wide: true },
   { key: 'observation', label: 'Observation', multiline: true, wide: true },
   { key: 'recommendation', label: 'Recommendation', multiline: true, wide: true },
   { key: 'conclusion', label: 'Conclusion', multiline: true, wide: true },
@@ -156,7 +162,7 @@ export function CustomPdfPage() {
           <section className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
             <div className="mb-5">
               <h2 className="text-sm font-semibold" style={{ color: 'var(--izy-navy)' }}>Document details</h2>
-              <p className="mt-1 text-xs" style={{ color: '#8fadc8' }}>The fields below are prefilled for the Alternative Bank solar fault report.</p>
+              <p className="mt-1 text-xs" style={{ color: '#8fadc8' }}>The fields below are prefilled for the Alternative Bank solar audit report.</p>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {fields.map(field => (

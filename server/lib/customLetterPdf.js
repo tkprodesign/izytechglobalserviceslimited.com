@@ -199,9 +199,11 @@ function generateCustomLetterPdf(input = {}) {
       recipientOrganization: 'The Alternative Bank',
       recipientLocation: 'Port Harcourt, Rivers State.',
       documentDate: '2026-09-22',
-      title: 'SOLAR SYSTEM FAULT REPORT',
+      title: 'SOLAR SYSTEM AUDIT REPORT',
       system: '6 kW Hybrid Inverter / 10 kWh Lithium Battery',
-      fault: 'Undersized Solar Panel Array',
+      finding: 'Undersized Solar Panel Array',
+      connectedLoads: '- 5 Ceiling Fans\n- 2 Freezers\n- 1 HP Inverter Air Conditioner',
+      operatingHours: 'The system is used mainly during the daytime and evening hours. The connected appliances are not operated simultaneously, and the actual load varies depending on the appliances in use.',
       observation: 'During system inspection, it was observed that the installed solar panel capacity is inadequate for the 10 kWh lithium battery and 6 kW hybrid inverter.\n\nThe available PV generation is insufficient to provide effective battery charging during the available sunlight hours. This is causing extended charging time and reduced battery availability.',
       recommendation: 'The existing solar panel array should be upgraded by increasing the total PV capacity to a suitable level for the inverter and battery system. This will improve charging performance and ensure the battery can be adequately charged during normal solar hours.',
       conclusion: 'The low PV capacity is the main cause of the poor battery charging performance. PV array upgrade is recommended.',
@@ -244,8 +246,8 @@ function generateCustomLetterPdf(input = {}) {
       width: 205,
       lineBreak: false,
     });
-    doc.fillColor(MUTED).font('bold').fontSize(7.5).text('FAULT', M + 250, y + 13, { characterSpacing: 1 });
-    doc.fillColor(NAVY).font('body').fontSize(10).text(String(report.fault), M + 250, y + 27, {
+    doc.fillColor(MUTED).font('bold').fontSize(7.5).text('PRIMARY FINDING', M + 250, y + 13, { characterSpacing: 1 });
+    doc.fillColor(NAVY).font('body').fontSize(10).text(String(report.finding), M + 250, y + 27, {
       width: RIGHT - (M + 250) - 14,
       lineBreak: false,
     });
@@ -272,6 +274,8 @@ function generateCustomLetterPdf(input = {}) {
       y += lines.length * 15 + 20;
     };
 
+    drawSection('Connected Loads', report.connectedLoads);
+    drawSection('Operating Hours', report.operatingHours);
     drawSection('Observation', report.observation);
     drawSection('Recommendation', report.recommendation);
     drawSection('Conclusion', report.conclusion);
