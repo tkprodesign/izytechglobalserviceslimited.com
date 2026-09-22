@@ -18,7 +18,7 @@ const DEFAULT_REPORT = {
   conclusion: 'The low PV capacity is the main cause of the poor battery charging performance. PV array upgrade is recommended.',
 };
 
-const REQUIRED_FIELDS = [
+const REPORT_FIELDS = [
   'recipientName',
   'recipientOrganization',
   'recipientLocation',
@@ -33,9 +33,13 @@ const REQUIRED_FIELDS = [
   'conclusion',
 ];
 
+const REQUIRED_FIELDS = REPORT_FIELDS.filter(field => (
+  !['recipientName', 'recipientOrganization', 'recipientLocation'].includes(field)
+));
+
 function cleanReport(body) {
   const source = body && typeof body === 'object' ? body : {};
-  return Object.fromEntries(REQUIRED_FIELDS.map(field => [
+  return Object.fromEntries(REPORT_FIELDS.map(field => [
     field,
     String(source[field] ?? DEFAULT_REPORT[field]).trim(),
   ]));

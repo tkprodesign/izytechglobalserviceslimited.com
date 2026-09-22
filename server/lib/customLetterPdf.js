@@ -218,16 +218,20 @@ function generateCustomLetterPdf(input = {}) {
       .text(formatDocumentDate(report.documentDate), M + 92, y);
     y += 32;
 
-    doc.fillColor(MUTED).font('body').fontSize(8)
-      .text('TO', M, y, { characterSpacing: 1.2 });
     const recipientText = [
       report.recipientName,
       report.recipientOrganization,
       report.recipientLocation,
     ].filter(Boolean).join('\n');
-    doc.fillColor(NAVY).font('bold').fontSize(12)
-      .text(recipientText, M, y + 15, { width: 330, lineGap: 1 });
-    y += 15 + doc.heightOfString(recipientText, { width: 330, lineGap: 1 }) + 28;
+    if (recipientText) {
+      doc.fillColor(MUTED).font('body').fontSize(8)
+        .text('TO', M, y, { characterSpacing: 1.2 });
+      doc.fillColor(NAVY).font('bold').fontSize(12)
+        .text(recipientText, M, y + 15, { width: 330, lineGap: 1 });
+      y += 15 + doc.heightOfString(recipientText, { width: 330, lineGap: 1 }) + 28;
+    } else {
+      y += 12;
+    }
 
     doc.fillColor(NAVY).font('bold').fontSize(18)
       .text(String(report.title).toUpperCase(), M, y, { width: W - M * 2, align: 'center' });

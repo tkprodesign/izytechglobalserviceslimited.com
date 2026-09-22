@@ -162,7 +162,7 @@ export function CustomPdfPage() {
           <section className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
             <div className="mb-5">
               <h2 className="text-sm font-semibold" style={{ color: 'var(--izy-navy)' }}>Document details</h2>
-              <p className="mt-1 text-xs" style={{ color: '#8fadc8' }}>The fields below are prefilled for the Alternative Bank solar audit report.</p>
+              <p className="mt-1 text-xs" style={{ color: '#8fadc8' }}>The fields below are prefilled for the Alternative Bank solar audit report. Clear the recipient fields to create a general report with no addressee.</p>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {fields.map(field => (
