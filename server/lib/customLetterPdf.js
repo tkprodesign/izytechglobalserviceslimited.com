@@ -16,7 +16,7 @@ const COMPANY = {
   legal: 'Izy Technologies Global Services Limited',
   tagline: 'Power the Future, Future-Ready Solutions, Today.',
   phone: '+234 810 126 2814',
-  email: 'invoice@izytechglobalservices.com',
+  email: 'info@izytechglobalservices.com',
   site: 'izytechglobalservices.com',
   address: '1 Pathfinder Close, Sandfield, Borikiri, Port Harcourt, Rivers State',
   registration: 'RC: 8705481',
