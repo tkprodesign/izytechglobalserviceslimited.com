@@ -7,3 +7,17 @@ uri = "file://Website for Izy Tech/SITE_GUIDE.md"
 type = "text"
 title = "IZY Technologies — Site Guide"
 logical_id = "921883c8-e848-4646-a8c6-b849ed94d02c"
+
+[[outputs]]
+id = "qesDCoGBXjlnPS7bupxrg"
+uri = "file://attached_assets/SOLAR_SYSTEM_AUDIT_REPORT_2026-09-22.pdf"
+type = "pdf"
+title = "Solar System Audit Report"
+description = "Two-page IZY Technologies audit report covering the undersized PV array, connected loads, operating hours, observation, recommendation, and conclusion."
+logical_id = "eb0f467c-87f2-4f44-a610-d70c553fb2be"
+content_hash = "sha256:ee92166b3eba8bb8da81b8c05b8fd9a508a757ada6ef4343d20766653c34347b"
+size = 492903
+mtime_ms = 1790075501667
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:b1e3b1bf-014d-4296-99a3-514fab4dcc3a/eb0f467c-87f2-4f44-a610-d70c553fb2be/04f4b568-6a2a-4971-9b32-55c7dddde725"
+storage_version_token = "1790075551691686"
+content_type = "application/pdf"
