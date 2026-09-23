@@ -33,9 +33,9 @@ const INITIAL_FORM: FormState = {
   finding: 'Undersized Solar Panel Array',
   connectedLoads: '- 5 Ceiling Fans\n- 2 Freezers\n- 1 HP Inverter Air Conditioner',
   operatingHours: 'The system is used mainly during the daytime and evening hours. The connected appliances are not operated simultaneously, and the actual load varies depending on the appliances in use.',
-  observation: 'During system inspection, it was observed that the installed solar panel capacity is adequate for the 10 kWh lithium battery and 6 kW hybrid inverter under the current operating conditions.\n\nHowever, an enhancement of the existing PV capacity will improve battery charging performance and further increase the uptime of the inverter and battery system for the customer.',
-  recommendation: 'The existing solar panel array should be enhanced by increasing the total PV capacity to increase the uptime of the inverter and battery system. This will improve charging performance and further extend the available operating hours of the system during normal solar hours.',
-  conclusion: 'The current PV capacity needs to be increased to meet the desired capacity of the customer for increased uptime hours. A PV upgrade by increasing the quantity of solar panels is recommended.',
+  observation: 'During system inspection, it was observed that while the existing PV capacity is undersized to adequately support the 6 kW hybrid inverter and 10 kWh lithium battery system under certain operating conditions, it remains operational under lower or variable load conditions.\n\nHowever, the existing PV capacity does not provide sufficient capacity to achieve the customer\'s desired level of battery charging and extended system uptime. A corrective replacement of the existing PV capacity will improve battery charging performance and further increase the uptime of the inverter and battery system for the customer.',
+  recommendation: 'The existing solar panel array should be corrected by increasing the total PV capacity to increase the uptime of the inverter and battery system. This will improve charging performance and further extend the available operating hours of the system during normal solar hours.',
+  conclusion: 'The current PV capacity needs to be increased to meet the desired capacity of the customer for increased uptime hours.',
 };
 
 const fields: Array<{
@@ -165,7 +165,7 @@ export function CustomPdfPage() {
           <section className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
             <div className="mb-5">
               <h2 className="text-sm font-semibold" style={{ color: 'var(--izy-navy)' }}>Document details</h2>
-              <p className="mt-1 text-xs" style={{ color: '#8fadc8' }}>The fields below are prefilled for Mr Stephen Ukaegbu's solar audit report. Edit the title to include or omit the customer name.</p>
+              <p className="mt-1 text-xs" style={{ color: '#8fadc8' }}>The fields below are prefilled for the current solar audit report for Mr Stephen Ukaegbu.</p>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {fields.map(field => (

@@ -37,29 +37,15 @@ storage_version_token = "1790084043829232"
 content_type = "application/pdf"
 
 [[outputs]]
-id = "1a3Q8xsDvXjh8o2DSK-5j"
-uri = "file://attached_assets/SOLAR_SYSTEM_AUDIT_REPORT_MR_STEPHEN_UKAEGBU_2026-09-23.pdf"
-type = "pdf"
-title = "Solar System Audit Report — Mr Stephen Ukaegbu — Corrected"
-description = "Corrected two-page IZY Technologies audit report dated 23 September 2026 with the FAULT field label matching the supplied report content."
-logical_id = "aef5c512-7e10-45c9-8ed3-9220f142bbe0"
-content_hash = "sha256:078ad9089de6a43c2ea361e49ef9252f08dbef91df18aaac2d895577e0d9a38d"
-size = 492856
-mtime_ms = 1790170517638
-storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:b1e3b1bf-014d-4296-99a3-514fab4dcc3a/aef5c512-7e10-45c9-8ed3-9220f142bbe0/4fce0760-1f94-4a28-acee-225c252d6fcc"
-storage_version_token = "1790170581852860"
-content_type = "application/pdf"
-
-[[outputs]]
 id = "GJozF7n4iW991-vmG-4ox"
 uri = "file://attached_assets/SOLAR_SYSTEM_AUDIT_REPORT_2026-09-23.pdf"
 type = "pdf"
-title = "Solar System Audit Report — General Title — Corrected"
-description = "Corrected two-page IZY Technologies audit report dated 23 September 2026 without the customer name in the title and with the FAULT field label matching the supplied report content."
+title = "Solar System Audit Report — 23 September 2026"
+description = "Single final two-page IZY Technologies solar system audit report using the supplied wording for Mr Stephen Ukaegbu, including the FAULT field and no asterisks."
 logical_id = "40f02341-d21b-4680-a663-90fee8c8566d"
-content_hash = "sha256:87ca8b9e2f3c1706cb09db1c6d7cc5492487be7e3cebd439a0a54ee9b285bdb3"
-size = 492601
-mtime_ms = 1790170517930
-storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:b1e3b1bf-014d-4296-99a3-514fab4dcc3a/40f02341-d21b-4680-a663-90fee8c8566d/c80c94dd-30cb-4da6-a798-a03ec2d8b914"
-storage_version_token = "1790170582877251"
+content_hash = "sha256:1afff9c4c717cd5e69827d3a1d95e2ede375d68acf678588464d4284667ea9d9"
+size = 492937
+mtime_ms = 1790180617106
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:b1e3b1bf-014d-4296-99a3-514fab4dcc3a/40f02341-d21b-4680-a663-90fee8c8566d/50a8c228-a343-4571-8911-c3ce57e434ca"
+storage_version_token = "1790180665867665"
 content_type = "application/pdf"

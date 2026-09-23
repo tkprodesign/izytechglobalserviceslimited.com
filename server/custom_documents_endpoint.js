@@ -14,9 +14,9 @@ const DEFAULT_REPORT = {
   finding: 'Undersized Solar Panel Array',
   connectedLoads: '- 5 Ceiling Fans\n- 2 Freezers\n- 1 HP Inverter Air Conditioner',
   operatingHours: 'The system is used mainly during the daytime and evening hours. The connected appliances are not operated simultaneously, and the actual load varies depending on the appliances in use.',
-  observation: 'During system inspection, it was observed that the installed solar panel capacity is adequate for the 10 kWh lithium battery and 6 kW hybrid inverter under the current operating conditions.\n\nHowever, an enhancement of the existing PV capacity will improve battery charging performance and further increase the uptime of the inverter and battery system for the customer.',
-  recommendation: 'The existing solar panel array should be enhanced by increasing the total PV capacity to increase the uptime of the inverter and battery system. This will improve charging performance and further extend the available operating hours of the system during normal solar hours.',
-  conclusion: 'The current PV capacity needs to be increased to meet the desired capacity of the customer for increased uptime hours. A PV upgrade by increasing the quantity of solar panels is recommended.',
+  observation: 'During system inspection, it was observed that while the existing PV capacity is undersized to adequately support the 6 kW hybrid inverter and 10 kWh lithium battery system under certain operating conditions, it remains operational under lower or variable load conditions.\n\nHowever, the existing PV capacity does not provide sufficient capacity to achieve the customer\'s desired level of battery charging and extended system uptime. A corrective replacement of the existing PV capacity will improve battery charging performance and further increase the uptime of the inverter and battery system for the customer.',
+  recommendation: 'The existing solar panel array should be corrected by increasing the total PV capacity to increase the uptime of the inverter and battery system. This will improve charging performance and further extend the available operating hours of the system during normal solar hours.',
+  conclusion: 'The current PV capacity needs to be increased to meet the desired capacity of the customer for increased uptime hours.',
 };
 
 const REPORT_FIELDS = [
