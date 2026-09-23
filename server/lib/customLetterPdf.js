@@ -195,18 +195,19 @@ function generateCustomLetterPdf(input = {}) {
     const geometry = { W, M, RIGHT };
     const contentBottom = () => doc.page.height - FOOTER_H - CONTENT_BOTTOM_GAP;
     const report = {
-      recipientName: 'The Manager',
-      recipientOrganization: 'The Alternative Bank',
-      recipientLocation: 'Port Harcourt, Rivers State.',
-      documentDate: '2026-09-22',
+      recipientName: '',
+      recipientOrganization: '',
+      recipientLocation: '',
+      documentDate: '2026-09-23',
       title: 'SOLAR SYSTEM AUDIT REPORT',
+      customerName: 'Mr Stephen Ukaegbu',
       system: '6 kW Hybrid Inverter / 10 kWh Lithium Battery',
       finding: 'Undersized Solar Panel Array',
       connectedLoads: '- 5 Ceiling Fans\n- 2 Freezers\n- 1 HP Inverter Air Conditioner',
       operatingHours: 'The system is used mainly during the daytime and evening hours. The connected appliances are not operated simultaneously, and the actual load varies depending on the appliances in use.',
-      observation: 'During system inspection, it was observed that the installed solar panel capacity is inadequate for the 10 kWh lithium battery and 6 kW hybrid inverter.\n\nThe available PV generation is insufficient to provide effective battery charging during the available sunlight hours. This is causing extended charging time and reduced battery availability.',
-      recommendation: 'The existing solar panel array should be upgraded by increasing the total PV capacity to a suitable level for the inverter and battery system. This will improve charging performance and ensure the battery can be adequately charged during normal solar hours.',
-      conclusion: 'The low PV capacity is the main cause of the poor battery charging performance. PV array upgrade is recommended.',
+      observation: 'During system inspection, it was observed that the installed solar panel capacity is adequate for the 10 kWh lithium battery and 6 kW hybrid inverter under the current operating conditions.\n\nHowever, an enhancement of the existing PV capacity will improve battery charging performance and further increase the uptime of the inverter and battery system for the customer.',
+      recommendation: 'The existing solar panel array should be enhanced by increasing the total PV capacity to increase the uptime of the inverter and battery system. This will improve charging performance and further extend the available operating hours of the system during normal solar hours.',
+      conclusion: 'The current PV capacity needs to be increased to meet the desired capacity of the customer for increased uptime hours. A PV upgrade by increasing the quantity of solar panels is recommended.',
       ...input,
     };
 
@@ -239,19 +240,24 @@ function generateCustomLetterPdf(input = {}) {
     doc.moveTo(M + 150, y).lineTo(RIGHT - 150, y).lineWidth(1).stroke(GOLD);
     y += 20;
 
-    const infoH = 58;
+    const infoH = 78;
     if (y + infoH > contentBottom()) {
       doc.addPage({ size: 'A4', margin: 0 });
       y = drawLetterheadHeader(doc, geometry, true);
     }
     doc.rect(M, y, RIGHT - M, infoH).fill('#f4f6fa');
-    doc.fillColor(MUTED).font('bold').fontSize(7.5).text('SYSTEM', M + 14, y + 13, { characterSpacing: 1 });
-    doc.fillColor(NAVY).font('body').fontSize(10).text(String(report.system), M + 14, y + 27, {
+    doc.fillColor(MUTED).font('bold').fontSize(7.5).text('CUSTOMER', M + 14, y + 12, { characterSpacing: 1 });
+    doc.fillColor(NAVY).font('body').fontSize(10).text(String(report.customerName || '—'), M + 14, y + 26, {
+      width: RIGHT - M - 28,
+      lineBreak: false,
+    });
+    doc.fillColor(MUTED).font('bold').fontSize(7.5).text('SYSTEM', M + 14, y + 47, { characterSpacing: 1 });
+    doc.fillColor(NAVY).font('body').fontSize(10).text(String(report.system), M + 14, y + 61, {
       width: 205,
       lineBreak: false,
     });
-    doc.fillColor(MUTED).font('bold').fontSize(7.5).text('PRIMARY FINDING', M + 250, y + 13, { characterSpacing: 1 });
-    doc.fillColor(NAVY).font('body').fontSize(10).text(String(report.finding), M + 250, y + 27, {
+    doc.fillColor(MUTED).font('bold').fontSize(7.5).text('PRIMARY FINDING', M + 250, y + 47, { characterSpacing: 1 });
+    doc.fillColor(NAVY).font('body').fontSize(10).text(String(report.finding), M + 250, y + 61, {
       width: RIGHT - (M + 250) - 14,
       lineBreak: false,
     });

@@ -35,3 +35,31 @@ mtime_ms = 1790084037648
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:b1e3b1bf-014d-4296-99a3-514fab4dcc3a/75eda0e5-29ca-4672-8f20-91ac0b929791/9feec338-486c-4837-8896-9996672942d4"
 storage_version_token = "1790084043829232"
 content_type = "application/pdf"
+
+[[outputs]]
+id = "1a3Q8xsDvXjh8o2DSK-5j"
+uri = "file://attached_assets/SOLAR_SYSTEM_AUDIT_REPORT_MR_STEPHEN_UKAEGBU_2026-09-23.pdf"
+type = "pdf"
+title = "Solar System Audit Report — Mr Stephen Ukaegbu"
+description = "Two-page IZY Technologies solar system audit report dated 23 September 2026 with Mr Stephen Ukaegbu in the title."
+logical_id = "aef5c512-7e10-45c9-8ed3-9220f142bbe0"
+content_hash = "sha256:5ee1553266dbe7de3a5baadb6893704af9201b8ded98e1438aaa666838f08ae1"
+size = 492856
+mtime_ms = 1790170151594
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:b1e3b1bf-014d-4296-99a3-514fab4dcc3a/aef5c512-7e10-45c9-8ed3-9220f142bbe0/be79fb09-d814-4378-91b1-5b11ee0b4d41"
+storage_version_token = "1790170199085203"
+content_type = "application/pdf"
+
+[[outputs]]
+id = "GJozF7n4iW991-vmG-4ox"
+uri = "file://attached_assets/SOLAR_SYSTEM_AUDIT_REPORT_2026-09-23.pdf"
+type = "pdf"
+title = "Solar System Audit Report — General Title"
+description = "Two-page IZY Technologies solar system audit report dated 23 September 2026 without the customer name in the title."
+logical_id = "40f02341-d21b-4680-a663-90fee8c8566d"
+content_hash = "sha256:d43230c8388fad90ee5ebdad54ea58516c5dcaf85f1bfa63841c8d1f4c9ac139"
+size = 492596
+mtime_ms = 1790170151842
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:b1e3b1bf-014d-4296-99a3-514fab4dcc3a/40f02341-d21b-4680-a663-90fee8c8566d/09868fd4-a82a-412b-a276-dc29c2b6119e"
+storage_version_token = "1790170200046738"
+content_type = "application/pdf"

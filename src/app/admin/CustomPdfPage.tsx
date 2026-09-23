@@ -12,6 +12,7 @@ type FormState = {
   recipientLocation: string;
   documentDate: string;
   title: string;
+  customerName: string;
   system: string;
   finding: string;
   connectedLoads: string;
@@ -22,18 +23,19 @@ type FormState = {
 };
 
 const INITIAL_FORM: FormState = {
-  recipientName: 'The Manager',
-  recipientOrganization: 'The Alternative Bank',
-  recipientLocation: 'Port Harcourt, Rivers State.',
-  documentDate: '2026-09-22',
+  recipientName: '',
+  recipientOrganization: '',
+  recipientLocation: '',
+  documentDate: '2026-09-23',
   title: 'SOLAR SYSTEM AUDIT REPORT',
+  customerName: 'Mr Stephen Ukaegbu',
   system: '6 kW Hybrid Inverter / 10 kWh Lithium Battery',
   finding: 'Undersized Solar Panel Array',
   connectedLoads: '- 5 Ceiling Fans\n- 2 Freezers\n- 1 HP Inverter Air Conditioner',
   operatingHours: 'The system is used mainly during the daytime and evening hours. The connected appliances are not operated simultaneously, and the actual load varies depending on the appliances in use.',
-  observation: 'During system inspection, it was observed that the installed solar panel capacity is inadequate for the 10 kWh lithium battery and 6 kW hybrid inverter.\n\nThe available PV generation is insufficient to provide effective battery charging during the available sunlight hours. This is causing extended charging time and reduced battery availability.',
-  recommendation: 'The existing solar panel array should be upgraded by increasing the total PV capacity to a suitable level for the inverter and battery system. This will improve charging performance and ensure the battery can be adequately charged during normal solar hours.',
-  conclusion: 'The low PV capacity is the main cause of the poor battery charging performance. PV array upgrade is recommended.',
+  observation: 'During system inspection, it was observed that the installed solar panel capacity is adequate for the 10 kWh lithium battery and 6 kW hybrid inverter under the current operating conditions.\n\nHowever, an enhancement of the existing PV capacity will improve battery charging performance and further increase the uptime of the inverter and battery system for the customer.',
+  recommendation: 'The existing solar panel array should be enhanced by increasing the total PV capacity to increase the uptime of the inverter and battery system. This will improve charging performance and further extend the available operating hours of the system during normal solar hours.',
+  conclusion: 'The current PV capacity needs to be increased to meet the desired capacity of the customer for increased uptime hours. A PV upgrade by increasing the quantity of solar panels is recommended.',
 };
 
 const fields: Array<{
@@ -47,6 +49,7 @@ const fields: Array<{
   { key: 'recipientLocation', label: 'Location' },
   { key: 'documentDate', label: 'Date' },
   { key: 'title', label: 'Document title', wide: true },
+  { key: 'customerName', label: 'Customer name', wide: true },
   { key: 'system', label: 'System', wide: true },
   { key: 'finding', label: 'Primary finding', wide: true },
   { key: 'connectedLoads', label: 'Connected loads', multiline: true, wide: true },
@@ -124,7 +127,7 @@ export function CustomPdfPage() {
               <h1 className="text-2xl font-bold" style={{ color: 'var(--izy-navy)' }}>Letterhead PDF</h1>
             </div>
             <p className="text-sm" style={{ color: '#5a6a82' }}>
-              Create and download a branded custom report using the invoice letterhead.
+              Create and download a branded custom report using the IZY Technologies letterhead.
             </p>
           </div>
           <button
@@ -162,7 +165,7 @@ export function CustomPdfPage() {
           <section className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
             <div className="mb-5">
               <h2 className="text-sm font-semibold" style={{ color: 'var(--izy-navy)' }}>Document details</h2>
-              <p className="mt-1 text-xs" style={{ color: '#8fadc8' }}>The fields below are prefilled for the Alternative Bank solar audit report. Clear the recipient fields to create a general report with no addressee.</p>
+              <p className="mt-1 text-xs" style={{ color: '#8fadc8' }}>The fields below are prefilled for Mr Stephen Ukaegbu's solar audit report. Edit the title to include or omit the customer name.</p>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {fields.map(field => (
