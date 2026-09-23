@@ -51,7 +51,7 @@ const fields: Array<{
   { key: 'title', label: 'Document title', wide: true },
   { key: 'customerName', label: 'Customer name', wide: true },
   { key: 'system', label: 'System', wide: true },
-  { key: 'finding', label: 'Primary finding', wide: true },
+  { key: 'finding', label: 'Fault', wide: true },
   { key: 'connectedLoads', label: 'Connected loads', multiline: true, wide: true },
   { key: 'operatingHours', label: 'Operating hours', multiline: true, wide: true },
   { key: 'observation', label: 'Observation', multiline: true, wide: true },

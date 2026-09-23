@@ -256,7 +256,7 @@ function generateCustomLetterPdf(input = {}) {
       width: 205,
       lineBreak: false,
     });
-    doc.fillColor(MUTED).font('bold').fontSize(7.5).text('PRIMARY FINDING', M + 250, y + 47, { characterSpacing: 1 });
+    doc.fillColor(MUTED).font('bold').fontSize(7.5).text('FAULT', M + 250, y + 47, { characterSpacing: 1 });
     doc.fillColor(NAVY).font('body').fontSize(10).text(String(report.finding), M + 250, y + 61, {
       width: RIGHT - (M + 250) - 14,
       lineBreak: false,
