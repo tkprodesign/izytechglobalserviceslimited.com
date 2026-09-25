@@ -128,6 +128,7 @@ export function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [savedNotice, setSavedNotice] = useState('');
 
   const [editing, setEditing] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -229,6 +230,8 @@ export function InvoicesPage() {
   }
 
   async function handleSave() {
+    setError('');
+    setSavedNotice('');
     const lineItems = form.line_items.filter(li =>
       (li.description || '').trim() && (li.quantity || 0) > 0 && (li.unit_price || 0) > 0
     );
@@ -271,6 +274,9 @@ export function InvoicesPage() {
       if (data.email_sent) {
         setSent(editingId || (data.data && data.data.id) || 0);
         setTimeout(() => setSent(null), 4000);
+      } else if (data.email_skipped) {
+        setSavedNotice('Invoice saved. Add a customer email whenever you want to send it by email.');
+        setTimeout(() => setSavedNotice(''), 6000);
       } else {
         setError(
           'Invoice saved, but the email to ' + (payload.customer_email || 'the customer') +
@@ -379,7 +385,7 @@ export function InvoicesPage() {
       const q = search.toLowerCase();
       list = list.filter(inv =>
         inv.customer_name.toLowerCase().includes(q) ||
-        inv.customer_email.toLowerCase().includes(q) ||
+        (inv.customer_email || '').toLowerCase().includes(q) ||
         inv.invoice_number.toLowerCase().includes(q)
       );
     }
@@ -406,7 +412,7 @@ export function InvoicesPage() {
             <div>
               <h1 className="text-2xl font-bold" style={{ color: '#0f172a' }}>Invoices</h1>
               <p className="text-sm mt-1" style={{ color: '#64748b' }}>
-                Create, manage, and send invoices to customers.
+                Create invoices and send them by email when a customer email is available.
               </p>
             </div>
             <button
@@ -423,6 +429,11 @@ export function InvoicesPage() {
         {error && (
           <div className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm mb-4" style={{ background: '#fef2f2', color: '#dc2626' }}>
             <AlertCircle size={14} /> {error}
+          </div>
+        )}
+        {savedNotice && (
+          <div className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm mb-4" style={{ background: '#f0fdf4', color: '#15803d' }}>
+            <CheckCircle size={14} /> {savedNotice}
           </div>
         )}
 
@@ -498,7 +509,7 @@ export function InvoicesPage() {
 
                   <div className="mt-2 min-w-0">
                     <p className="text-sm font-medium truncate" style={{ color: '#0f172a' }}>{inv.customer_name}</p>
-                    <p className="text-xs truncate" style={{ color: '#94a3b8' }}>{inv.customer_email}</p>
+                    <p className="text-xs truncate" style={{ color: '#94a3b8' }}>{inv.customer_email || 'No email supplied'}</p>
                   </div>
 
                   <div className="mt-2 flex items-baseline justify-between gap-3">
@@ -535,9 +546,10 @@ export function InvoicesPage() {
                     </button>
                     <button
                       onClick={() => handleSend(inv)}
-                      disabled={sending === inv.id}
+                      disabled={sending === inv.id || !inv.customer_email?.trim()}
                       className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium transition-colors disabled:opacity-40 active:bg-green-50"
                       style={{ borderColor: '#e2e8f0', color: '#16a34a' }}
+                      title={inv.customer_email?.trim() ? 'Send by email' : 'Add a customer email to enable sending'}
                     >
                       <Mail size={13} className={sending === inv.id ? 'animate-pulse' : ''} /> Send
                     </button>
@@ -578,7 +590,7 @@ export function InvoicesPage() {
                     </td>
                     <td className="px-5 py-3">
                       <p className="text-sm font-medium" style={{ color: '#0f172a' }}>{inv.customer_name}</p>
-                      <p className="text-xs truncate max-w-[180px] md:max-w-none" style={{ color: '#94a3b8' }}>{inv.customer_email}</p>
+                      <p className="text-xs truncate max-w-[180px] md:max-w-none" style={{ color: '#94a3b8' }}>{inv.customer_email || 'No email supplied'}</p>
                     </td>
                     <td className="px-5 py-3 hidden md:table-cell">
                       <span
@@ -623,9 +635,9 @@ export function InvoicesPage() {
                         </button>
                         <button
                           onClick={() => handleSend(inv)}
-                          disabled={sending === inv.id}
+                          disabled={sending === inv.id || !inv.customer_email?.trim()}
                           className="p-2 rounded-lg hover:bg-green-50 transition-colors disabled:opacity-40"
-                          title="Send by email"
+                          title={inv.customer_email?.trim() ? 'Send by email' : 'Add a customer email to enable sending'}
                         >
                           <Mail size={14} style={{ color: '#16a34a' }} className={sending === inv.id ? 'animate-pulse' : ''} />
                         </button>
@@ -721,7 +733,7 @@ export function InvoicesPage() {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#94a3b8' }}>Customer Email *</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#94a3b8' }}>Customer Email (optional)</label>
                 <input
                   type="email"
                   value={form.customer_email}
@@ -734,7 +746,7 @@ export function InvoicesPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#94a3b8' }}>Phone</label>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#94a3b8' }}>Phone (optional)</label>
                 <input
                   value={form.customer_phone}
                   onChange={e => setField('customer_phone', e.target.value)}

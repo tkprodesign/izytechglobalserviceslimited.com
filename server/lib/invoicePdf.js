@@ -270,16 +270,46 @@ function generateInvoicePdf(inv, options = {}) {
         .text(recipientText, M, billToY + 15, { width: 300, lineGap: 1 });
       recipientBottom = billToY + 15
         + doc.heightOfString(recipientText, { width: 300, lineGap: 1 });
+
+      if (options.includeCustomerDetails) {
+        const customerLines = [
+          ['Email', inv.customer_email],
+          ['Phone', inv.customer_phone],
+          ['Address', inv.customer_address],
+        ].filter(([, value]) => String(value || '').trim());
+        const customerName = String(inv.customer_name || '').trim();
+        if (customerName || customerLines.length) {
+          const detailsY = recipientBottom + 14;
+          doc.fillColor(MUTED).font('body').fontSize(8)
+            .text('CUSTOMER DETAILS', M, detailsY, { characterSpacing: 1.2 });
+          let detailY = detailsY + 15;
+          if (customerName) {
+            doc.fillColor(NAVY).font('bold').fontSize(10.5)
+              .text(customerName, M, detailY, { width: 300 });
+            detailY += doc.heightOfString(customerName, { width: 300 }) + 4;
+          }
+          doc.fillColor(SLATE).font('body').fontSize(9);
+          for (const [label, value] of customerLines) {
+            const line = `${label}: ${String(value).trim()}`;
+            doc.text(line, M, detailY, { width: 300 });
+            detailY += doc.heightOfString(line, { width: 300 }) + 3;
+          }
+          recipientBottom = detailY;
+        }
+      }
     } else {
       doc.fillColor(NAVY).font('bold').fontSize(12)
         .text(inv.customer_name || '', M, billToY + 15);
       doc.font('body').fillColor(SLATE).fontSize(9.5);
       let by = billToY + 34;
-      if (inv.customer_email) { doc.text(inv.customer_email, M, by); by += 14; }
-      if (inv.customer_phone) { doc.text(inv.customer_phone, M, by); by += 14; }
-      if (inv.customer_address) {
-        doc.text(inv.customer_address, M, by, { width: 300 });
-        by += 14 * Math.ceil((inv.customer_address.length / 46));
+      const customerEmail = String(inv.customer_email || '').trim();
+      const customerPhone = String(inv.customer_phone || '').trim();
+      const customerAddress = String(inv.customer_address || '').trim();
+      if (customerEmail) { doc.text(customerEmail, M, by); by += 14; }
+      if (customerPhone) { doc.text(customerPhone, M, by); by += 14; }
+      if (customerAddress) {
+        doc.text(customerAddress, M, by, { width: 300 });
+        by += 14 * Math.ceil((customerAddress.length / 46));
       }
       recipientBottom = by;
     }

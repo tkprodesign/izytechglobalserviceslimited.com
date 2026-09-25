@@ -12,6 +12,7 @@ function generateAltBankLetterPdf(inv) {
         'Port Harcourt, Rivers State.',
       ],
     },
+    includeCustomerDetails: true,
     includeStatusPill: false,
   });
 }

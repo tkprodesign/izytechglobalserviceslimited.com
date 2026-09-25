@@ -117,13 +117,17 @@ function isValidEmail(value) {
  * @returns {Promise<{ok: boolean, error?: string}>}
  */
 async function sendInvoiceEmail(inv) {
+  const recipientEmail = String(inv.customer_email || '').trim();
+  if (!recipientEmail) {
+    throw new Error('Customer email is required to send this invoice');
+  }
   const pdfBuffer = await generateInvoicePdf(inv);
   const html = invoiceEmail({ invoice: inv });
   const naira = n => '\u20A6' + (Number(n) || 0).toLocaleString('en-NG');
 
   await sendResendEmail({
     from: process.env.INVOICE_EMAIL || 'invoice@izytechglobalservices.com',
-    to: inv.customer_email,
+    to: recipientEmail,
     subject: `Invoice ${inv.invoice_number} from Izy Technologies Global Services Limited${inv.status === 'paid' ? ' \u2014 Paid' : ''}`,
     html,
     text: `Invoice ${inv.invoice_number}\nBill to: ${inv.customer_name}\nTotal: ${naira(inv.total)} (${inv.status === 'paid' ? 'PAID' : 'UNPAID'})\n\nThe full invoice is attached as a PDF. Questions? Call +234 810 126 2814 or reply to this email.`,
@@ -198,8 +202,12 @@ router.post('/api/admin/invoices', requireAuth, async (req, res) => {
     line_items, logistics, service_charge, tax_rate, tax_label, discount,
     notes, due_date, status, bank_account_name, bank_account_number, bank_name,
   } = req.body || {};
-  if (!customer_name || !customer_email) return res.status(400).json({ error: 'Customer name and email are required' });
-  if (!isValidEmail(customer_email)) return res.status(400).json({ error: 'Enter a valid customer email address' });
+  const customerName = String(customer_name || '').trim();
+  const customerEmail = String(customer_email || '').trim();
+  const customerPhone = String(customer_phone || '').trim();
+  const customerAddress = String(customer_address || '').trim();
+  if (!customerName) return res.status(400).json({ error: 'Customer name is required' });
+  if (customerEmail && !isValidEmail(customerEmail)) return res.status(400).json({ error: 'Enter a valid customer email address' });
   if (!Array.isArray(line_items) || !line_items.length) return res.status(400).json({ error: 'At least one line item is required' });
 
   const items = line_items.map(item => ({
@@ -227,10 +235,10 @@ router.post('/api/admin/invoices', requireAuth, async (req, res) => {
       [
         invoice_number,
         title?.trim() || DEFAULT_INVOICE_TITLE,
-        customer_name,
-        customer_email,
-        customer_phone || '',
-        customer_address || '',
+        customerName,
+        customerEmail,
+        customerPhone,
+        customerAddress,
         JSON.stringify(items),
         subtotal,
         logisticsAmount,
@@ -252,18 +260,21 @@ router.post('/api/admin/invoices', requireAuth, async (req, res) => {
     const inv = rows[0];
 
     // Auto-send invoice email (with PDF attached) to the customer on creation.
-    let emailResult = { ok: false, error: 'not attempted' };
-    try {
-      emailResult = await sendInvoiceEmail(inv);
-    } catch (emailErr) {
-      console.error('Invoice email error:', emailErr.message);
-      emailResult = { ok: false, error: emailErr.message };
+    let emailResult = { ok: false, skipped: true };
+    if (inv.customer_email) {
+      try {
+        emailResult = await sendInvoiceEmail(inv);
+      } catch (emailErr) {
+        console.error('Invoice email error:', emailErr.message);
+        emailResult = { ok: false, error: emailErr.message };
+      }
     }
 
     res.status(201).json({
       data: inv,
       email_sent: emailResult.ok,
-      email_error: emailResult.ok ? null : (emailResult.error || 'Email could not be sent'),
+      email_skipped: Boolean(emailResult.skipped),
+      email_error: emailResult.ok || emailResult.skipped ? null : (emailResult.error || 'Email could not be sent'),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -276,8 +287,12 @@ router.put('/api/admin/invoices/:id', requireAuth, async (req, res) => {
     line_items, logistics, service_charge, tax_rate, tax_label, discount,
     notes, due_date, status, bank_account_name, bank_account_number, bank_name,
   } = req.body || {};
-  if (!customer_name || !customer_email) return res.status(400).json({ error: 'Customer name and email are required' });
-  if (!isValidEmail(customer_email)) return res.status(400).json({ error: 'Enter a valid customer email address' });
+  const customerName = String(customer_name || '').trim();
+  const customerEmail = String(customer_email || '').trim();
+  const customerPhone = String(customer_phone || '').trim();
+  const customerAddress = String(customer_address || '').trim();
+  if (!customerName) return res.status(400).json({ error: 'Customer name is required' });
+  if (customerEmail && !isValidEmail(customerEmail)) return res.status(400).json({ error: 'Enter a valid customer email address' });
   if (!Array.isArray(line_items) || !line_items.length) return res.status(400).json({ error: 'At least one line item is required' });
   const items = (line_items || []).map(item => ({
     description: item.description || '',
@@ -300,10 +315,10 @@ router.put('/api/admin/invoices/:id', requireAuth, async (req, res) => {
       'UPDATE invoices SET title=$1, customer_name=$2, customer_email=$3, customer_phone=$4, customer_address=$5, line_items=$6, subtotal=$7, logistics=$8, service_charge=$9, tax_rate=$10, tax_label=$11, tax_amount=$12, discount=$13, total=$14, notes=$15, status=$16, due_date=$17, bank_account_name=$18, bank_account_number=$19, bank_name=$20, paid_date=CASE WHEN $16=\'paid\' AND paid_date IS NULL THEN NOW() ELSE paid_date END, updated_at=NOW() WHERE id=$21 RETURNING *',
       [
         title?.trim() || DEFAULT_INVOICE_TITLE,
-        customer_name,
-        customer_email,
-        customer_phone || '',
-        customer_address || '',
+        customerName,
+        customerEmail,
+        customerPhone,
+        customerAddress,
         JSON.stringify(items),
         subtotal,
         logisticsAmount,
@@ -326,18 +341,21 @@ router.put('/api/admin/invoices/:id', requireAuth, async (req, res) => {
     const inv = rows[0];
 
     // Auto-send the updated invoice to the customer address on every update.
-    let emailResult = { ok: false, error: 'not attempted' };
-    try {
-      emailResult = await sendInvoiceEmail(inv);
-    } catch (emailErr) {
-      console.error('Invoice email error:', emailErr.message);
-      emailResult = { ok: false, error: emailErr.message };
+    let emailResult = { ok: false, skipped: true };
+    if (inv.customer_email) {
+      try {
+        emailResult = await sendInvoiceEmail(inv);
+      } catch (emailErr) {
+        console.error('Invoice email error:', emailErr.message);
+        emailResult = { ok: false, error: emailErr.message };
+      }
     }
 
     res.json({
       data: inv,
       email_sent: emailResult.ok,
-      email_error: emailResult.ok ? null : (emailResult.error || 'Email could not be sent'),
+      email_skipped: Boolean(emailResult.skipped),
+      email_error: emailResult.ok || emailResult.skipped ? null : (emailResult.error || 'Email could not be sent'),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -360,6 +378,9 @@ router.post('/api/admin/invoices/:id/send', requireAuth, async (req, res) => {
   try {
     const { rows } = await db.query('SELECT * FROM invoices WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Invoice not found' });
+    if (!String(rows[0].customer_email || '').trim()) {
+      return res.status(400).json({ error: 'Add a customer email to this invoice before sending it' });
+    }
     await sendInvoiceEmail(rows[0]);
     res.json({ success: true, message: 'Invoice emailed to ' + rows[0].customer_email });
   } catch (err) {
