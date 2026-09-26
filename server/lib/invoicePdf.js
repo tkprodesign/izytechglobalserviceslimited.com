@@ -332,6 +332,12 @@ function generateInvoicePdf(inv, options = {}) {
     const totLabelW = 92, totValW = 155, totGap = 12;
     const totValX = RIGHT - totValW;
     const totLabelX = totValX - totGap - totLabelW;
+    const summaryW = 300;
+    const summaryX = RIGHT - summaryW;
+    const summaryValueW = 135;
+    const summaryValueX = RIGHT - 12 - summaryValueW;
+    const summaryLabelX = summaryX + 12;
+    const summaryLabelW = summaryValueX - summaryLabelX - 12;
 
     const drawSummaryRow = (label, value, opts = {}) => {
       doc.font(opts.bold ? 'bold' : 'body').fontSize(opts.size || 10);
@@ -453,44 +459,100 @@ function generateInvoicePdf(inv, options = {}) {
 
     const sections = Array.isArray(inv.sections) ? inv.sections.filter(Boolean) : [];
     if (sections.length) {
-      sections.forEach(section => {
-        drawSectionHeading(section.title);
-        drawItems(section.items);
-
-        const amounts = sectionAmounts(section);
+      const drawSectionSummary = (section, amounts) => {
         const rows = [
           ['Subtotal', money(amounts.subtotal)],
           ['Logistics', money(amounts.logistics)],
           ['Service Charge', money(amounts.serviceCharge)],
           [amounts.taxLabel, money(amounts.taxAmount)],
         ];
-        const blockHeight = 18 + rows.length * 20 + 28;
-        if (ty + blockHeight > contentBottom()) {
+        const headerH = 24;
+        const rowH = 17;
+        const totalH = 28;
+        const panelH = headerH + rows.length * rowH + totalH;
+        if (ty + 8 + panelH > contentBottom()) {
           ty = startContinuationPage(doc, inv, geometry, false);
         }
-        ty += 10;
-        doc.fillColor(MUTED).font('bold').fontSize(8)
-          .text(`${String(section.title || 'Section').toUpperCase()} SUMMARY`, totLabelX - 30, ty, {
-            width: totLabelW + 30,
-            align: 'right',
-            characterSpacing: 0.8,
+
+        const panelY = ty + 8;
+        doc.roundedRect(summaryX, panelY, summaryW, panelH, 8)
+          .fill('#f7f9fc')
+          .stroke('#e5eaf1');
+        doc.rect(summaryX, panelY, summaryW, headerH).fill('#eef1f6');
+        doc.fillColor(NAVY).font('bold').fontSize(8)
+          .text(String(section.title || 'Section').toUpperCase(), summaryLabelX, panelY + 9, {
+            width: summaryLabelW,
+            lineBreak: false,
+            characterSpacing: 0.6,
           });
-        ty += 16;
-        rows.forEach(([label, value]) => drawSummaryRow(label, value, { size: 9 }));
-        doc.moveTo(totLabelX, ty).lineTo(RIGHT, ty).lineWidth(0.75).stroke(NAVY);
-        ty += 9;
-        drawSummaryRow('SECTION TOTAL', money(amounts.total), { bold: true, size: 11 });
-        ty += 8;
+        doc.fillColor(MUTED).font('bold').fontSize(7)
+          .text('SECTION SUMMARY', summaryValueX - 12, panelY + 9, {
+            width: summaryValueW + 12,
+            align: 'right',
+            lineBreak: false,
+            characterSpacing: 0.5,
+          });
+
+        let rowY = panelY + headerH + 6;
+        rows.forEach(([label, value]) => {
+          doc.fillColor(SLATE).font('body').fontSize(9)
+            .text(label, summaryLabelX, rowY, {
+              width: summaryLabelW,
+              lineBreak: false,
+            })
+            .text(value, summaryValueX, rowY, {
+              width: summaryValueW,
+              align: 'right',
+              lineBreak: false,
+            });
+          rowY += rowH;
+        });
+
+        const totalY = panelY + headerH + rows.length * rowH;
+        doc.roundedRect(summaryX + 1, totalY, summaryW - 2, totalH - 1, 6).fill(NAVY);
+        doc.fillColor('#ffffff').font('bold').fontSize(9.5)
+          .text('SECTION TOTAL', summaryLabelX, totalY + 9, {
+            width: summaryLabelW,
+            lineBreak: false,
+          })
+          .text(money(amounts.total), summaryValueX, totalY + 9, {
+            width: summaryValueW,
+            align: 'right',
+            lineBreak: false,
+          });
+        ty = panelY + panelH + 8;
+      };
+
+      const drawGrandTotal = () => {
+        const panelH = 48;
+        if (ty + 8 + panelH > contentBottom()) {
+          ty = startContinuationPage(doc, inv, geometry, false);
+        }
+        const panelY = ty + 8;
+        doc.roundedRect(summaryX, panelY, summaryW, panelH, 8).fill(NAVY);
+        doc.rect(summaryX, panelY, summaryW, 3).fill(GOLD);
+        doc.fillColor('#ffffff').font('bold').fontSize(12)
+          .text('GRAND TOTAL', summaryLabelX, panelY + 17, {
+            width: summaryLabelW,
+            lineBreak: false,
+          })
+          .text(money(inv.total), summaryValueX, panelY + 17, {
+            width: summaryValueW,
+            align: 'right',
+            lineBreak: false,
+          });
+        ty = panelY + panelH + 6;
+      };
+
+      sections.forEach(section => {
+        drawSectionHeading(section.title);
+        drawItems(section.items);
+
+        const amounts = sectionAmounts(section);
+        drawSectionSummary(section, amounts);
       });
 
-      const grandTotalHeight = 48;
-      if (ty + grandTotalHeight > contentBottom()) {
-        ty = startContinuationPage(doc, inv, geometry, false);
-      }
-      ty += 12;
-      doc.moveTo(totLabelX, ty).lineTo(RIGHT, ty).lineWidth(1).stroke(NAVY);
-      ty += 14;
-      drawSummaryRow('GRAND TOTAL', money(inv.total), { bold: true, size: 14 });
+      drawGrandTotal();
     } else {
       drawItems(inv.line_items || []);
 
