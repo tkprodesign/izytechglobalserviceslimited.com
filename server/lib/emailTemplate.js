@@ -278,13 +278,34 @@ function invoiceEmail({ invoice, bodyHtml }) {
   const pillColor = paid ? '#16a34a' : overdue ? '#dc2626' : inv.status === 'cancelled' ? '#6b7280' : '#b45309';
   const pillLabel = paid ? 'PAID' : overdue ? 'OVERDUE' : inv.status === 'cancelled' ? 'CANCELLED' : 'UNPAID';
 
-  const itemRows = (inv.line_items || []).map(item => `
+  const flatItemRows = (inv.line_items || []).map(item => `
         <tr>
           <td style="padding:10px 14px;border-bottom:1px solid #eef1f6;font-size:13px;color:#041627">${escHtml(item.description || '\u2014')}</td>
           <td style="padding:10px 14px;border-bottom:1px solid #eef1f6;font-size:13px;color:#5a6a82;text-align:center">${escHtml(String(item.quantity))}</td>
           <td style="padding:10px 14px;border-bottom:1px solid #eef1f6;font-size:13px;color:#5a6a82;text-align:right">${naira(item.unit_price)}</td>
           <td style="padding:10px 14px;border-bottom:1px solid #eef1f6;font-size:13px;color:#041627;font-weight:600;text-align:right">${naira(item.amount)}</td>
         </tr>`).join('');
+  const itemRows = Array.isArray(inv.sections) && inv.sections.length
+    ? inv.sections.map((section, index) => `
+        <tr>
+          <td colspan="4" style="padding:11px 14px 7px;background:#eaf2ff;border-bottom:1px solid #dbeafe;font-size:12px;color:#1d4ed8;font-weight:700;text-transform:uppercase;letter-spacing:.04em">
+            Section ${index + 1}: ${escHtml(section.title || `Section ${index + 1}`)}
+          </td>
+        </tr>
+        ${(section.line_items || []).map(item => `
+        <tr>
+          <td style="padding:10px 14px;border-bottom:1px solid #eef1f6;font-size:13px;color:#041627">${escHtml(item.description || '\u2014')}</td>
+          <td style="padding:10px 14px;border-bottom:1px solid #eef1f6;font-size:13px;color:#5a6a82;text-align:center">${escHtml(String(item.quantity))}</td>
+          <td style="padding:10px 14px;border-bottom:1px solid #eef1f6;font-size:13px;color:#5a6a82;text-align:right">${naira(item.unit_price)}</td>
+          <td style="padding:10px 14px;border-bottom:1px solid #eef1f6;font-size:13px;color:#041627;font-weight:600;text-align:right">${naira(item.amount)}</td>
+        </tr>`).join('')}
+        <tr>
+          <td colspan="3" style="padding:6px 14px 10px;font-size:11px;color:#5a6a82;text-align:right">
+            Logistics ${naira(section.logistics)} &middot; Service charge ${naira(section.service_charge)}
+          </td>
+          <td style="padding:6px 14px 10px;font-size:11px;color:#041627;font-weight:600;text-align:right">${naira(section.total)}</td>
+        </tr>`).join('')
+    : flatItemRows;
 
   const body = bodyHtml || `
       <h2 class="greeting">Hello ${escHtml(inv.customer_name)},</h2>
