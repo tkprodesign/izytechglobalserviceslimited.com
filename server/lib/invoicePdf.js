@@ -338,7 +338,10 @@ function generateInvoicePdf(inv, options = {}) {
     let itemRowIndex = 0;
     invoiceRows.forEach(item => {
       if (item.sectionTitle) {
-        if (ty + 26 > contentBottom()) {
+        // Keep a subsection heading with at least the first line item. A
+        // heading at the bottom of a page by itself is confusing and leaves
+        // the section's content stranded on the continuation page.
+        if (ty + 26 + 28 > contentBottom()) {
           ty = startContinuationPage(doc, inv, geometry, true);
         }
         doc.rect(M, ty, RIGHT - M, 26).fill('#eef1f6');
@@ -478,7 +481,10 @@ function generateInvoicePdf(inv, options = {}) {
         ...(inv.bank_account_number ? wrapTextByWidth(doc, 'Account Number: ' + String(inv.bank_account_number), W - M * 2) : []),
         ...(inv.bank_name ? wrapTextByWidth(doc, 'Bank: ' + String(inv.bank_name), W - M * 2) : []),
       ];
-      const paymentBlockHeight = 10 + 14 + paymentLines.length * (ITEM_LINE_H + 4);
+      // Keep payment details compact enough to share a page with totals when
+      // a long section has just moved to a continuation page.
+      const paymentLineGap = 1;
+      const paymentBlockHeight = 10 + 14 + paymentLines.length * (ITEM_LINE_H + paymentLineGap);
       if (ty + paymentBlockHeight > contentBottom()) {
         ty = startContinuationPage(doc, inv, geometry, false);
       }
@@ -489,7 +495,7 @@ function generateInvoicePdf(inv, options = {}) {
       ty += 14;
       for (const line of paymentLines) {
         doc.text(line || ' ', M, ty, { width: W - M * 2, lineBreak: false });
-        ty += ITEM_LINE_H + 4;
+        ty += ITEM_LINE_H + paymentLineGap;
       }
     }
 
