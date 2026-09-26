@@ -25,8 +25,8 @@ interface Invoice {
   invoice_number: string;
   title: string;
   customer_name: string;
-  customer_email: string;
-  customer_phone: string;
+  customer_email?: string | null;
+  customer_phone?: string | null;
   customer_address: string;
   line_items: LineItem[];
   subtotal: number;
@@ -208,9 +208,9 @@ export function InvoicesPage() {
     setForm({
       title: inv.title || 'Invoice',
       customer_name: inv.customer_name,
-      customer_email: inv.customer_email,
-      customer_phone: inv.customer_phone,
-      customer_address: inv.customer_address,
+      customer_email: inv.customer_email ?? '',
+      customer_phone: inv.customer_phone ?? '',
+      customer_address: inv.customer_address ?? '',
       line_items: JSON.parse(JSON.stringify(inv.line_items || [])),
       logistics: String(inv.logistics ?? 0),
       service_charge: String(inv.service_charge ?? 0),
