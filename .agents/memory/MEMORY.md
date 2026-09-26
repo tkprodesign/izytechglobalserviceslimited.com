@@ -18,3 +18,4 @@
 - [LFS deployment blocker](lfs-deployment-blocker.md) — Unused Git LFS upload archives can exhaust quota and prevent Render/Cloudflare from cloning the repository
 - [Next.js Replit compatibility](nextjs-replit-compatibility.md) — This custom-webpack app uses Next's explicit webpack mode because Replit blocks the older vulnerable Next patch
 - [Invoice PDF rules](invoice-pdf-pagination.md) — Customer and Alternative Bank PDFs omit missing contact details; email and phone are optional
+- [Next API bridge](next-express-api-bridge.md) — The custom Next entrypoint must mount the Express API before Next handles page fallbacks
