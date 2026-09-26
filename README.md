@@ -2,39 +2,45 @@
 
 Official website and digital platform for IZY Technologies Global Services Limited — Nigeria's premier energy solutions provider.
 
-## Architecture — Vite + React SPA + Express API
+## Architecture — single full Next.js app
 
-One Node/Express process serves both the frontend and the API. The frontend is a
-**Vite + React 18** SPA (client-side routing via `react-router`), pre-built with
-`vite build` into `dist/`. Express serves those static assets and all `/api/*`
-routes from the same process — no separate backend service, no Next.js.
+The root Next.js app serves the React site, the admin/developer panels, and the
+Express API bridge from one process. The existing Cloudflare Pages deployment
+keeps a separate Vite build (`pages:build`) for its static site path.
 
 ```
 /                       Repo root
-├── public/             Static assets (images, videos, favicon)
-├── dist/               Vite production build (generated; served by Express)
-├── server/             Express API library (all routes, DB, email, PDF)
-├── server.js           Production entry: `node server.js` (0.0.0.0:$PORT)
-├── vite.config.ts      Vite config; `@` resolves to `src/`
-├── package.json        dev/build/start scripts
+├── app/                Next.js route shell and root layout
+├── pages/api/          Next.js API catch-all for the Express app
+├── src/                React site, admin, and developer panels
+├── public/              Static assets (images, videos, favicon)
+├── server/              Express API library (all routes, DB, email, PDF)
+├── server.js            Production entry: `node server.js` (0.0.0.0:$PORT)
+├── next.config.js       Next.js configuration
+├── vite.config.ts       Cloudflare Pages build configuration
+├── package.json         dev/build/start scripts
 ```
 
-- **Site**: client-side React app (react-router), consumed from `src/`.
-- **API**: Express routes under `server/expressApp.js`, mounted at `/api/*`.
-- **One deployment**: frontend + API ship together; the start command is `node server.js`.
+- **Site**: the client-side React app in `src/`, mounted by `app/[[...path]]/page.tsx`.
+- **API**: `pages/api/[[...path]].ts` delegates `/api/*` to `server/expressApp.js`.
+- **Primary deployment**: Next.js pages and API ship together; the start command is `node server.js`.
+- **Cloudflare Pages path**: `npm run pages:build` produces the existing Vite `dist/` output.
 
 ## Quick Start
 
 ```bash
 npm install
-npm run dev       # Vite dev server on 0.0.0.0:$PORT (default 5000)
+npm run dev       # Next.js dev server on 0.0.0.0:$PORT (default 3000)
 ```
 
 ## Production
 
 ```bash
-npm run build     # vite build → dist/
-npm start         # node server.js  (serves pages + API on $PORT)
+npm run build     # next build --webpack
+npm start         # node server.js (serves pages + API on $PORT)
+
+# Cloudflare Pages only:
+npm run pages:build  # vite build → dist/
 ```
 
 Docker: `docker build -t izy . && docker run -p 3000:3000 izy`
@@ -46,7 +52,7 @@ Docker: `docker build -t izy . && docker run -p 3000:3000 izy`
 | `DATABASE_URL` | Neon PostgreSQL connection string (required) |
 | `SESSION_SECRET` | JWT signing secret for admin/dev auth |
 | `RESEND_API_KEY` | Email delivery (invoices, contact, notifications) |
-| `NEXT_PUBLIC_VITE_API_URL` | Optional: absolute API base for the SPA; leave unset for same-origin `/api` |
+| `VITE_API_URL` | Render API base URL baked into the Cloudflare Pages Vite build |
 
 ## Docs
 

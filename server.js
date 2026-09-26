@@ -1,30 +1,23 @@
-// Load environment variables.
+// Load environment variables (repo-root .env in dev workspaces).
 require('dotenv').config();
 
-const { join } = require('path');
-const express = require('express');
+// The full Next.js app (pages + API) as a request handler. All Express API
+// routes live inside it under /api/* — there is no separate backend process.
+const nextApp = require('next')({ dev: false, dir: __dirname });
 
-const app = require('./server/expressApp');
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
-// Production layout: the Vite build is pre-bundled into dist/ at deploy time.
-// Express just serves those static assets and still drives the API routes.
-const distDir = join(__dirname, 'dist');
-app.use(express.static(distDir));
-app.get('*', (req, res, next) => {
-  // Only intercept non-API routes so the routers below still get their URLs.
-  if (req.path.startsWith('/api/')) return next();
-  res.sendFile(join(distDir, 'index.html'));
-});
+nextApp.prepare().then(() => {
+  const handle = nextApp.getRequestHandler();
 
-// Bind the Express app to the network first (it contains every /api/* router).
-const server = app.listen(PORT, HOST, () => {
-  console.log(`IZY Tech (Express: SPA + API) running on http://${HOST}:${PORT}`);
-});
-
-// Graceful shutdown.
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received — shutting down');
-  server.close(() => process.exit(0));
+  const { createServer } = require('http');
+  createServer((req, res) => {
+    handle(req, res);
+  }).listen(PORT, HOST, () => {
+    console.log(`IZY Tech (Next.js: site + API) running on http://${HOST}:${PORT}`);
+  });
+}).catch((err) => {
+  console.error('Failed to start Next.js server:', err);
+  process.exit(1);
 });

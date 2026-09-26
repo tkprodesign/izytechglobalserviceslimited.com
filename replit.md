@@ -1,6 +1,6 @@
 # IZY Technologies Global Services Limited
 
-Official digital platform — a Vite + React SPA (admin & developer panels) plus an Express + PostgreSQL API, deployed from one Node process.
+Official digital platform — a Next.js app (admin & developer panels) plus an Express + PostgreSQL API bridge, deployed from one Node process. Cloudflare Pages retains a separate Vite build path.
 
 **Brand naming:** The full legal name is **Izy Technologies Global Services Limited**. The preferred short alias is **Izy Tech Services**. Avoid using “IZY” as a standalone company reference in customer-facing copy.
 
@@ -28,7 +28,7 @@ The application runs as one workflow:
 
 | Workflow | Command | Port | Purpose |
 |---|---|---|---|
-| **Start application** | `PORT=5000 npm run dev` | 5000 | Vite site + Express API |
+| **Start application** | `npm run build && PORT=5000 npm start` | 5000 | Next.js site + Express API |
 
 It starts automatically. The preview pane shows the site and admin panel, while `/api/*` is handled by the same server.
 
@@ -39,7 +39,7 @@ npm ci
 
 ## Stack
 
-- **App**: Vite + React 18, TypeScript, Tailwind CSS v4, Framer Motion, Radix UI
+- **App**: Next.js, React 18, TypeScript, Tailwind CSS v4, Framer Motion, Radix UI
 - **API**: Node.js, Express, PostgreSQL (`pg`), JWT auth
 - **Database**: Neon PostgreSQL (connection via `DATABASE_URL` secret)
 
@@ -56,7 +56,7 @@ All secrets are stored in Replit's secret manager and are automatically availabl
 ### Frontend config
 | Secret | Purpose |
 |---|---|
-| `VITE_API_URL` | Production Render API base URL used by the Cloudflare Pages build (`https://izytech-api.onrender.com`). Local Replit development uses the Vite `/api` proxy instead. |
+| `VITE_API_URL` | Production Render API base URL used by the Cloudflare Pages Vite build (`https://izytech-api.onrender.com`). The primary Next.js app uses its same-origin API bridge. |
 
 ### Email accounts (Resend Receiving + sending)
 | Secret | Purpose |
@@ -110,7 +110,7 @@ The Email Manager reads inbound messages from Resend Receiving and sends through
 |---|---|
 | `SMARTSUPP_API` | Smartsupp REST API token (server-side only, never exposed to the browser). Verifies the account/agent state; agent profile photo and chat-box appearance are configured in the Smartsupp dashboard. |
 
-The public chat widget is loaded in `index.html` (Vite) with the site key, brand color `#F0A20E`, rating enabled, and cross-subdomain cookies (`.izytechglobalservices.com`). Visitor identification is bridged in `src/lib/smartsupp.ts` and called after form submissions so agents see the visitor's name, email, phone and form type.
+The public chat widget is loaded in `app/layout.tsx` for Next.js and `index.html` for the Cloudflare Pages Vite build, with the site key, brand color `#F0A20E`, rating enabled, and cross-subdomain cookies (`.izytechglobalservices.com`). Visitor identification is bridged in `src/lib/smartsupp.ts` and called after form submissions so agents see the visitor's name, email, phone and form type.
 
 ## Database
 
@@ -129,18 +129,24 @@ Invoices can be created from **structured sections** (title + rows) instead of f
 
 ## Cloudflare Pages environment variable
 
+Cloudflare Pages uses `npm run pages:build` and publishes `dist/`. Set
+`VITE_API_URL` to the public Render API URL before deploying.
+
 ## Production deployment
 
-- **Application**: Vite + Express deployment (site and API together)
+- **Application**: Next.js deployment (site and API together)
+- **Cloudflare Pages**: separate Vite static build for the configured Pages project
 - **Database**: Neon PostgreSQL
 
 ## Project structure
 
 ```
-src/        Vite + React site, admin, and developer panels
+app/        Next.js route shell
+src/        React site, admin, and developer panels
 server/     Express API library and database initialization
+pages/api/  Next.js bridge for the Express API
 public/     Static assets
-dist/       Vite production build (served by Express)
+dist/       Cloudflare Pages Vite build output
 docs/       Design system, guides, attributions
 ```
 

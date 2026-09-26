@@ -26,7 +26,13 @@ Express + TypeScript API for IZY Technologies platform, deployed on Render.
 
 ## Production server
 
-The Express API is the single runtime. `server.js` starts Node on `0.0.0.0:$PORT`. The Vite frontend is pre-built with `vite build` into `dist/` and is served as static assets by Express. Build command: `vite build`. Start command: `node server.js`. |
+The primary runtime is Next.js. `server.js` starts the Next.js request handler
+on `0.0.0.0:$PORT`; the Next catch-all page serves the React app and
+`pages/api/[[...path]].ts` delegates `/api/*` to Express. Build command:
+`next build --webpack`. Start command: `node server.js`.
+
+Cloudflare Pages retains the separate `npm run pages:build` Vite build and
+publishes `dist/`.
 
 ## Local development
 
@@ -34,8 +40,8 @@ The Express API is the single runtime. `server.js` starts Node on `0.0.0.0:$PORT
 npm install
 npm run dev            # Vite dev server (0.0.0.0:$PORT, default 5000)
 
-# The Express API is already mounted; it reads DATABASE_URL from your .env.
-# Run the Vite proxy or set VITE_API_URL to the dev API origin.
+# The Express API is already mounted through the Next.js API bridge; it reads
+# DATABASE_URL from your .env.
 ```
 
 ## Database setup (Neon)
@@ -90,7 +96,11 @@ After adding it, trigger a new Pages deployment so Vite bakes it in at build tim
 
 ## Agent continuity notes
 
-This repository is a **Vite + React SPA** (`src/`) plus an **Express + PostgreSQL API** (`server/`). There is no Next.js app, `pages/`, `app/`, or `next.config.js` in production — the `package.json` build command is `vite build`, the start command is `node server.js`, and the Express app is the only server process.
+This repository uses a **Next.js app shell** (`app/` and `pages/api/`) around
+the existing React client (`src/`) plus an **Express + PostgreSQL API**
+(`server/`). Cloudflare Pages also uses the retained Vite build path. The root
+`package.json` build command is `next build --webpack`, the start command is
+`node server.js`, and `npm run pages:build` is reserved for Cloudflare Pages.
 
 #### What an agent must know before changing the router/auth surface
 
@@ -98,5 +108,10 @@ This repository is a **Vite + React SPA** (`src/`) plus an **Express + PostgreSQ
 - The backend flattens `sections` into the persistent `line_items` JSONB column via `flattenToLineItems()`; the `sections` JSONB column is also persisted. **Do not** make the REST API accept one format exclusively while the UI sends the other, or the PDF/email renderers and the editor will diverge.
 - Drafts: `POST /api/admin/invoices/:id/save-draft` upserts an in-progress payload with `status='draft'`. The client debounced-autosaves on every keystroke and restores drafts with `loadDraft()` when the editor opens.
 - **`invoices.status` CHECK must include `'draft'`.** The `CREATE TABLE` in `server/invoices_endpoint.js` only allows `unpaid|paid|overdue|cancelled`; adding `draft` to that check (and any existing production row) is required for the draft workflow to persist.
-- New frontend work should keep these conventions: `import.meta.env.VITE_API_URL` is injected by Vite, `@` resolves to `src/` in `vite.config.ts`, and the admin routes live under `src/app/admin/`. Prefer reusing `DashboardLayout`, `ProtectedRoute`, and the existing `lucide-react` button patterns.
+- New frontend work should keep these conventions: the primary Next app uses
+  the same-origin `/api` bridge, the Cloudflare Pages build injects
+  `import.meta.env.VITE_API_URL`, `@` resolves to `src/` in `vite.config.ts`,
+  and the admin routes live under `src/app/admin/`. Prefer reusing
+  `DashboardLayout`, `ProtectedRoute`, and the existing `lucide-react` button
+  patterns.
 - It is safe to delete now-stale files left over from the old Next.js build (for example `pages/api/[[...path]].ts` and any `next.config.js` that declared the `serverExternalPackages` express/pdfkit extras); confirm a file is unused before removing it so you do not break a build.

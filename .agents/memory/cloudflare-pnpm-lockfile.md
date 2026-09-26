@@ -7,4 +7,4 @@ The Cloudflare Pages deployment installs dependencies with `pnpm install` in fro
 
 **Why:** Cloudflare stops before running the build when the pnpm importer specifiers differ from `package.json`.
 
-**How to apply:** After dependency changes, run a lockfile-only pnpm refresh and verify with a frozen install before pushing. Keep the Next.js build as the primary application check.
+**How to apply:** After dependency changes, run a lockfile-only pnpm refresh and verify with a frozen install before pushing. Do not leave a stale `bun.lock` beside the pnpm lockfile: Cloudflare may select Bun and fail before the configured Pages build runs. Keep the Next.js build as the primary application check.
