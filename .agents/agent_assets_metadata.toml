@@ -54,14 +54,14 @@ content_type = "application/pdf"
 id = "09QXCyr8y-z5mRAeVCEu0"
 uri = "file://attached_assets/Invoice_IZY-2609-9370_Toyota_Camry.pdf"
 type = "pdf"
-title = "Updated Toyota Camry invoice with painting work"
-description = "Final Camry invoice including mechanical, electrical, panel beating, and painting work with section-level VAT and a grand total of ₦2,784,357.50."
+title = "Corrected Toyota Camry invoice"
+description = "Updated Camry invoice with TIE ROD wording corrected in the mechanical work section. Grand total remains ₦2,784,357.50."
 logical_id = "f0d87e3a-1899-400a-b5ac-c01bbe8c930c"
-content_hash = "sha256:0582b4a76e3f9c3d07ba42541f8c8ae6a54bac227b2d81c6cf3e153fea6519a7"
+content_hash = "sha256:86f13afc9081cc4128729d5b1c4dddfaab44fd8151ae9db1f31afae020d9c3b5"
 size = 501817
-mtime_ms = 1790410768996
-storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:8c4fc5f6-6024-4c3b-8999-4fc461eceae6/f0d87e3a-1899-400a-b5ac-c01bbe8c930c/ec240591-2b41-446a-a7e6-2569f1cbce59"
-storage_version_token = "1790410804652566"
+mtime_ms = 1790411064408
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:8c4fc5f6-6024-4c3b-8999-4fc461eceae6/f0d87e3a-1899-400a-b5ac-c01bbe8c930c/4e077cd8-81af-4e5c-84a4-bc04fb8903e8"
+storage_version_token = "1790411070090348"
 content_type = "application/pdf"
 
 [[outputs]]
