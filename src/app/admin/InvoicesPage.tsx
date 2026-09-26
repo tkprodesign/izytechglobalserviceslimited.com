@@ -1,253 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router';
-import { DashboardLayout } from './DashboardLayout';
-import { SectionsEditor } from './SectionsEditor';
-import { getToken, removeToken } from '../../lib/auth';
-import { ngDate, ngDateTime } from '../../lib/ngtime';
-import {
-  FileText, Plus, Trash2, Send, Eye, Edit2, Pencil, ChevronDown, X, Download,
-  Loader2, CheckCircle, Clock, AlertCircle, Search, Filter,
-  Mail, PlusCircle, Landmark, LayoutDashboard,
-} from 'lucide-react';
-
-const API = import.meta.env.VITE_API_URL ?? '';
-
-/* ── Types ─────────────────────────────────────────────────────────────────── */
-
-interface Row {
-  description: string;
-  quantity: number;
-  unit_price: number;
-  amount: number;
-}
-
-interface Section {
-  title: string;
-  description: string | null;
-  rows: Row[];
-}
-
-type SectionTree = Section[];
-
-interface LineItem {
-  description: string;
-  quantity: number;
-  unit_price: number;
-  amount: number;
-}
-
-interface Invoice {
-  id: number;
-  invoice_number: string;
-  title: string;
-  customer_name: string;
-  customer_email?: string | null;
-  customer_phone?: string | null;
-  customer_address: string;
-  line_items: LineItem[];
-  subtotal: number;
-  logistics: number;
-  service_charge: number;
-  tax_rate: number;
-  tax_label: string;
-  tax_amount: number;
-  discount: number;
-  total: number;
-  notes: string;
-  status: 'unpaid' | 'paid' | 'overdue' | 'cancelled' | 'draft';
-  due_date: string;
-  paid_date: string;
-  bank_account_name: string;
-  bank_account_number: string;
-  bank_name: string;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface InvoicePayload {
-  title: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  customer_address: string;
-  line_items: unknown[];
-  sections: unknown[];
-  logistics: number;
-  service_charge: number;
-  tax_rate: number;
-  tax_label: string;
-  discount: number;
-  notes: string;
-  due_date: string | null;
-  status: string;
-  bank_account_name: string;
-  bank_account_number: string;
-  bank_name: string;
-}
-
-type FormState = {
-  title: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  customer_address: string;
-  line_items: LineItem[];
-  sections: unknown[] | null;
-  logistics: string;
-  service_charge: string;
-  tax_rate: string;
-  tax_label: string;
-  discount: string;
-  notes: string;
-  due_date: string;
-  status: string;
-  bank_account_name: string;
-  bank_account_number: string;
-  bank_name: string;
-};
-
-function defaultValue(): FormState {
-  return {
-    title: 'Invoice',
-    customer_name: '',
-    customer_email: '',
-    customer_phone: '',
-    customer_address: '',
-    line_items: [{ description: '', quantity: 1, unit_price: 0, amount: 0 }],
-    logistics: '0',
-    service_charge: '0',
-    tax_rate: '7.50',
-    tax_label: 'VAT (7.5%)',
-    discount: '0',
-    notes: '',
-    due_date: '',
-    sections: null,
-    status: 'unpaid',
-    bank_account_name: 'Izy Technologies Global services Ltd',
-    bank_account_number: '0512121038',
-    bank_name: 'Alternative Bank',
-  };
-}
-
-/* ── Helpers ───────────────────────────────────────────────────────────────── */
-
-function naira(n: number): string {
-  return '₦' + Math.round(n).toLocaleString('en-NG');
-}
-
-function fmtDate(d: string | null) {
-  return ngDate(d);
-}
-
-function statusColor(status: string) {
-  switch (status) {
-    case 'paid': return '#16a34a';
-    case 'overdue': return '#dc2626';
-    case 'cancelled': return '#6b7280';
-    default: return '#b45309';
-  }
-}
-
-function statusLabel(status: string) {
-  const labels: Record<string, string> = {
-    unpaid: 'Unpaid',
-    paid: 'Paid',
-    overdue: 'Overdue',
-    cancelled: 'Cancelled',
-  };
-  return labels[status] ?? status;
-}
-
-/* ── Main Page ─────────────────────────────────────────────────────────────── */
-
-export function InvoicesPage() {
-  const token = getToken();
-  const navigate = useNavigate();
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [savedNotice, setSavedNotice] = useState('');
-
-  const [editing, setEditing] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState<FormState>(defaultValue());
-
-  const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('');
-  const [saving, setSaving] = useState(false);
-  const [sending, setSending] = useState<number | null>(null);
-  const [sent, setSent] = useState<number | null>(null);
-  const [sendingError, setSendingError] = useState('');
-  const [generatingPdf, setGeneratingPdf] = useState(false);
-  const [generatingAltBank, setGeneratingAltBank] = useState(false);
-  const [mobileView, setMobileView] = useState<'list' | 'editor'>('list');
-
-  useEffect(() => {
-    loadInvoices();
-  }, []);
-
-  const loadInvoices = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch(API + '/api/admin/invoices', {
-        headers: { Authorization: 'Bearer ' + token },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to load');
-      setInvoices(data.data || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Load failed');
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
-
-  // Auto-save the in-progress invoice as a server-side `draft` on every
-  // keystroke (debounced). A cancelled tab or browser exit therefore never
-  // loses work: reopening the page restores the last saved sections + fields
-  // via loadDraft().
-  useEffect(() => {
-    if (!token) return;
-
-    // Only auto-save the sections form — the flat-line-items editor shares
-    // the same `status = 'draft'` backend but is the legacy path; it still
-    // benefits from draft persistence, so we auto-save it too once a section
-    // tree exists (isSectionedForm) or the flat form is the only content.
-    const payload = isSectionedForm()
-      ? { sections: sectionsToPayloadSections(), line_items: [] }
-      : { line_items: form.line_items.map(li => ({ ...li })) };
-
-    const timer = window.setTimeout(async () => {
-      try {
-        const res = await fetch(
-          API + '/api/admin/invoices/' + (editingId || 0) + '/save-draft',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: 'Bearer ' + token,
-            },
-            body: JSON.stringify({ ...payload, title: form.title, customer_name: form.customer_name, customer_email: form.customer_email, customer_phone: form.customer_phone, customer_address: form.customer_address, logistics: form.logistics, service_charge: form.service_charge, tax_rate: form.tax_rate, tax_label: form.tax_label, discount: form.discount, notes: form.notes, due_date: form.due_date, bank_account_name: form.bank_account_name, bank_account_number: form.bank_account_number, bank_name: form.bank_name }),
-          },
-        );
-        const data = await res.json();
-        if (res.ok && data.saved_as_draft) {
-          setSavedNotice('Saved as draft — your work is safe. It will resume on the next visit.');
-          window.setTimeout(() => setSavedNotice(''), 6000);
-        }
-      } catch {
-        // Network failures are expected while offline; the draft is kept
-        // locally in React state until the effect retries.
-      }
-    }, 800);
-
-    return () => window.clearTimeout(timer);
-  }, [form, editingId, token, isSectionedForm, sectionsToPayloadSections]);
-
-  function setField(key: keyof FormState, value: string | LineItem[] | number) {
-    setForm(prev => ({ ...prev, [key]: value }));
+]: value }));
   }
 
   function addLineItem() {
@@ -287,7 +38,7 @@ export function InvoicesPage() {
       customer_phone: inv.customer_phone ?? '',
       customer_address: inv.customer_address ?? '',
       line_items: JSON.parse(JSON.stringify(inv.line_items || [])),
-      sections: inv.sections ? inv.sections : null,
+      sections: (inv.sections ?? []) as SectionTree,
       logistics: String(inv.logistics ?? 0),
       service_charge: String(inv.service_charge ?? 0),
       tax_rate: String(inv.tax_rate ?? 7.5),
@@ -302,6 +53,7 @@ export function InvoicesPage() {
     });
     setEditing(true);
     setEditingId(inv.id);
+    setDraftPersistenceEnabled(inv.status === 'draft');
     setMobileView('editor');
   }
 
@@ -321,6 +73,7 @@ export function InvoicesPage() {
     setForm(defaultValue());
     setEditing(false);
     setEditingId(null);
+    setDraftPersistenceEnabled(false);
     setMobileView('list');
     setDocsTab(SECTIONS_TAB);
     setDraftToResume(referenceInvoiceId ?? null);
@@ -360,7 +113,7 @@ export function InvoicesPage() {
         customer_phone: inv.customer_phone ?? '',
         customer_address: inv.customer_address ?? '',
         line_items: JSON.parse(JSON.stringify(inv.line_items || [])),
-        sections: inv.sections ?? [],
+        sections: (inv.sections ?? []) as SectionTree,
         logistics: String(inv.logistics ?? 0),
         service_charge: String(inv.service_charge ?? 0),
         tax_rate: String(inv.tax_rate ?? 7.5),
@@ -375,6 +128,7 @@ export function InvoicesPage() {
       });
       setEditing(true);
       setEditingId(inv.id);
+      setDraftPersistenceEnabled(true);
       setMobileView('editor');
       setSavedNotice('Resumed your in-progress sections invoice. Auto-save is on — changes are saved every 800 ms.');
       setTimeout(() => setSavedNotice(''), 6000);
@@ -387,7 +141,7 @@ export function InvoicesPage() {
   function isSectionedForm(): boolean {
     // The sections editor writes the full section tree into `form.sections`,
     // so a populated sections array means we're submitting sections.
-    const sections = form.sections as SectionTree ?? [];
+    const sections = form.sections;
     return sections.some(s => Array.isArray(s.rows) && s.rows.length > 0);
   }
 
@@ -396,7 +150,7 @@ export function InvoicesPage() {
     // REST API's `flattenToLineItems` expects (rows whose description and
     // quantity/unit_price are non-empty / positive).
     const rows: LineItem[] = [];
-    const sections = form.sections as SectionTree ?? [];
+    const sections = form.sections;
     for (let i = 0; i < sections.length; i++) {
       const section = sections[i];
       if (!section || !Array.isArray(section.rows)) continue;
@@ -417,7 +171,7 @@ export function InvoicesPage() {
   function sectionsToPayloadSections(): unknown[] {
     // Build the structured `sections` array backed by plain objects, exactly as
     // the REST API expects.
-    const sections = form.sections ?? [];
+    const sections = form.sections;
     const out: SectionTree = [];
     for (let i = 0; i < sections.length; i++) {
       const section = sections[i];
@@ -425,16 +179,76 @@ export function InvoicesPage() {
       out.push({
         title: String((section as { title?: string }).title ?? '').trim() || 'Section',
         description: (section as { description?: string | null }).description ?? null,
-        rows: (section as { rows?: SectionTree }).rows?.map(row => ({
-          description: String((row as { description?: string }).description ?? '').trim(),
-          quantity: Number((row as { quantity?: number }).quantity) || 1,
-          unit_price: Number((row as { unit_price?: number }).unit_price) || 0,
-          amount: Number((row as { amount?: number }).amount) || 0,
+        rows: section.rows.map(row => ({
+          description: String(row.description ?? '').trim(),
+          quantity: Number(row.quantity) || 1,
+          unit_price: Number(row.unit_price) || 0,
+          amount: Number(row.amount) || 0,
         })) ?? [],
       });
     }
     return out;
   }
+
+  // Persist an open invoice as a draft after a short pause. This effect lives
+  // below the section helpers so the first render cannot reference an
+  // uninitialized helper, and it creates the draft record before subsequent
+  // edits switch to the update endpoint.
+  useEffect(() => {
+    if (!token || mobileView !== 'editor' || (editingId && !draftPersistenceEnabled)) return;
+
+    const payload = {
+      ...(isSectionedForm()
+        ? { sections: sectionsToPayloadSections(), line_items: sectionsToPayloadRows() }
+        : { sections: [], line_items: form.line_items.map(li => ({ ...li })) }),
+      title: form.title,
+      customer_name: form.customer_name,
+      customer_email: form.customer_email,
+      customer_phone: form.customer_phone,
+      customer_address: form.customer_address,
+      logistics: form.logistics,
+      service_charge: form.service_charge,
+      tax_rate: form.tax_rate,
+      tax_label: form.tax_label,
+      discount: form.discount,
+      notes: form.notes,
+      due_date: form.due_date,
+      bank_account_name: form.bank_account_name,
+      bank_account_number: form.bank_account_number,
+      bank_name: form.bank_name,
+    };
+    const url = editingId
+      ? API + '/api/admin/invoices/' + editingId + '/save-draft'
+      : API + '/api/admin/invoices/draft';
+
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token,
+          },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (res.ok && data.saved_as_draft) {
+          if (!editingId && data.data?.id) {
+            setEditingId(data.data.id);
+            setEditing(true);
+            setDraftPersistenceEnabled(true);
+          }
+          setSavedNotice('Saved as draft — your work is safe. It will resume on the next visit.');
+          window.setTimeout(() => setSavedNotice(''), 6000);
+        }
+      } catch {
+        // Keep the current form usable while a transient network failure is
+        // retried by the next debounced change.
+      }
+    }, 800);
+
+    return () => window.clearTimeout(timer);
+  }, [form, editingId, token, mobileView, docsTab, draftPersistenceEnabled]);
 
   async function handleSave() {
     setError('');
@@ -446,6 +260,8 @@ export function InvoicesPage() {
       customer_email: form.customer_email.trim(),
       customer_phone: form.customer_phone.trim(),
       customer_address: form.customer_address.trim(),
+      line_items: [],
+      sections: [],
       logistics: parseFloat(form.logistics) || 0,
       service_charge: parseFloat(form.service_charge) || 0,
       tax_rate: parseFloat(form.tax_rate) || 7.5,
@@ -461,7 +277,6 @@ export function InvoicesPage() {
 
     try {
       if (docsTab === SECTIONS_TAB) {
-        if (!form.sections) form.sections = [];
         payload.sections = sectionsToPayloadSections();
         payload.line_items = sectionsToPayloadRows();
         if (!payload.line_items.length) {
@@ -1111,7 +926,7 @@ export function InvoicesPage() {
             {/* Sections vs flat items editor */}
             {docsTab === SECTIONS_TAB ? (
               <SectionsEditor
-                sections={form.sections as unknown as SectionTree}
+                sections={form.sections}
                 onChange={(next) => setForm(prev => ({ ...prev, ...(next as Partial<FormState>) }))}
                 onAddSection={() => setForm(f => ({
                   ...f,
@@ -1128,10 +943,21 @@ export function InvoicesPage() {
                 }))}
                 onRowChange={(sectionIndex, rowIndex, field, value) => setForm(f => ({
                   ...f,
-                  sections: (f.sections ?? []).map((s, i) => i === sectionIndex ? {
-                    ...s,
-                    rows: s.rows.map((r, j) => j === rowIndex ? { ...r, [field]: value } : r),
-                  } : s),
+                  sections: (f.sections ?? []).map((s, i) => {
+                    if (i !== sectionIndex) return s;
+                    if (rowIndex < 0) return { ...s, [field]: value };
+                    return {
+                      ...s,
+                      rows: s.rows.map((r, j) => {
+                        if (j !== rowIndex) return r;
+                        const next = { ...r, [field]: value };
+                        return {
+                          ...next,
+                          amount: (Number(next.quantity) || 0) * (Number(next.unit_price) || 0),
+                        };
+                      }),
+                    };
+                  }),
                 }))}
               />
             ) : (

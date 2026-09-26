@@ -148,6 +148,90 @@ function flattenToLineItems(sections) {
   return items;
 }
 
+function normalizeLineItems(lineItems, sections) {
+  const directItems = Array.isArray(lineItems)
+    ? lineItems.filter(item => item && typeof item === 'object' && (
+      'description' in item || 'quantity' in item || 'unit_price' in item
+    ))
+    : [];
+  const source = directItems.length ? directItems : flattenToLineItems(sections);
+
+  return source.map(item => ({
+    description: String(item.description || '').trim(),
+    quantity: Number(item.quantity) || 1,
+    unit_price: Number(item.unit_price) || 0,
+    amount: (Number(item.quantity) || 1) * (Number(item.unit_price) || 0),
+  }));
+}
+
+function normalizeInvoiceInput(body, { draft = false } = {}) {
+  const {
+    title, customer_name, customer_email, customer_phone, customer_address,
+    line_items, sections, logistics, service_charge, tax_rate, tax_label, discount,
+    notes, due_date, status, bank_account_name, bank_account_number, bank_name,
+  } = body || {};
+  const customerName = String(customer_name || '').trim();
+  const customerEmail = String(customer_email || '').trim();
+  const customerPhone = String(customer_phone || '').trim();
+  const customerAddress = String(customer_address || '').trim();
+  const items = normalizeLineItems(line_items, sections);
+  const sectionsValue = Array.isArray(sections) ? sections : [];
+
+  if (!draft && !customerName) throw new Error('Customer name is required');
+  if (customerEmail && !isValidEmail(customerEmail)) {
+    throw new Error('Enter a valid customer email address');
+  }
+  if (!draft && !items.length) {
+    throw new Error('At least one line item is required');
+  }
+
+  const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+  const logisticsAmount = parseMoney(logistics);
+  const serviceCharge = parseMoney(service_charge);
+  const rate = parseRate(tax_rate);
+  const taxableSubtotal = subtotal + logisticsAmount + serviceCharge;
+  const taxAmt = Math.round(taxableSubtotal * rate) / 100;
+  const requestedDiscount = parseMoney(discount);
+  if (!draft && requestedDiscount > taxableSubtotal) {
+    throw new Error('Discount cannot exceed the invoice subtotal and charges');
+  }
+  const disc = draft ? Math.min(requestedDiscount, taxableSubtotal) : requestedDiscount;
+
+  return {
+    title: String(title || '').trim() || DEFAULT_INVOICE_TITLE,
+    customerName,
+    customerEmail,
+    customerPhone,
+    customerAddress,
+    items,
+    sections: sectionsValue,
+    subtotal,
+    logisticsAmount,
+    serviceCharge,
+    rate,
+    taxLabel: String(tax_label || 'VAT (7.5%)').trim() || 'VAT (7.5%)',
+    taxAmt,
+    discount: disc,
+    total: taxableSubtotal + taxAmt - disc,
+    notes: String(notes || '').trim(),
+    status: draft ? 'draft' : (status || 'unpaid'),
+    dueDate: due_date || null,
+    bankAccountName: String(bank_account_name || '').trim() || DEFAULT_BANK_ACCOUNT_NAME,
+    bankAccountNumber: String(bank_account_number || '').trim() || DEFAULT_BANK_ACCOUNT_NUMBER,
+    bankName: String(bank_name || '').trim() || DEFAULT_BANK_NAME,
+  };
+}
+
+function invoiceEmailResult(emailResult) {
+  return {
+    email_sent: Boolean(emailResult.ok),
+    email_skipped: Boolean(emailResult.skipped),
+    email_error: emailResult.ok || emailResult.skipped
+      ? null
+      : (emailResult.error || 'Email could not be sent'),
+  };
+}
+
 /**
  * Emails an invoice to the customer address on the invoice.
  * The email body IS the invoice (branded template) and a PDF copy is attached.
@@ -234,38 +318,12 @@ router.get('/api/admin/invoices/:id/alt-bank-pdf', requireAuth, async (req, res)
 });
 
 router.post('/api/admin/invoices', requireAuth, async (req, res) => {
-  const {
-    title, customer_name, customer_email, customer_phone, customer_address,
-    line_items, sections, logistics, service_charge, tax_rate, tax_label, discount,
-    notes, due_date, status, bank_account_name, bank_account_number, bank_name,
-  } = req.body || {};
-  const customerName = String(customer_name || '').trim();
-  const customerEmail = String(customer_email || '').trim();
-  const customerPhone = String(customer_phone || '').trim();
-  const customerAddress = String(customer_address || '').trim();
-  if (!customerName) return res.status(400).json({ error: 'Customer name is required' });
-  if (customerEmail && !isValidEmail(customerEmail)) return res.status(400).json({ error: 'Enter a valid customer email address' });
-  if (!Array.isArray(line_items) || !line_items.length) return res.status(400).json({ error: 'At least one line item is required' });
-
-  // Sections are flattened into the same line-items array the PDF/email
-  // renderers already consume, so the two editors never diverge.
-  const flattened = flattenToLineItems(line_items || []);
-  const items = flattened.map(item => ({
-    description: item.description || '',
-    quantity: Number(item.quantity) || 1,
-    unit_price: Number(item.unit_price) || 0,
-    amount: (Number(item.quantity) || 1) * (Number(item.unit_price) || 0),
-  }));
-
-  const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
-  const logisticsAmount = parseMoney(logistics);
-  const serviceCharge = parseMoney(service_charge);
-  const rate = parseRate(tax_rate);
-  const taxableSubtotal = subtotal + logisticsAmount + serviceCharge;
-  const taxAmt = Math.round(taxableSubtotal * rate) / 100;
-  const disc = parseMoney(discount);
-  if (disc > taxableSubtotal) return res.status(400).json({ error: 'Discount cannot exceed the invoice subtotal and charges' });
-  const total = taxableSubtotal + taxAmt - disc;
+  let input;
+  try {
+    input = normalizeInvoiceInput(req.body);
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
   const invoice_number = generateInvoiceNumber();
   const user = req.user;
 
@@ -274,27 +332,27 @@ router.post('/api/admin/invoices', requireAuth, async (req, res) => {
       'INSERT INTO invoices (invoice_number, title, customer_name, customer_email, customer_phone, customer_address, line_items, sections, subtotal, logistics, service_charge, tax_rate, tax_label, tax_amount, discount, total, notes, status, due_date, bank_account_name, bank_account_number, bank_name, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) RETURNING *',
       [
         invoice_number,
-        title?.trim() || DEFAULT_INVOICE_TITLE,
-        customerName,
-        customerEmail,
-        customerPhone,
-        customerAddress,
-        JSON.stringify(items),
-        JSON.stringify(sections || []),
-        subtotal,
-        logisticsAmount,
-        serviceCharge,
-        rate,
-        tax_label || 'VAT (7.5%)',
-        taxAmt,
-        disc,
-        total,
-        notes || '',
-        status || 'unpaid',
-        due_date || null,
-        bank_account_name?.trim() || DEFAULT_BANK_ACCOUNT_NAME,
-        bank_account_number?.trim() || DEFAULT_BANK_ACCOUNT_NUMBER,
-        bank_name?.trim() || DEFAULT_BANK_NAME,
+        input.title,
+        input.customerName,
+        input.customerEmail,
+        input.customerPhone,
+        input.customerAddress,
+        JSON.stringify(input.items),
+        JSON.stringify(input.sections),
+        input.subtotal,
+        input.logisticsAmount,
+        input.serviceCharge,
+        input.rate,
+        input.taxLabel,
+        input.taxAmt,
+        input.discount,
+        input.total,
+        input.notes,
+        input.status,
+        input.dueDate,
+        input.bankAccountName,
+        input.bankAccountNumber,
+        input.bankName,
         user.email || user.role || 'admin',
       ]
     );
@@ -313,9 +371,7 @@ router.post('/api/admin/invoices', requireAuth, async (req, res) => {
 
     res.status(201).json({
       data: inv,
-      email_sent: emailResult.ok,
-      email_skipped: Boolean(emailResult.skipped),
-      email_error: emailResult.ok || emailResult.skipped ? null : (emailResult.error || 'Email could not be sent'),
+      ...invoiceEmailResult(emailResult),
       saved_as_draft: false,
     });
   } catch (err) {
@@ -323,59 +379,174 @@ router.post('/api/admin/invoices', requireAuth, async (req, res) => {
   }
 });
 
-// ── Admin: persist an in-progress invoice as a draft (no email, no PDF) ─────
-
-router.post('/api/admin/invoices/:id/save-draft', requireAuth, async (req, res) => {
+router.put('/api/admin/invoices/:id', requireAuth, async (req, res) => {
+  let input;
   try {
-    const { rows } = await db.query('SELECT * FROM invoices WHERE id = $1', [req.params.id]);
+    input = normalizeInvoiceInput(req.body);
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+
+  try {
+    const { rows } = await db.query(
+      'UPDATE invoices SET title=$1, customer_name=$2, customer_email=$3, customer_phone=$4, customer_address=$5, line_items=$6, sections=$7, subtotal=$8, logistics=$9, service_charge=$10, tax_rate=$11, tax_label=$12, tax_amount=$13, discount=$14, total=$15, notes=$16, status=$17, due_date=$18, bank_account_name=$19, bank_account_number=$20, bank_name=$22, paid_date=CASE WHEN $17=\'paid\' AND paid_date IS NULL THEN NOW() ELSE paid_date END, updated_at=NOW() WHERE id=$21 RETURNING *',
+      [
+        input.title,
+        input.customerName,
+        input.customerEmail,
+        input.customerPhone,
+        input.customerAddress,
+        JSON.stringify(input.items),
+        JSON.stringify(input.sections),
+        input.subtotal,
+        input.logisticsAmount,
+        input.serviceCharge,
+        input.rate,
+        input.taxLabel,
+        input.taxAmt,
+        input.discount,
+        input.total,
+        input.notes,
+        input.status,
+        input.dueDate,
+        input.bankAccountName,
+        input.bankAccountNumber,
+        req.params.id,
+        input.bankName,
+      ],
+    );
     if (!rows.length) return res.status(404).json({ error: 'Invoice not found' });
 
-    const payload = {
-      title: String(rest.title || '').trim() || 'Invoice',
-      customer_name: String(rest.customer_name || '').trim(),
-      customer_email: String(rest.customer_email || '').trim(),
-      customer_phone: String(rest.customer_phone || '').trim(),
-      customer_address: String(rest.customer_address || '').trim(),
-      sections: JSON.stringify(sections ?? []),
-      line_items: JSON.stringify(line_items ?? []),
-      logistics: parseMoney(rest.logistics),
-      service_charge: parseMoney(rest.service_charge),
-      tax_rate: parseRate(rest.tax_rate),
-      tax_label: String(rest.tax_label || 'VAT (7.5%)').trim() || 'VAT (7.5%)',
-      discount: parseMoney(rest.discount),
-      notes: String(rest.notes || '').trim(),
-      due_date: rest.due_date || null,
-      status: 'draft',
-      bank_account_name: String(rest.bank_account_name || '').trim() || DEFAULT_BANK_ACCOUNT_NAME,
-      bank_account_number: String(rest.bank_account_number || '').trim() || DEFAULT_BANK_ACCOUNT_NUMBER,
-      bank_name: String(rest.bank_name || '').trim() || DEFAULT_BANK_NAME,
-    };
-
-    try {
-      const { rows } = await db.query(
-        `UPDATE invoices SET
-          title = $1, customer_name = $2, customer_email = $3, customer_phone = $4,
-          customer_address = $5, line_items = $6, sections = $7, subtotal = $8,
-          logistics = $9, service_charge = $10, tax_rate = $11, tax_label = $12,
-          tax_amount = $13, discount = $14, total = $15, notes = $16, status = $17,
-          due_date = $18, bank_account_name = $19, bank_account_number = $20,
-          bank_name = $21, updated_at = NOW() WHERE id = $22 RETURNING *`,
-        [
-          payload.title, payload.customer_name, payload.customer_email, payload.customer_phone,
-          payload.customer_address, payload.line_items, payload.sections,
-          payload.logistics, payload.service_charge, payload.tax_rate, payload.tax_label,
-          payload.tax_amount, payload.discount, payload.total, payload.notes, payload.status,
-          payload.due_date, payload.bank_account_name, payload.bank_account_number,
-          payload.bank_name, req.params.id,
-        ]
-      );
-      if (!rows.length) return res.status(404).json({ error: 'Invoice not found' });
-      res.json({ data: rows[0], saved_as_draft: true });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+    const inv = rows[0];
+    let emailResult = { ok: false, skipped: true };
+    if (inv.customer_email) {
+      try {
+        emailResult = await sendInvoiceEmail(inv);
+      } catch (emailErr) {
+        console.error('Invoice email error:', emailErr.message);
+        emailResult = { ok: false, error: emailErr.message };
+      }
     }
+    res.json({ data: inv, ...invoiceEmailResult(emailResult), saved_as_draft: false });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Admin: persist an in-progress invoice as a draft (no email, no PDF) ─────
+
+router.post('/api/admin/invoices/draft', requireAuth, async (req, res) => {
+  let input;
+  try {
+    input = normalizeInvoiceInput(req.body, { draft: true });
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+
+  try {
+    const { rows } = await db.query(
+      'INSERT INTO invoices (invoice_number, title, customer_name, customer_email, customer_phone, customer_address, line_items, sections, subtotal, logistics, service_charge, tax_rate, tax_label, tax_amount, discount, total, notes, status, due_date, bank_account_name, bank_account_number, bank_name, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) RETURNING *',
+      [
+        generateInvoiceNumber(),
+        input.title,
+        input.customerName,
+        input.customerEmail,
+        input.customerPhone,
+        input.customerAddress,
+        JSON.stringify(input.items),
+        JSON.stringify(input.sections),
+        input.subtotal,
+        input.logisticsAmount,
+        input.serviceCharge,
+        input.rate,
+        input.taxLabel,
+        input.taxAmt,
+        input.discount,
+        input.total,
+        input.notes,
+        'draft',
+        input.dueDate,
+        input.bankAccountName,
+        input.bankAccountNumber,
+        input.bankName,
+        req.user.email || req.user.role || 'admin',
+      ],
+    );
+    res.status(201).json({ data: rows[0], saved_as_draft: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/api/admin/invoices/:id/save-draft', requireAuth, async (req, res) => {
+  let input;
+  try {
+    input = normalizeInvoiceInput(req.body, { draft: true });
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+
+  try {
+    const { rows } = await db.query(
+      'UPDATE invoices SET title=$1, customer_name=$2, customer_email=$3, customer_phone=$4, customer_address=$5, line_items=$6, sections=$7, subtotal=$8, logistics=$9, service_charge=$10, tax_rate=$11, tax_label=$12, tax_amount=$13, discount=$14, total=$15, notes=$16, status=$17, due_date=$18, bank_account_name=$19, bank_account_number=$20, bank_name=$22, updated_at=NOW() WHERE id=$21 RETURNING *',
+      [
+        input.title,
+        input.customerName,
+        input.customerEmail,
+        input.customerPhone,
+        input.customerAddress,
+        JSON.stringify(input.items),
+        JSON.stringify(input.sections),
+        input.subtotal,
+        input.logisticsAmount,
+        input.serviceCharge,
+        input.rate,
+        input.taxLabel,
+        input.taxAmt,
+        input.discount,
+        input.total,
+        input.notes,
+        'draft',
+        input.dueDate,
+        input.bankAccountName,
+        input.bankAccountNumber,
+        req.params.id,
+        input.bankName,
+      ],
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Invoice not found' });
+    res.json({ data: rows[0], saved_as_draft: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/api/admin/invoices/:id', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      'DELETE FROM invoices WHERE id=$1 RETURNING id, invoice_number',
+      [req.params.id],
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Invoice not found' });
+    res.json({ success: true, deleted: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/api/admin/invoices/:id/send', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT * FROM invoices WHERE id=$1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Invoice not found' });
+    const invoice = rows[0];
+    if (!String(invoice.customer_email || '').trim()) {
+      return res.status(400).json({ error: 'Add a customer email to this invoice before sending it' });
+    }
+    await sendInvoiceEmail(invoice);
+    res.json({ success: true, message: 'Invoice emailed to ' + invoice.customer_email });
+  } catch (err) {
+    console.error('Invoice email error:', err.message);
+    res.status(500).json({ error: 'Invoice saved but email could not be sent: ' + err.message });
   }
 });
 
