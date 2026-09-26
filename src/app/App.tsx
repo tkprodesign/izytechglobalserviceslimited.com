@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useLocation } from "react-router";
 import { useEffect, useRef } from "react";
 import "../styles/fonts.css";
 import "../styles/micro.css";
+import { getToken, getUser, loginPathForRoute } from "../lib/auth";
 
 const NAVBAR_H = 80; // matches h-20 in Navbar
 
@@ -37,6 +38,41 @@ function NavigationScroll() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [location]);
+
+  return null;
+}
+
+/**
+ * Re-check the JWT while a protected page is open. ProtectedRoute handles
+ * initial navigation and refreshes; this guard also handles a session expiring
+ * while the user remains on an admin or developer screen.
+ */
+function AuthSessionGuard() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const isProtectedArea =
+      (location.pathname.startsWith("/admin") || location.pathname.startsWith("/dev")) &&
+      !location.pathname.endsWith("/login");
+    if (!isProtectedArea) {
+      return;
+    }
+
+    const checkSession = () => {
+      if (getToken() && !getUser()) {
+        window.location.replace(loginPathForRoute(location.pathname));
+      }
+    };
+
+    checkSession();
+    const interval = window.setInterval(checkSession, 30_000);
+    window.addEventListener("storage", checkSession);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("storage", checkSession);
+    };
+  }, [location.pathname]);
 
   return null;
 }
@@ -130,6 +166,7 @@ export default function App() {
   return (
     <CartProvider>
     <NavigationScroll />
+    <AuthSessionGuard />
     <Routes>
       {/* Public site */}
       <Route path="/" element={<PublicSite />} />
