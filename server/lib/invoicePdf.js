@@ -429,8 +429,15 @@ function generateInvoicePdf(inv, options = {}) {
       ty += 26;
     };
 
+    const sectionItems = section => {
+      if (Array.isArray(section?.rows)) return section.rows;
+      if (Array.isArray(section?.line_items)) return section.line_items;
+      if (Array.isArray(section?.items)) return section.items;
+      return [];
+    };
+
     const sectionAmounts = section => {
-      const items = Array.isArray(section.items) ? section.items : [];
+      const items = sectionItems(section);
       const subtotal = Number.isFinite(Number(section.subtotal))
         ? Number(section.subtotal)
         : items.reduce((sum, item) => sum + (Number(item.amount) || (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)), 0);
@@ -546,7 +553,7 @@ function generateInvoicePdf(inv, options = {}) {
 
       sections.forEach(section => {
         drawSectionHeading(section.title);
-        drawItems(section.items);
+        drawItems(sectionItems(section));
 
         const amounts = sectionAmounts(section);
         drawSectionSummary(section, amounts);

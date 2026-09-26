@@ -10,3 +10,9 @@ Customer email and phone are optional invoice fields. Omit missing contact lines
 **Why:** The CEO wants invoices to be usable when customers do not provide contact details. PDFKit can also implicitly create pages when text overflows, separating row backgrounds from text; width-wrapped footer text can create blank trailing pages on buffered pages.
 
 **How to apply:** Keep row and section coordinates below the reserved footer boundary. For buffered-page footers, calculate centered/right-aligned x positions manually and use non-wrapping text without a width wrapper. Test both customer and manager PDF paths with and without customer email/phone, and with many items; verify page count, continuation markers, final items, totals, and no blank pages.
+
+Sectioned invoice records may expose their line items as `rows`, `line_items`, or the older `items` shape. PDF and email renderers must normalize these shapes before drawing rows or calculating section totals.
+
+**Why:** The editor persists the current section tree as `rows`, while older records and templates may use another property. Reading only one shape silently produces blank sections and zero-valued summaries.
+
+**How to apply:** Use one section-item normalization helper at every document-rendering boundary, and keep a sectioned-PDF regression case alongside the flat-invoice pagination cases.

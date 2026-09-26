@@ -167,8 +167,8 @@ export function SectionsEditor({
               <div className="space-y-2">
                 {Array.isArray(section.rows) ? (
                   section.rows.map((row, rowIndex) => (
-                    <div key={rowIndex} className="flex gap-2 items-start rounded-lg border p-3" style={{ borderColor: '#e2e8f0', background: '#fff' }}>
-                      <div className="flex-1 min-w-0">
+                    <div key={rowIndex} className="grid grid-cols-1 gap-3 rounded-lg border p-3 sm:grid-cols-[minmax(0,1fr)_76px_112px_auto] sm:items-start" style={{ borderColor: '#e2e8f0', background: '#fff' }}>
+                      <div className="min-w-0">
                         <input
                           value={row.description}
                           onChange={(e) => onRowChange(sectionIndex, rowIndex, 'description', e.target.value)}
@@ -177,8 +177,8 @@ export function SectionsEditor({
                           style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
                         />
                       </div>
-                      <div className="flex gap-2">
-                        <div className="flex-1">
+                      <div className="grid min-w-0 grid-cols-2 gap-2 sm:contents">
+                        <div className="min-w-0">
                           <input
                             type="number"
                             min="0"
@@ -190,7 +190,7 @@ export function SectionsEditor({
                             style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
                           />
                         </div>
-                        <div className="flex-1">
+                        <div className="min-w-0">
                           <input
                             type="number"
                             min="0"
@@ -203,7 +203,7 @@ export function SectionsEditor({
                           />
                         </div>
                       </div>
-                      <div className="text-right flex-shrink-0 mt-5">
+                      <div className="flex items-center justify-between gap-3 sm:mt-5 sm:block sm:text-right">
                         <p className="text-sm font-bold" style={{ color: '#0f172a' }}>{currency(row.amount)}</p>
                         <button
                           type="button"

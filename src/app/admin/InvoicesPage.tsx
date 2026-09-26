@@ -688,9 +688,15 @@ export function InvoicesPage() {
   }
 
   // Calculate form totals
-  const formSubtotal = form.line_items.reduce((s, i) => s + i.amount, 0);
-  const formLogistics = parseFloat(form.logistics) || 0;
-  const formServiceCharge = parseFloat(form.service_charge) || 0;
+  const sectionFormRows = form.sections.flatMap(section => Array.isArray(section.rows) ? section.rows : []);
+  const formSubtotal = (docsTab === SECTIONS_TAB ? sectionFormRows : form.line_items)
+    .reduce((s, i) => s + ((Number(i.quantity) || 0) * (Number(i.unit_price) || 0)), 0);
+  const formLogistics = docsTab === SECTIONS_TAB
+    ? form.sections.reduce((sum, section) => sum + (parseFloat(section.logistics) || 0), 0)
+    : parseFloat(form.logistics) || 0;
+  const formServiceCharge = docsTab === SECTIONS_TAB
+    ? form.sections.reduce((sum, section) => sum + (parseFloat(section.service_charge) || 0), 0)
+    : parseFloat(form.service_charge) || 0;
   const formTaxRate = parseFloat(form.tax_rate) || 7.5;
   const formTaxAmount = Math.round((formSubtotal + formLogistics + formServiceCharge) * formTaxRate) / 100;
   const formDiscount = parseFloat(form.discount) || 0;
@@ -698,7 +704,7 @@ export function InvoicesPage() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 max-w-7xl mx-auto" style={{ background: '#f8fafc', minHeight: 'calc(100vh - 3.5rem)' }}>
+      <div className="p-6 max-w-7xl mx-auto" style={{ background: '#f8fafc' }}>
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
