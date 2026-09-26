@@ -1,11 +1,10 @@
 // Load environment variables.
 require('dotenv').config();
 
-const { createServer } = require('http');
 const { join } = require('path');
 const express = require('express');
 
-const app = express();
+const app = require('./server/expressApp');
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
