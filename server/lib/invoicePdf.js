@@ -325,118 +325,15 @@ function generateInvoicePdf(inv, options = {}) {
     ty += 14;
     ty = drawInvoiceTableHeader(doc, geometry, ty);
 
-    const invoiceRows = Array.isArray(inv.sections) && inv.sections.length
-      ? inv.sections.flatMap(section => [
-        { sectionTitle: section.title },
-        ...(Array.isArray(section.items) ? section.items : []),
-      ])
-      : (inv.line_items || []);
-
     // Rows are laid out against the usable page area. This prevents PDFKit's
     // implicit text pagination from separating the row content from its
     // background and from placing the footer between line items.
     let itemRowIndex = 0;
-    invoiceRows.forEach(item => {
-      if (item.sectionTitle) {
-        // Keep a subsection heading with at least the first line item. A
-        // heading at the bottom of a page by itself is confusing and leaves
-        // the section's content stranded on the continuation page.
-        if (ty + 26 + 28 > contentBottom()) {
-          ty = startContinuationPage(doc, inv, geometry, true);
-        }
-        doc.rect(M, ty, RIGHT - M, 26).fill('#eef1f6');
-        doc.fillColor(NAVY).font('bold').fontSize(9)
-          .text(String(item.sectionTitle).toUpperCase(), geometry.descX, ty + 9, {
-            characterSpacing: 0.8,
-            lineBreak: false,
-          });
-        ty += 26;
-        return;
-      }
-
-      const i = itemRowIndex;
-      itemRowIndex += 1;
-      doc.font('body').fontSize(9.5);
-      const desc = String(item.description || '\u2014');
-      const descriptionLines = wrapTextByWidth(doc, desc, geometry.descW);
-      let lineIndex = 0;
-      let firstChunk = true;
-
-      while (lineIndex < descriptionLines.length) {
-        if (ty + 28 > contentBottom()) {
-          ty = startContinuationPage(doc, inv, geometry, true);
-        }
-
-        const availableLines = Math.max(
-          1,
-          Math.floor((contentBottom() - ty - 16) / ITEM_LINE_H),
-        );
-        const chunk = descriptionLines.slice(lineIndex, lineIndex + availableLines);
-        const rowH = Math.max(28, chunk.length * ITEM_LINE_H + 16);
-
-        if (i % 2 === 1) doc.rect(M, ty, RIGHT - M, rowH).fill('#fafbfd');
-
-        const baseline = ty + 8;
-        doc.fillColor(NAVY).font('body').fontSize(9.5);
-        chunk.forEach((line, lineOffset) => {
-          doc.text(line || ' ', geometry.descX, baseline + lineOffset * ITEM_LINE_H, {
-            width: geometry.descW,
-            lineBreak: false,
-          });
-        });
-
-        // Keep the numeric cells on the first part of a split description.
-        if (firstChunk) {
-          doc.fillColor(SLATE)
-            .text(String(item.quantity ?? ''), geometry.qtyX, baseline, {
-              width: geometry.qtyW,
-              align: 'center',
-              lineBreak: false,
-            })
-            .text(money(item.unit_price), geometry.unitX, baseline, {
-              width: geometry.unitW,
-              align: 'right',
-              lineBreak: false,
-            });
-          doc.fillColor(NAVY).font('bold')
-            .text(money(item.amount), geometry.amtX, baseline, {
-              width: geometry.amtW,
-              align: 'right',
-              lineBreak: false,
-            });
-        }
-
-        doc.moveTo(M, ty + rowH).lineTo(RIGHT, ty + rowH).lineWidth(0.5).stroke(LINE);
-        ty += rowH;
-        lineIndex += chunk.length;
-        firstChunk = false;
-
-        if (lineIndex < descriptionLines.length) {
-          ty = startContinuationPage(doc, inv, geometry, true);
-        }
-      }
-    });
-
-    /* ── Totals (fixed two-column block, right-aligned) ──────── */
-    const totalRows = [
-      ['Subtotal', money(inv.subtotal), 10],
-      ['Logistics', money(inv.logistics), 10],
-      ['Service Charge', money(inv.service_charge), 10],
-      [inv.tax_label || 'VAT', money(inv.tax_amount), 10],
-      ...(Number(inv.discount) > 0 ? [['Discount', '-' + money(inv.discount), 10]] : []),
-    ];
-    const totalBlockHeight = 18
-      + totalRows.reduce((sum, [, , size]) => sum + size + 10, 0)
-      + 12 + 14 + 10 + 10;
-    if (ty + totalBlockHeight > contentBottom()) {
-      ty = startContinuationPage(doc, inv, geometry, false);
-    }
-    ty += 18;
     const totLabelW = 92, totValW = 155, totGap = 12;
     const totValX = RIGHT - totValW;
     const totLabelX = totValX - totGap - totLabelW;
 
-    const totalRow = (label, value, opts = {}) => {
+    const drawSummaryRow = (label, value, opts = {}) => {
       doc.font(opts.bold ? 'bold' : 'body').fontSize(opts.size || 10);
       doc.fillColor(opts.color || (opts.bold ? NAVY : SLATE))
         .text(label, totLabelX, ty, { width: totLabelW, align: 'right' });
@@ -444,13 +341,182 @@ function generateInvoicePdf(inv, options = {}) {
       ty += (opts.size || 10) + 10;
     };
 
-    for (const [label, value] of totalRows) {
-      totalRow(label, value, label === 'Discount' ? { color: '#dc2626' } : {});
-    }
+    const drawItems = items => {
+      (Array.isArray(items) ? items : []).forEach(item => {
+        const i = itemRowIndex;
+        itemRowIndex += 1;
+        doc.font('body').fontSize(9.5);
+        const desc = String(item.description || '\u2014');
+        const descriptionLines = wrapTextByWidth(doc, desc, geometry.descW);
+        let lineIndex = 0;
+        let firstChunk = true;
 
-    doc.moveTo(totLabelX, ty).lineTo(RIGHT, ty).lineWidth(1).stroke(NAVY);
-    ty += 12;
-    totalRow('TOTAL', money(inv.total), { bold: true, size: 14 });
+        while (lineIndex < descriptionLines.length) {
+          if (ty + 28 > contentBottom()) {
+            ty = startContinuationPage(doc, inv, geometry, true);
+          }
+
+          const availableLines = Math.max(
+            1,
+            Math.floor((contentBottom() - ty - 16) / ITEM_LINE_H),
+          );
+          const chunk = descriptionLines.slice(lineIndex, lineIndex + availableLines);
+          const rowH = Math.max(28, chunk.length * ITEM_LINE_H + 16);
+
+          if (i % 2 === 1) doc.rect(M, ty, RIGHT - M, rowH).fill('#fafbfd');
+
+          const baseline = ty + 8;
+          doc.fillColor(NAVY).font('body').fontSize(9.5);
+          chunk.forEach((line, lineOffset) => {
+            doc.text(line || ' ', geometry.descX, baseline + lineOffset * ITEM_LINE_H, {
+              width: geometry.descW,
+              lineBreak: false,
+            });
+          });
+
+          // Keep the numeric cells on the first part of a split description.
+          if (firstChunk) {
+            doc.fillColor(SLATE)
+              .text(String(item.quantity ?? ''), geometry.qtyX, baseline, {
+                width: geometry.qtyW,
+                align: 'center',
+                lineBreak: false,
+              })
+              .text(money(item.unit_price), geometry.unitX, baseline, {
+                width: geometry.unitW,
+                align: 'right',
+                lineBreak: false,
+              });
+            doc.fillColor(NAVY).font('bold')
+              .text(money(item.amount), geometry.amtX, baseline, {
+                width: geometry.amtW,
+                align: 'right',
+                lineBreak: false,
+              });
+          }
+
+          doc.moveTo(M, ty + rowH).lineTo(RIGHT, ty + rowH).lineWidth(0.5).stroke(LINE);
+          ty += rowH;
+          lineIndex += chunk.length;
+          firstChunk = false;
+
+          if (lineIndex < descriptionLines.length) {
+            ty = startContinuationPage(doc, inv, geometry, true);
+          }
+        }
+      });
+    };
+
+    const drawSectionHeading = title => {
+      // Keep a subsection heading with at least the first line item. A
+      // heading at the bottom of a page by itself is confusing and leaves
+      // the section's content stranded on the continuation page.
+      if (ty + 26 + 28 > contentBottom()) {
+        ty = startContinuationPage(doc, inv, geometry, true);
+      }
+      doc.rect(M, ty, RIGHT - M, 26).fill('#eef1f6');
+      doc.fillColor(NAVY).font('bold').fontSize(9)
+        .text(String(title || 'Section').toUpperCase(), geometry.descX, ty + 9, {
+          characterSpacing: 0.8,
+          lineBreak: false,
+        });
+      ty += 26;
+    };
+
+    const sectionAmounts = section => {
+      const items = Array.isArray(section.items) ? section.items : [];
+      const subtotal = Number.isFinite(Number(section.subtotal))
+        ? Number(section.subtotal)
+        : items.reduce((sum, item) => sum + (Number(item.amount) || (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)), 0);
+      const logistics = Number(section.logistics) || 0;
+      const serviceCharge = Number(section.service_charge) || 0;
+      const taxRate = Number.isFinite(Number(section.tax_rate))
+        ? Number(section.tax_rate)
+        : Number(inv.tax_rate) || 7.5;
+      const taxable = subtotal + logistics + serviceCharge;
+      const taxAmount = Number.isFinite(Number(section.tax_amount))
+        ? Number(section.tax_amount)
+        : Math.round(taxable * taxRate) / 100;
+      const total = Number.isFinite(Number(section.total))
+        ? Number(section.total)
+        : taxable + taxAmount;
+      return {
+        subtotal,
+        logistics,
+        serviceCharge,
+        taxAmount,
+        taxRate,
+        taxLabel: section.tax_label || `VAT (${taxRate}%)`,
+        total,
+      };
+    };
+
+    const sections = Array.isArray(inv.sections) ? inv.sections.filter(Boolean) : [];
+    if (sections.length) {
+      sections.forEach(section => {
+        drawSectionHeading(section.title);
+        drawItems(section.items);
+
+        const amounts = sectionAmounts(section);
+        const rows = [
+          ['Subtotal', money(amounts.subtotal)],
+          ['Logistics', money(amounts.logistics)],
+          ['Service Charge', money(amounts.serviceCharge)],
+          [amounts.taxLabel, money(amounts.taxAmount)],
+        ];
+        const blockHeight = 18 + rows.length * 20 + 28;
+        if (ty + blockHeight > contentBottom()) {
+          ty = startContinuationPage(doc, inv, geometry, false);
+        }
+        ty += 10;
+        doc.fillColor(MUTED).font('bold').fontSize(8)
+          .text(`${String(section.title || 'Section').toUpperCase()} SUMMARY`, totLabelX - 30, ty, {
+            width: totLabelW + 30,
+            align: 'right',
+            characterSpacing: 0.8,
+          });
+        ty += 16;
+        rows.forEach(([label, value]) => drawSummaryRow(label, value, { size: 9 }));
+        doc.moveTo(totLabelX, ty).lineTo(RIGHT, ty).lineWidth(0.75).stroke(NAVY);
+        ty += 9;
+        drawSummaryRow('SECTION TOTAL', money(amounts.total), { bold: true, size: 11 });
+        ty += 8;
+      });
+
+      const grandTotalHeight = 48;
+      if (ty + grandTotalHeight > contentBottom()) {
+        ty = startContinuationPage(doc, inv, geometry, false);
+      }
+      ty += 12;
+      doc.moveTo(totLabelX, ty).lineTo(RIGHT, ty).lineWidth(1).stroke(NAVY);
+      ty += 14;
+      drawSummaryRow('GRAND TOTAL', money(inv.total), { bold: true, size: 14 });
+    } else {
+      drawItems(inv.line_items || []);
+
+      /* ── Totals (fixed two-column block, right-aligned) ──────── */
+      const totalRows = [
+        ['Subtotal', money(inv.subtotal), 10],
+        ['Logistics', money(inv.logistics), 10],
+        ['Service Charge', money(inv.service_charge), 10],
+        [inv.tax_label || 'VAT', money(inv.tax_amount), 10],
+        ...(Number(inv.discount) > 0 ? [['Discount', '-' + money(inv.discount), 10]] : []),
+      ];
+      const totalBlockHeight = 18
+        + totalRows.reduce((sum, [, , size]) => sum + size + 10, 0)
+        + 12 + 14 + 10 + 10;
+      if (ty + totalBlockHeight > contentBottom()) {
+        ty = startContinuationPage(doc, inv, geometry, false);
+      }
+      ty += 18;
+      for (const [label, value] of totalRows) {
+        drawSummaryRow(label, value, label === 'Discount' ? { color: '#dc2626' } : {});
+      }
+
+      doc.moveTo(totLabelX, ty).lineTo(RIGHT, ty).lineWidth(1).stroke(NAVY);
+      ty += 12;
+      drawSummaryRow('TOTAL', money(inv.total), { bold: true, size: 14 });
+    }
 
     /* ── Notes ───────────────────────────────────────────────── */
     doc.font('body').fontSize(9);
