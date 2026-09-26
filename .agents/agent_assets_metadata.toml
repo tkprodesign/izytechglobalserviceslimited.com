@@ -49,3 +49,17 @@ mtime_ms = 1790180617106
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:b1e3b1bf-014d-4296-99a3-514fab4dcc3a/40f02341-d21b-4680-a663-90fee8c8566d/50a8c228-a343-4571-8911-c3ce57e434ca"
 storage_version_token = "1790180665867665"
 content_type = "application/pdf"
+
+[[outputs]]
+id = "09QXCyr8y-z5mRAeVCEu0"
+uri = "file://attached_assets/Invoice_IZY-2609-9370_Toyota_Camry.pdf"
+type = "pdf"
+title = "Merged Toyota Camry Invoice — IZY-2609-9370"
+description = "Merged Camry pro forma invoice combining Electrical Work and Panel Beating Work, with customer phone and email removed. Total: ₦615,437.50."
+logical_id = "f0d87e3a-1899-400a-b5ac-c01bbe8c930c"
+content_hash = "sha256:2dff35b486067b9792c09c8ffb67b31a66a6f06236ed0949122d772b2f5a6247"
+size = 495227
+mtime_ms = 1790392915711
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:b1e3b1bf-014d-4296-99a3-514fab4dcc3a/f0d87e3a-1899-400a-b5ac-c01bbe8c930c/01b1288d-2bc9-4dd8-8cc1-8f225cd6475d"
+storage_version_token = "1790392947015368"
+content_type = "application/pdf"

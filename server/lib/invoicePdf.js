@@ -324,10 +324,34 @@ function generateInvoicePdf(inv, options = {}) {
     ty += 14;
     ty = drawInvoiceTableHeader(doc, geometry, ty);
 
+    const invoiceRows = Array.isArray(inv.sections) && inv.sections.length
+      ? inv.sections.flatMap(section => [
+        { sectionTitle: section.title },
+        ...(Array.isArray(section.items) ? section.items : []),
+      ])
+      : (inv.line_items || []);
+
     // Rows are laid out against the usable page area. This prevents PDFKit's
     // implicit text pagination from separating the row content from its
     // background and from placing the footer between line items.
-    (inv.line_items || []).forEach((item, i) => {
+    let itemRowIndex = 0;
+    invoiceRows.forEach(item => {
+      if (item.sectionTitle) {
+        if (ty + 26 > contentBottom()) {
+          ty = startContinuationPage(doc, inv, geometry, true);
+        }
+        doc.rect(M, ty, RIGHT - M, 26).fill('#eef1f6');
+        doc.fillColor(NAVY).font('bold').fontSize(9)
+          .text(String(item.sectionTitle).toUpperCase(), geometry.descX, ty + 9, {
+            characterSpacing: 0.8,
+            lineBreak: false,
+          });
+        ty += 26;
+        return;
+      }
+
+      const i = itemRowIndex;
+      itemRowIndex += 1;
       doc.font('body').fontSize(9.5);
       const desc = String(item.description || '\u2014');
       const descriptionLines = wrapTextByWidth(doc, desc, geometry.descW);
@@ -487,11 +511,12 @@ function generateInvoicePdf(inv, options = {}) {
       doc.fillColor(MUTED).font('body');
       centeredFooterLine(COMPANY.legal, 9.5, pageH - 48);
       centeredFooterLine(COMPANY.address, 9, pageH - 35);
-      centeredFooterLine(
-        COMPANY.registration + '  \u00b7  ' + COMPANY.phone + '  \u00b7  ' + COMPANY.email + '  \u00b7  ' + COMPANY.site,
-        8.75,
-        pageH - 22,
-      );
+      const footerContactParts = [
+        COMPANY.registration,
+        ...(options.hideCompanyContact ? [] : [COMPANY.phone, COMPANY.email]),
+        COMPANY.site,
+      ];
+      centeredFooterLine(footerContactParts.join('  \u00b7  '), 8.75, pageH - 22);
       const pageLabel = `Page ${i - range.start + 1} of ${range.count}`;
       doc.fontSize(8).text(pageLabel, RIGHT - doc.widthOfString(pageLabel), pageH - 9, {
         lineBreak: false,
