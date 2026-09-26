@@ -63,3 +63,17 @@ mtime_ms = 1790393411159
 storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:b1e3b1bf-014d-4296-99a3-514fab4dcc3a/f0d87e3a-1899-400a-b5ac-c01bbe8c930c/0cc5570d-4d28-478c-acc8-e8f98c5e56cc"
 storage_version_token = "1790393426804252"
 content_type = "application/pdf"
+
+[[outputs]]
+id = "GtS5RJ-OS4RFZ59FiKiLH"
+uri = "file://attached_assets/Invoice_IZY-2609-9371_Nissan_Bus.pdf"
+type = "pdf"
+title = "Merged Nissan Bus Invoice — IZY-2609-9371"
+description = "Merged Nissan Bus pro forma invoice combining Electrical Work, Panel Beating Work, and Painting Work. Customer phone and email omitted. Footer includes invoice@izytechglobalservices.com and info@izytechglobalservices.com. Total: ₦880,425.00."
+logical_id = "529d705a-8511-4831-ba0d-0ce8af050318"
+content_hash = "sha256:59aae3ebd2c9d7aa936ece054db76235289d69fe86bd13a56bca1e8fbd770bc9"
+size = 496175
+mtime_ms = 1790393708215
+storage_uri = "gcs://replit-rams-assets-riker/rams/assets/repl:b1e3b1bf-014d-4296-99a3-514fab4dcc3a/529d705a-8511-4831-ba0d-0ce8af050318/5c33ce24-87e6-4162-bf23-d89b271b93b1"
+storage_version_token = "1790393723471597"
+content_type = "application/pdf"
