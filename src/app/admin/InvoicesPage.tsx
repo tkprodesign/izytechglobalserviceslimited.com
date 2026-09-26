@@ -1,4 +1,212 @@
-]: value }));
+import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router';
+import { DashboardLayout } from './DashboardLayout';
+import { SectionsEditor } from './SectionsEditor';
+import { getToken, removeToken } from '../../lib/auth';
+import { ngDate, ngDateTime } from '../../lib/ngtime';
+import {
+  FileText, Plus, Trash2, Send, Eye, Edit2, Pencil, ChevronDown, X, Download,
+  Loader2, CheckCircle, Clock, AlertCircle, Search, Filter,
+  Mail, PlusCircle, Landmark, LayoutDashboard,
+} from 'lucide-react';
+
+const API = import.meta.env.VITE_API_URL ?? '';
+
+/* ── Types ─────────────────────────────────────────────────────────────────── */
+
+interface Row {
+  description: string;
+  quantity: number;
+  unit_price: number;
+  amount: number;
+}
+
+interface Section {
+  title: string;
+  description: string | null;
+  rows: Row[];
+}
+
+type SectionTree = Section[];
+
+interface LineItem {
+  description: string;
+  quantity: number;
+  unit_price: number;
+  amount: number;
+}
+
+interface Invoice {
+  id: number;
+  invoice_number: string;
+  title: string;
+  customer_name: string;
+  customer_email?: string | null;
+  customer_phone?: string | null;
+  customer_address: string;
+  line_items: LineItem[];
+  subtotal: number;
+  logistics: number;
+  service_charge: number;
+  tax_rate: number;
+  tax_label: string;
+  tax_amount: number;
+  discount: number;
+  total: number;
+  notes: string;
+  status: 'unpaid' | 'paid' | 'overdue' | 'cancelled' | 'draft';
+  due_date: string;
+  paid_date: string;
+  bank_account_name: string;
+  bank_account_number: string;
+  bank_name: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface InvoicePayload {
+  title: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  customer_address: string;
+  line_items: unknown[];
+  sections: unknown[];
+  logistics: number;
+  service_charge: number;
+  tax_rate: number;
+  tax_label: string;
+  discount: number;
+  notes: string;
+  due_date: string | null;
+  status: string;
+  bank_account_name: string;
+  bank_account_number: string;
+  bank_name: string;
+}
+
+type FormState = {
+  title: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  customer_address: string;
+  line_items: LineItem[];
+  sections: SectionTree;
+  logistics: string;
+  service_charge: string;
+  tax_rate: string;
+  tax_label: string;
+  discount: string;
+  notes: string;
+  due_date: string;
+  status: string;
+  bank_account_name: string;
+  bank_account_number: string;
+  bank_name: string;
+};
+
+function defaultValue(): FormState {
+  return {
+    title: 'Invoice',
+    customer_name: '',
+    customer_email: '',
+    customer_phone: '',
+    customer_address: '',
+    line_items: [{ description: '', quantity: 1, unit_price: 0, amount: 0 }],
+    logistics: '0',
+    service_charge: '0',
+    tax_rate: '7.50',
+    tax_label: 'VAT (7.5%)',
+    discount: '0',
+    notes: '',
+    due_date: '',
+    sections: [],
+    status: 'unpaid',
+    bank_account_name: 'Izy Technologies Global services Ltd',
+    bank_account_number: '0512121038',
+    bank_name: 'Alternative Bank',
+  };
+}
+
+/* ── Helpers ───────────────────────────────────────────────────────────────── */
+
+function naira(n: number): string {
+  return '₦' + Math.round(n).toLocaleString('en-NG');
+}
+
+function fmtDate(d: string | null) {
+  return ngDate(d);
+}
+
+function statusColor(status: string) {
+  switch (status) {
+    case 'paid': return '#16a34a';
+    case 'overdue': return '#dc2626';
+    case 'cancelled': return '#6b7280';
+    default: return '#b45309';
+  }
+}
+
+function statusLabel(status: string) {
+  const labels: Record<string, string> = {
+    unpaid: 'Unpaid',
+    paid: 'Paid',
+    overdue: 'Overdue',
+    cancelled: 'Cancelled',
+  };
+  return labels[status] ?? status;
+}
+
+/* ── Main Page ─────────────────────────────────────────────────────────────── */
+
+export function InvoicesPage() {
+  const token = getToken();
+  const navigate = useNavigate();
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [savedNotice, setSavedNotice] = useState('');
+
+  const [editing, setEditing] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [form, setForm] = useState<FormState>(defaultValue());
+
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('');
+  const [saving, setSaving] = useState(false);
+  const [sending, setSending] = useState<number | null>(null);
+  const [sent, setSent] = useState<number | null>(null);
+  const [sendingError, setSendingError] = useState('');
+  const [draftPersistenceEnabled, setDraftPersistenceEnabled] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [generatingAltBank, setGeneratingAltBank] = useState(false);
+  const [mobileView, setMobileView] = useState<'list' | 'editor'>('list');
+
+  useEffect(() => {
+    loadInvoices();
+  }, []);
+
+  const loadInvoices = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(API + '/api/admin/invoices', {
+        headers: { Authorization: 'Bearer ' + token },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load');
+      setInvoices(data.data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Load failed');
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  function setField(key: keyof FormState, value: string | LineItem[] | number) {
+    setForm(prev => ({ ...prev, [key]: value }));
   }
 
   function addLineItem() {
