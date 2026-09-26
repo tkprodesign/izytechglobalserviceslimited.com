@@ -25,6 +25,8 @@ interface Section {
   title: string;
   description: string | null;
   rows: Row[];
+  logistics: string;
+  service_charge: string;
 }
 
 type SectionTree = Section[];
@@ -45,6 +47,7 @@ interface Invoice {
   customer_phone?: string | null;
   customer_address: string;
   line_items: LineItem[];
+  sections?: unknown[];
   subtotal: number;
   logistics: number;
   service_charge: number;
@@ -159,6 +162,31 @@ function statusLabel(status: string) {
   return labels[status] ?? status;
 }
 
+function normalizeSectionsForForm(value: unknown): SectionTree {
+  if (!Array.isArray(value)) return [];
+  return value.map((section: any) => {
+    const sourceRows = Array.isArray(section?.rows)
+      ? section.rows
+      : Array.isArray(section?.line_items)
+        ? section.line_items
+        : Array.isArray(section?.items)
+          ? section.items
+          : [];
+    return {
+      title: String(section?.title || ''),
+      description: section?.description ?? '',
+      rows: sourceRows.map((row: any) => ({
+        description: String(row?.description || ''),
+        quantity: Number(row?.quantity) || 1,
+        unit_price: Number(row?.unit_price) || 0,
+        amount: Number(row?.amount) || 0,
+      })),
+      logistics: String(section?.logistics ?? 0),
+      service_charge: String(section?.service_charge ?? 0),
+    };
+  });
+}
+
 /* ── Main Page ─────────────────────────────────────────────────────────────── */
 
 export function InvoicesPage() {
@@ -246,7 +274,7 @@ export function InvoicesPage() {
       customer_phone: inv.customer_phone ?? '',
       customer_address: inv.customer_address ?? '',
       line_items: JSON.parse(JSON.stringify(inv.line_items || [])),
-      sections: (inv.sections ?? []) as SectionTree,
+      sections: normalizeSectionsForForm(inv.sections),
       logistics: String(inv.logistics ?? 0),
       service_charge: String(inv.service_charge ?? 0),
       tax_rate: String(inv.tax_rate ?? 7.5),
@@ -262,6 +290,7 @@ export function InvoicesPage() {
     setEditing(true);
     setEditingId(inv.id);
     setDraftPersistenceEnabled(inv.status === 'draft');
+    setDocsTab(Array.isArray(inv.sections) && inv.sections.length ? SECTIONS_TAB : FLAT_TAB);
     setMobileView('editor');
   }
 
@@ -283,7 +312,7 @@ export function InvoicesPage() {
     setEditingId(null);
     setDraftPersistenceEnabled(false);
     setMobileView('list');
-    setDocsTab(SECTIONS_TAB);
+    setDocsTab(FLAT_TAB);
     setDraftToResume(referenceInvoiceId ?? null);
   }
 
@@ -321,7 +350,7 @@ export function InvoicesPage() {
         customer_phone: inv.customer_phone ?? '',
         customer_address: inv.customer_address ?? '',
         line_items: JSON.parse(JSON.stringify(inv.line_items || [])),
-        sections: (inv.sections ?? []) as SectionTree,
+        sections: normalizeSectionsForForm(inv.sections),
         logistics: String(inv.logistics ?? 0),
         service_charge: String(inv.service_charge ?? 0),
         tax_rate: String(inv.tax_rate ?? 7.5),
@@ -337,6 +366,7 @@ export function InvoicesPage() {
       setEditing(true);
       setEditingId(inv.id);
       setDraftPersistenceEnabled(true);
+      setDocsTab(Array.isArray(inv.sections) && inv.sections.length ? SECTIONS_TAB : FLAT_TAB);
       setMobileView('editor');
       setSavedNotice('Resumed your in-progress sections invoice. Auto-save is on — changes are saved every 800 ms.');
       setTimeout(() => setSavedNotice(''), 6000);
@@ -380,13 +410,15 @@ export function InvoicesPage() {
     // Build the structured `sections` array backed by plain objects, exactly as
     // the REST API expects.
     const sections = form.sections;
-    const out: SectionTree = [];
+    const out: unknown[] = [];
     for (let i = 0; i < sections.length; i++) {
       const section = sections[i];
       if (!section || !Array.isArray(section.rows)) continue;
       out.push({
         title: String((section as { title?: string }).title ?? '').trim() || 'Section',
         description: (section as { description?: string | null }).description ?? null,
+        logistics: Number(section.logistics) || 0,
+        service_charge: Number(section.service_charge) || 0,
         rows: section.rows.map(row => ({
           description: String(row.description ?? '').trim(),
           quantity: Number(row.quantity) || 1,
@@ -1138,7 +1170,13 @@ export function InvoicesPage() {
                 onChange={(next) => setForm(prev => ({ ...prev, ...(next as Partial<FormState>) }))}
                 onAddSection={() => setForm(f => ({
                   ...f,
-                  sections: [...(f.sections ?? []), { title: '', description: '', rows: [{ description: '', quantity: 1, unit_price: 0, amount: 0 }] }],
+                  sections: [...(f.sections ?? []), {
+                    title: '',
+                    description: '',
+                    logistics: '0',
+                    service_charge: '0',
+                    rows: [{ description: '', quantity: 1, unit_price: 0, amount: 0 }],
+                  }],
                 }))}
                 onRemoveSection={(i) => setForm(f => ({ ...f, sections: (f.sections ?? []).filter((_, idx) => idx !== i) }))}
                 onAddRow={(sectionIndex) => setForm(f => ({
@@ -1153,7 +1191,13 @@ export function InvoicesPage() {
                   ...f,
                   sections: (f.sections ?? []).map((s, i) => {
                     if (i !== sectionIndex) return s;
-                    if (rowIndex < 0) return { ...s, [field]: value };
+                    if (rowIndex < 0) return {
+                      ...s,
+                      [field]: value,
+                      ...(field === 'logistics' || field === 'service_charge'
+                        ? { [field]: String(value) }
+                        : {}),
+                    };
                     return {
                       ...s,
                       rows: s.rows.map((r, j) => {
@@ -1236,6 +1280,7 @@ export function InvoicesPage() {
             )}
 
             {/* Additional charges */}
+            {docsTab === FLAT_TAB ? (
             <div className="rounded-xl border p-4" style={{ background: '#f8fafc', borderColor: '#e2e8f0' }}>
               <div className="flex items-center gap-2 mb-3">
                 <PlusCircle size={14} style={{ color: '#2563eb' }} />
@@ -1273,6 +1318,11 @@ export function InvoicesPage() {
                 </div>
               </div>
             </div>
+            ) : (
+              <div className="rounded-xl border p-4 text-xs" style={{ background: '#f8fafc', borderColor: '#e2e8f0', color: '#64748b' }}>
+                Logistics and service charge are set separately inside each section.
+              </div>
+            )}
 
             {/* Discount */}
             <div className="flex gap-3">

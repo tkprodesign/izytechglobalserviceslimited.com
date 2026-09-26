@@ -119,49 +119,109 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
 }
 
-/**
- * Normalize the dual-format input (`line_items` + `sections`) into the
- * flat array the PDF/email renderers and the `line_items` JSONB column already
- * expect, so both editors always produce the same persisted totals.
- */
-function flattenToLineItems(sections) {
-  const items = [];
-  for (const section of Array.isArray(sections) ? sections : []) {
-    if (section && typeof section === 'object' && Array.isArray(section.rows)) {
-      for (const row of section.rows) {
-        if (typeof row === 'string') {
-          // JSON-stringified row from the client (e.g. `[{"description":"..."}]`).
-          try { items.push(...JSON.parse(row)); } catch { /* fall through */ }
-        } else if (row && typeof row === 'object') {
-          items.push({
-            description: String(row.description || '').trim(),
-            quantity: Number(row.quantity) || 1,
-            unit_price: Number(row.unit_price) || 0,
-            amount: Number(row.amount) || 0,
-          });
-        }
-      }
-    } else if (typeof section === 'string') {
-      try { items.push(...JSON.parse(section)); } catch { /* fall through */ }
-    }
-  }
-  return items;
+function roundMoney(value) {
+  return Math.round((Number(value) || 0) * 100) / 100;
 }
 
-function normalizeLineItems(lineItems, sections) {
-  const directItems = Array.isArray(lineItems)
-    ? lineItems.filter(item => item && typeof item === 'object' && (
-      'description' in item || 'quantity' in item || 'unit_price' in item
-    ))
-    : [];
-  const source = directItems.length ? directItems : flattenToLineItems(sections);
+function normalizeLineItems(lineItems) {
+  return (Array.isArray(lineItems) ? lineItems : [])
+    .map(item => {
+      const quantity = Number(item?.quantity) > 0 ? Number(item.quantity) : 1;
+      const unitPrice = parseMoney(item?.unit_price);
+      return {
+        description: String(item?.description || '').trim(),
+        quantity,
+        unit_price: unitPrice,
+        amount: roundMoney(quantity * unitPrice),
+      };
+    })
+    .filter(item => item.description && item.unit_price > 0);
+}
 
-  return source.map(item => ({
-    description: String(item.description || '').trim(),
-    quantity: Number(item.quantity) || 1,
-    unit_price: Number(item.unit_price) || 0,
-    amount: (Number(item.quantity) || 1) * (Number(item.unit_price) || 0),
-  }));
+function sectionRows(section) {
+  if (Array.isArray(section?.rows)) return section.rows;
+  if (Array.isArray(section?.line_items)) return section.line_items;
+  if (Array.isArray(section?.items)) return section.items;
+  return [];
+}
+
+/**
+ * Store calculated section snapshots. This accepts the current editor's
+ * `rows` shape as well as the earlier `line_items`/`items` shapes so existing
+ * drafts remain editable. Flat invoices continue to use invoice-level charges.
+ */
+function calculateInvoiceAmounts({ line_items, sections, logistics, service_charge, tax_rate, tax_label, discount }) {
+  const rate = parseRate(tax_rate);
+  const taxLabel = String(tax_label || 'VAT (7.5%)').trim() || 'VAT (7.5%)';
+  const rawSections = Array.isArray(sections) ? sections : [];
+
+  if (rawSections.length) {
+    const normalizedSections = rawSections.map((section, index) => {
+      const items = normalizeLineItems(sectionRows(section));
+      const subtotal = roundMoney(items.reduce((sum, item) => sum + item.amount, 0));
+      const sectionLogistics = parseMoney(section?.logistics);
+      const sectionServiceCharge = parseMoney(section?.service_charge);
+      const taxable = roundMoney(subtotal + sectionLogistics + sectionServiceCharge);
+      const sectionTax = roundMoney(taxable * rate / 100);
+      return {
+        title: String(section?.title || `Section ${index + 1}`).trim() || `Section ${index + 1}`,
+        description: String(section?.description || '').trim(),
+        rows: items,
+        line_items: items,
+        subtotal,
+        logistics: sectionLogistics,
+        service_charge: sectionServiceCharge,
+        tax_rate: rate,
+        tax_label: taxLabel,
+        tax_amount: sectionTax,
+        total: roundMoney(taxable + sectionTax),
+      };
+    }).filter(section => section.rows.length);
+
+    if (!normalizedSections.length) {
+      return { error: 'Add at least one completed section with a priced line item' };
+    }
+
+    const subtotal = roundMoney(normalizedSections.reduce((sum, section) => sum + section.subtotal, 0));
+    const logisticsAmount = roundMoney(normalizedSections.reduce((sum, section) => sum + section.logistics, 0));
+    const serviceCharge = roundMoney(normalizedSections.reduce((sum, section) => sum + section.service_charge, 0));
+    const taxAmount = roundMoney(normalizedSections.reduce((sum, section) => sum + section.tax_amount, 0));
+    const taxableSubtotal = roundMoney(subtotal + logisticsAmount + serviceCharge);
+    const disc = parseMoney(discount);
+    if (disc > taxableSubtotal) return { error: 'Discount cannot exceed the invoice subtotal and charges' };
+
+    return {
+      sections: normalizedSections,
+      lineItems: normalizedSections.flatMap(section => section.rows),
+      subtotal,
+      logisticsAmount,
+      serviceCharge,
+      rate,
+      taxAmount,
+      disc,
+      total: roundMoney(taxableSubtotal + taxAmount - disc),
+    };
+  }
+
+  const items = normalizeLineItems(line_items);
+  const subtotal = roundMoney(items.reduce((sum, item) => sum + item.amount, 0));
+  const logisticsAmount = parseMoney(logistics);
+  const serviceCharge = parseMoney(service_charge);
+  const taxableSubtotal = roundMoney(subtotal + logisticsAmount + serviceCharge);
+  const taxAmount = roundMoney(taxableSubtotal * rate / 100);
+  const disc = parseMoney(discount);
+  if (disc > taxableSubtotal) return { error: 'Discount cannot exceed the invoice subtotal and charges' };
+  return {
+    sections: [],
+    lineItems: items,
+    subtotal,
+    logisticsAmount,
+    serviceCharge,
+    rate,
+    taxAmount,
+    disc,
+    total: roundMoney(taxableSubtotal + taxAmount - disc),
+  };
 }
 
 function normalizeInvoiceInput(body, { draft = false } = {}) {
@@ -174,28 +234,15 @@ function normalizeInvoiceInput(body, { draft = false } = {}) {
   const customerEmail = String(customer_email || '').trim();
   const customerPhone = String(customer_phone || '').trim();
   const customerAddress = String(customer_address || '').trim();
-  const items = normalizeLineItems(line_items, sections);
-  const sectionsValue = Array.isArray(sections) ? sections : [];
-
   if (!draft && !customerName) throw new Error('Customer name is required');
   if (customerEmail && !isValidEmail(customerEmail)) {
     throw new Error('Enter a valid customer email address');
   }
-  if (!draft && !items.length) {
-    throw new Error('At least one line item is required');
-  }
-
-  const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
-  const logisticsAmount = parseMoney(logistics);
-  const serviceCharge = parseMoney(service_charge);
-  const rate = parseRate(tax_rate);
-  const taxableSubtotal = subtotal + logisticsAmount + serviceCharge;
-  const taxAmt = Math.round(taxableSubtotal * rate) / 100;
-  const requestedDiscount = parseMoney(discount);
-  if (!draft && requestedDiscount > taxableSubtotal) {
-    throw new Error('Discount cannot exceed the invoice subtotal and charges');
-  }
-  const disc = draft ? Math.min(requestedDiscount, taxableSubtotal) : requestedDiscount;
+  const amounts = calculateInvoiceAmounts({
+    line_items, sections, logistics, service_charge, tax_rate, tax_label, discount,
+  });
+  if (amounts.error) throw new Error(amounts.error);
+  if (!draft && !amounts.lineItems.length) throw new Error('At least one line item is required');
 
   return {
     title: String(title || '').trim() || DEFAULT_INVOICE_TITLE,
@@ -203,16 +250,16 @@ function normalizeInvoiceInput(body, { draft = false } = {}) {
     customerEmail,
     customerPhone,
     customerAddress,
-    items,
-    sections: sectionsValue,
-    subtotal,
-    logisticsAmount,
-    serviceCharge,
-    rate,
+    items: amounts.lineItems,
+    sections: amounts.sections,
+    subtotal: amounts.subtotal,
+    logisticsAmount: amounts.logisticsAmount,
+    serviceCharge: amounts.serviceCharge,
+    rate: amounts.rate,
     taxLabel: String(tax_label || 'VAT (7.5%)').trim() || 'VAT (7.5%)',
-    taxAmt,
-    discount: disc,
-    total: taxableSubtotal + taxAmt - disc,
+    taxAmt: amounts.taxAmount,
+    discount: amounts.disc,
+    total: amounts.total,
     notes: String(notes || '').trim(),
     status: draft ? 'draft' : (status || 'unpaid'),
     dueDate: due_date || null,

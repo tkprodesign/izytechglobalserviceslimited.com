@@ -15,6 +15,8 @@ interface Section {
   title: string;
   description: string | null;
   rows: Row[];
+  logistics: string;
+  service_charge: string;
 }
 
 type SectionTree = Section[];
@@ -26,7 +28,7 @@ interface SectionsEditorProps {
   onRemoveSection(index: number): void;
   onAddRow(sectionIndex: number): void;
   onRemoveRow(sectionIndex: number, rowIndex: number): void;
-  onRowChange(sectionIndex: number, rowIndex: number, field: keyof Row, value: string | number): void;
+  onRowChange(sectionIndex: number, rowIndex: number, field: keyof Row | keyof Section, value: string | number): void;
 }
 
 /* ── Helpers ───────────────────────────────────────────────────────────────── */
@@ -101,8 +103,8 @@ export function SectionsEditor({
           {expanded === sectionIndex ? (
             <div className="px-4 pb-4 space-y-3 border-t border-border/30">
               {/* Section row editor */}
-              <div className="flex gap-2 items-center">
-                <div className="flex-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
                   <label className="block text-[11px] font-medium mb-1" style={{ color: '#94a3b8' }}>Section title</label>
                   <input
                     value={section.title}
@@ -112,7 +114,7 @@ export function SectionsEditor({
                     style={{ borderColor: '#e2e8f0', background: '#fff' }}
                   />
                 </div>
-                <div className="flex-1">
+                <div>
                   <label className="block text-[11px] font-medium mb-1" style={{ color: '#94a3b8' }}>Section description (optional)</label>
                   <input
                     value={section.description ?? ''}
@@ -122,12 +124,42 @@ export function SectionsEditor({
                     style={{ borderColor: '#e2e8f0', background: '#fff' }}
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-medium mb-1" style={{ color: '#64748b' }}>Logistics (₦)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={section.logistics}
+                    onChange={(e) => onRowChange(sectionIndex, -1, 'logistics', e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]20"
+                    style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-medium mb-1" style={{ color: '#64748b' }}>Service charge (₦)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={section.service_charge}
+                    onChange={(e) => onRowChange(sectionIndex, -1, 'service_charge', e.target.value)}
+                    className="w-full px-3 py-2 text-sm rounded-lg border outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]20"
+                    style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end">
                 <button
                   type="button"
                   onClick={() => onAddRow(sectionIndex)}
-                  className="p-2 rounded-lg hover:bg-blue-50 transition-colors text-[#2563eb]"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition-colors text-xs font-medium text-[#2563eb]"
                 >
-                  <Plus size={14} />
+                  <Plus size={14} /> Add row
                 </button>
               </div>
 
