@@ -148,7 +148,6 @@ function flattenToLineItems(sections) {
   return items;
 }
 
-function parseRate(tax_rate) {
 /**
  * Emails an invoice to the customer address on the invoice.
  * The email body IS the invoice (branded template) and a PDF copy is attached.
@@ -379,9 +378,6 @@ router.post('/api/admin/invoices/:id/save-draft', requireAuth, async (req, res) 
     res.status(500).json({ error: err.message });
   }
 });
-
-}
-
 
   return router;
 
