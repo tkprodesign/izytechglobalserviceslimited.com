@@ -15,6 +15,7 @@ const COMPANY = {
   tagline: 'Power the Future, Future-Ready Solutions, Today.',
   phone: '+234 810 126 2814',
   email: 'invoice@izytechglobalservices.com',
+  infoEmail: 'info@izytechglobalservices.com',
   site: 'izytechglobalservices.com',
   address: '1 Pathfinder Close, Sandfield, Borikiri, Port Harcourt, Rivers State',
   registration: 'RC: 8705481',
@@ -513,7 +514,10 @@ function generateInvoicePdf(inv, options = {}) {
       centeredFooterLine(COMPANY.address, 9, pageH - 35);
       const footerContactParts = [
         COMPANY.registration,
-        ...(options.hideCompanyContact ? [] : [COMPANY.phone, COMPANY.email]),
+        ...(options.hideCompanyContact ? [] : [COMPANY.phone]),
+        ...(options.includeFooterEmails
+          ? [COMPANY.email, COMPANY.infoEmail]
+          : (options.hideCompanyContact ? [] : [COMPANY.email])),
         COMPANY.site,
       ];
       centeredFooterLine(footerContactParts.join('  \u00b7  '), 8.75, pageH - 22);
