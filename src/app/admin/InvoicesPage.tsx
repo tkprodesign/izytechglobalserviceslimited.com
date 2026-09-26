@@ -1,17 +1,33 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { DashboardLayout } from './DashboardLayout';
+import { SectionsEditor } from './SectionsEditor';
 import { getToken, removeToken } from '../../lib/auth';
 import { ngDate, ngDateTime } from '../../lib/ngtime';
 import {
   FileText, Plus, Trash2, Send, Eye, Edit2, Pencil, ChevronDown, X, Download,
   Loader2, CheckCircle, Clock, AlertCircle, Search, Filter,
-  Mail, PlusCircle, Landmark,
+  Mail, PlusCircle, Landmark, LayoutDashboard,
 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
+
+interface Row {
+  description: string;
+  quantity: number;
+  unit_price: number;
+  amount: number;
+}
+
+interface Section {
+  title: string;
+  description: string | null;
+  rows: Row[];
+}
+
+type SectionTree = Section[];
 
 interface LineItem {
   description: string;
@@ -38,7 +54,7 @@ interface Invoice {
   discount: number;
   total: number;
   notes: string;
-  status: 'unpaid' | 'paid' | 'overdue' | 'cancelled';
+  status: 'unpaid' | 'paid' | 'overdue' | 'cancelled' | 'draft';
   due_date: string;
   paid_date: string;
   bank_account_name: string;
@@ -49,6 +65,27 @@ interface Invoice {
   updated_at: string;
 }
 
+interface InvoicePayload {
+  title: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  customer_address: string;
+  line_items: unknown[];
+  sections: unknown[];
+  logistics: number;
+  service_charge: number;
+  tax_rate: number;
+  tax_label: string;
+  discount: number;
+  notes: string;
+  due_date: string | null;
+  status: string;
+  bank_account_name: string;
+  bank_account_number: string;
+  bank_name: string;
+}
+
 type FormState = {
   title: string;
   customer_name: string;
@@ -56,6 +93,7 @@ type FormState = {
   customer_phone: string;
   customer_address: string;
   line_items: LineItem[];
+  sections: unknown[] | null;
   logistics: string;
   service_charge: string;
   tax_rate: string;
@@ -84,6 +122,7 @@ function defaultValue(): FormState {
     discount: '0',
     notes: '',
     due_date: '',
+    sections: null,
     status: 'unpaid',
     bank_account_name: 'Izy Technologies Global services Ltd',
     bank_account_number: '0512121038',
@@ -136,6 +175,7 @@ export function InvoicesPage() {
 
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('');
+  const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState<number | null>(null);
   const [sent, setSent] = useState<number | null>(null);
   const [sendingError, setSendingError] = useState('');
@@ -163,6 +203,48 @@ export function InvoicesPage() {
       setLoading(false);
     }
   }, [token]);
+
+  // Auto-save the in-progress invoice as a server-side `draft` on every
+  // keystroke (debounced). A cancelled tab or browser exit therefore never
+  // loses work: reopening the page restores the last saved sections + fields
+  // via loadDraft().
+  useEffect(() => {
+    if (!token) return;
+
+    // Only auto-save the sections form — the flat-line-items editor shares
+    // the same `status = 'draft'` backend but is the legacy path; it still
+    // benefits from draft persistence, so we auto-save it too once a section
+    // tree exists (isSectionedForm) or the flat form is the only content.
+    const payload = isSectionedForm()
+      ? { sections: sectionsToPayloadSections(), line_items: [] }
+      : { line_items: form.line_items.map(li => ({ ...li })) };
+
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await fetch(
+          API + '/api/admin/invoices/' + (editingId || 0) + '/save-draft',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer ' + token,
+            },
+            body: JSON.stringify({ ...payload, title: form.title, customer_name: form.customer_name, customer_email: form.customer_email, customer_phone: form.customer_phone, customer_address: form.customer_address, logistics: form.logistics, service_charge: form.service_charge, tax_rate: form.tax_rate, tax_label: form.tax_label, discount: form.discount, notes: form.notes, due_date: form.due_date, bank_account_name: form.bank_account_name, bank_account_number: form.bank_account_number, bank_name: form.bank_name }),
+          },
+        );
+        const data = await res.json();
+        if (res.ok && data.saved_as_draft) {
+          setSavedNotice('Saved as draft — your work is safe. It will resume on the next visit.');
+          window.setTimeout(() => setSavedNotice(''), 6000);
+        }
+      } catch {
+        // Network failures are expected while offline; the draft is kept
+        // locally in React state until the effect retries.
+      }
+    }, 800);
+
+    return () => window.clearTimeout(timer);
+  }, [form, editingId, token, isSectionedForm, sectionsToPayloadSections]);
 
   function setField(key: keyof FormState, value: string | LineItem[] | number) {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -197,14 +279,7 @@ export function InvoicesPage() {
     });
   }
 
-  function resetForm() {
-    setForm(defaultValue());
-    setEditing(false);
-    setEditingId(null);
-    setMobileView('list');
-  }
-
-  function openEdit(inv: Invoice) {
+  function openEdit(inv: Invoice & { sections?: unknown[] }) {
     setForm({
       title: inv.title || 'Invoice',
       customer_name: inv.customer_name,
@@ -212,6 +287,7 @@ export function InvoicesPage() {
       customer_phone: inv.customer_phone ?? '',
       customer_address: inv.customer_address ?? '',
       line_items: JSON.parse(JSON.stringify(inv.line_items || [])),
+      sections: inv.sections ? inv.sections : null,
       logistics: String(inv.logistics ?? 0),
       service_charge: String(inv.service_charge ?? 0),
       tax_rate: String(inv.tax_rate ?? 7.5),
@@ -229,20 +305,147 @@ export function InvoicesPage() {
     setMobileView('editor');
   }
 
+  // Drafts are in-progress invoices still in `status = 'draft'`. The client
+  // auto-saves them on every keystroke (debounced) and restores the form from
+  // Drafts are in-progress invoices still in `status = 'draft'`. The client
+  // auto-saves them on every keystroke (debounced) and restores the form from
+  // the server when the page is revisited, so a cancelled tab or browser exit
+  // never loses work.
+  const SECTIONS_TAB = 'sections';
+  const FLAT_TAB = 'flat';
+
+  const [docsTab, setDocsTab] = useState<'sections' | 'flat'>(SECTIONS_TAB);
+  const [draftToResume, setDraftToResume] = useState<number | null>(null);
+
+  function resetForm(referenceInvoiceId?: number) {
+    setForm(defaultValue());
+    setEditing(false);
+    setEditingId(null);
+    setMobileView('list');
+    setDocsTab(SECTIONS_TAB);
+    setDraftToResume(referenceInvoiceId ?? null);
+  }
+
+  // Resume a previously saved draft, either from the "Resume" button on the
+  // list or by re-entering the editor after the tab was closed.
+  async function resumeDraft(invoiceId: number) {
+    try {
+      setDraftToResume(invoiceId);
+      await loadDraft(invoiceId);
+    } catch {
+      // loadDraft already set the error state.
+      setDraftToResume(null);
+    }
+  }
+
+  // Load an in-progress draft from the DB so a cancelled/refreshed tab can
+  // resume exactly where it left off.
+  async function loadDraft(invoiceId: number) {
+    try {
+      const res = await fetch(API + '/api/admin/invoices/' + invoiceId, {
+        headers: { Authorization: 'Bearer ' + token },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Load draft failed');
+      const inv = data.data;
+
+      // Only restore a `draft` that was actually saved by the client — an
+      // already-finalised invoice must keep its original status.
+      if (inv.status !== 'draft') return;
+
+      setForm({
+        title: inv.title || 'Invoice',
+        customer_name: inv.customer_name,
+        customer_email: inv.customer_email ?? '',
+        customer_phone: inv.customer_phone ?? '',
+        customer_address: inv.customer_address ?? '',
+        line_items: JSON.parse(JSON.stringify(inv.line_items || [])),
+        sections: inv.sections ?? [],
+        logistics: String(inv.logistics ?? 0),
+        service_charge: String(inv.service_charge ?? 0),
+        tax_rate: String(inv.tax_rate ?? 7.5),
+        tax_label: inv.tax_label || 'VAT (7.5%)',
+        discount: String(inv.discount ?? 0),
+        notes: inv.notes || '',
+        due_date: inv.due_date || '',
+        status: inv.status,
+        bank_account_name: inv.bank_account_name || 'Izy Technologies Global services Ltd',
+        bank_account_number: inv.bank_account_number || '0512121038',
+        bank_name: inv.bank_name || 'Alternative Bank',
+      });
+      setEditing(true);
+      setEditingId(inv.id);
+      setMobileView('editor');
+      setSavedNotice('Resumed your in-progress sections invoice. Auto-save is on — changes are saved every 800 ms.');
+      setTimeout(() => setSavedNotice(''), 6000);
+      setDraftToResume(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to resume draft');
+    }
+  }
+
+  function isSectionedForm(): boolean {
+    // The sections editor writes the full section tree into `form.sections`,
+    // so a populated sections array means we're submitting sections.
+    const sections = form.sections as SectionTree ?? [];
+    return sections.some(s => Array.isArray(s.rows) && s.rows.length > 0);
+  }
+
+  function sectionsToPayloadRows(): LineItem[] {
+    // Build the flat `line_items` array from the section tree, exactly as the
+    // REST API's `flattenToLineItems` expects (rows whose description and
+    // quantity/unit_price are non-empty / positive).
+    const rows: LineItem[] = [];
+    const sections = form.sections as SectionTree ?? [];
+    for (let i = 0; i < sections.length; i++) {
+      const section = sections[i];
+      if (!section || !Array.isArray(section.rows)) continue;
+      for (const row of section.rows) {
+        if ((row as unknown as Row)?.description?.trim() && (Number((row as unknown as Row).quantity) || 0) > 0 && (Number((row as unknown as Row).unit_price) || 0) > 0) {
+          rows.push({
+            description: (row as Row).description.trim(),
+            quantity: Number((row as Row).quantity) || 1,
+            unit_price: Number((row as Row).unit_price) || 0,
+            amount: Number((row as Row).amount) || 0,
+          });
+        }
+      }
+    }
+    return rows;
+  }
+
+  function sectionsToPayloadSections(): unknown[] {
+    // Build the structured `sections` array backed by plain objects, exactly as
+    // the REST API expects.
+    const sections = form.sections ?? [];
+    const out: SectionTree = [];
+    for (let i = 0; i < sections.length; i++) {
+      const section = sections[i];
+      if (!section || !Array.isArray(section.rows)) continue;
+      out.push({
+        title: String((section as { title?: string }).title ?? '').trim() || 'Section',
+        description: (section as { description?: string | null }).description ?? null,
+        rows: (section as { rows?: SectionTree }).rows?.map(row => ({
+          description: String((row as { description?: string }).description ?? '').trim(),
+          quantity: Number((row as { quantity?: number }).quantity) || 1,
+          unit_price: Number((row as { unit_price?: number }).unit_price) || 0,
+          amount: Number((row as { amount?: number }).amount) || 0,
+        })) ?? [],
+      });
+    }
+    return out;
+  }
+
   async function handleSave() {
     setError('');
     setSavedNotice('');
-    const lineItems = form.line_items.filter(li =>
-      (li.description || '').trim() && (li.quantity || 0) > 0 && (li.unit_price || 0) > 0
-    );
 
-    const payload = {
+    const payload: InvoicePayload = {
       title: form.title.trim() || 'Invoice',
       customer_name: form.customer_name.trim(),
       customer_email: form.customer_email.trim(),
       customer_phone: form.customer_phone.trim(),
       customer_address: form.customer_address.trim(),
-      line_items: lineItems,
       logistics: parseFloat(form.logistics) || 0,
       service_charge: parseFloat(form.service_charge) || 0,
       tax_rate: parseFloat(form.tax_rate) || 7.5,
@@ -257,22 +460,58 @@ export function InvoicesPage() {
     };
 
     try {
-      const url = editingId ? API + '/api/admin/invoices/' + editingId : API + '/api/admin/invoices';
+      if (docsTab === SECTIONS_TAB) {
+        if (!form.sections) form.sections = [];
+        payload.sections = sectionsToPayloadSections();
+        payload.line_items = sectionsToPayloadRows();
+        if (!payload.line_items.length) {
+          throw new Error('At least one line item is required — add rows inside a section before saving.');
+        }
+      } else {
+        // Flat fallback — same shape the existing invoice renderer expects.
+        const lineItems = form.line_items.filter(li =>
+          (li.description || '').trim() && (li.quantity || 0) > 0 && (li.unit_price || 0) > 0
+        );
+        payload.line_items = lineItems;
+        if (!payload.line_items.length) {
+          throw new Error('Add at least one line item before saving.');
+        }
+      }
+
+      const url = editingId
+        ? API + '/api/admin/invoices/' + editingId
+        : API + '/api/admin/invoices';
       const method = editingId ? 'PUT' : 'POST';
+      setSaving(true);
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
+      setSaving(false);
+
       if (!res.ok) throw new Error(data.error || 'Save failed');
-      setEditing(false);
-      setEditingId(null);
-      setMobileView('list');
-      // The backend auto-emails the invoice (with PDF attached) to the customer
-      // address on every create/update — surface the outcome to the user.
+
+      // Use the persisted server-side record as the source of truth (it carries
+      // server-computed `total` and auto-generated `invoice_number`).
+      const saved = data.data || (editingId ? invoices.find(i => i.id === editingId) : null) || form;
+
+      // Clear the editor and return to the list.
+      resetForm();
+      loadInvoices();
+
+      // Keep the invoice visible in the list while it is being finalised.
+      if (editingId) setEditingId(null);
+
+      if (data.saved_as_draft) {
+        setSavedNotice('Saved as draft — your work will not be lost. Use "Resume draft" to continue.');
+        setTimeout(() => setSavedNotice(''), 6000);
+        return;
+      }
+
       if (data.email_sent) {
-        setSent(editingId || (data.data && data.data.id) || 0);
+        setSent(saved.id || editingId || 0);
         setTimeout(() => setSent(null), 4000);
       } else if (data.email_skipped) {
         setSavedNotice('Invoice saved. Add a customer email whenever you want to send it by email.');
@@ -284,8 +523,6 @@ export function InvoicesPage() {
           ' Use the send button on the invoice to retry.'
         );
       }
-      loadInvoices();
-      resetForm();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');
     }
@@ -542,8 +779,19 @@ export function InvoicesPage() {
                       className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium transition-colors active:bg-gray-100"
                       style={{ borderColor: '#e2e8f0', color: '#334155' }}
                     >
-                      <Pencil size={13} /> Edit
+                      <PlusCircle size={13} />
+                      <span className="hidden sm:inline">Sections</span>
+                      <span className="sm:hidden">New</span>
                     </button>
+                    {inv.status === 'draft' && (
+                      <button
+                        onClick={() => resumeDraft(inv.id)}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium transition-colors active:bg-amber-50"
+                        style={{ borderColor: '#fde68a', color: '#b45309' }}
+                      >
+                        <Clock size={13} /> Resume draft
+                      </button>
+                    )}
                     <button
                       onClick={() => handleSend(inv)}
                       disabled={sending === inv.id || !inv.customer_email?.trim()}
@@ -629,10 +877,19 @@ export function InvoicesPage() {
                         <button
                           onClick={() => openEdit(inv)}
                           className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                          title="Edit"
+                          title="Create with sections"
                         >
-                          <Pencil size={14} style={{ color: '#64748b' }} />
+                          <LayoutDashboard size={14} style={{ color: '#334155' }} />
                         </button>
+                        {inv.status === 'draft' && (
+                          <button
+                            onClick={() => resumeDraft(inv.id)}
+                            className="p-2 rounded-lg hover:bg-amber-50 transition-colors"
+                            title="Resume draft"
+                          >
+                            <Clock size={14} style={{ color: '#b45309' }} />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleSend(inv)}
                           disabled={sending === inv.id || !inv.customer_email?.trim()}
@@ -681,14 +938,34 @@ export function InvoicesPage() {
         {/* ═══ Editor ═══ */}
         <div className={`rounded-2xl border overflow-hidden bg-white ${mobileView === 'list' ? 'hidden' : ''}`} style={{ borderColor: '#e2e8f0' }}>
           {/* Editor header */}
-          <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: '#e2e8f0' }}>
-            <div className="flex items-center gap-2">
+          <div className="px-5 py-4 border-b flex flex-wrap items-center justify-between gap-3" style={{ borderColor: '#e2e8f0' }}>
+            <div className="flex items-center gap-2 flex-wrap">
               <FileText size={15} style={{ color: '#2563eb' }} />
               <span className="text-sm font-semibold" style={{ color: '#0f172a' }}>
                 {editing ? 'Edit Invoice' : 'New Invoice'}
               </span>
+              {draftToResume !== null && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: '#fef3c7', color: '#b45309' }}>
+                  <Clock size={10} /> Draft resuming
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
+              {/* Sections vs flat editor tab */}
+              <div className="flex items-center border-b border-border/40">
+                <button
+                  onClick={() => setDocsTab(SECTIONS_TAB)}
+                  className={`px-3 py-1.5 text-[11px] font-semibold transition-colors ${docsTab === SECTIONS_TAB ? 'text-[#1a5fab]' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  Sections
+                </button>
+                <button
+                  onClick={() => setDocsTab(FLAT_TAB)}
+                  className={`px-3 py-1.5 text-[11px] font-semibold transition-colors ${docsTab === FLAT_TAB ? 'text-[#1a5fab]' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  Flat items
+                </button>
+              </div>
               <button
                 onClick={() => setMobileView('list')}
                 className="flex md:hidden items-center gap-1 text-xs font-medium"
@@ -698,7 +975,11 @@ export function InvoicesPage() {
               </button>
               {editing && (
                 <button
-                  onClick={resetForm}
+                  onClick={() => {
+                    // Discarding the in-progress draft returns to the list.
+                    resetForm();
+                    setMobileView('list');
+                  }}
                   className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <X size={15} style={{ color: '#94a3b8' }} />
@@ -829,71 +1110,98 @@ export function InvoicesPage() {
               </div>
             </div>
 
-            {/* Line items */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className="block text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#94a3b8' }}>Line Items</label>
-                <button
-                  onClick={addLineItem}
-                  className="text-xs font-medium flex items-center gap-1 rounded-lg hover:bg-blue-50 transition-colors"
-                  style={{ color: '#2563eb' }}
-                >
-                  <Plus size={12} /> Add Item
-                </button>
-              </div>
+            {/* Sections vs flat items editor */}
+            {docsTab === SECTIONS_TAB ? (
+              <SectionsEditor
+                sections={form.sections as unknown as SectionTree}
+                onChange={(next) => setForm(prev => ({ ...prev, ...(next as Partial<FormState>) }))}
+                onAddSection={() => setForm(f => ({
+                  ...f,
+                  sections: [...(f.sections ?? []), { title: '', description: '', rows: [{ description: '', quantity: 1, unit_price: 0, amount: 0 }] }],
+                }))}
+                onRemoveSection={(i) => setForm(f => ({ ...f, sections: (f.sections ?? []).filter((_, idx) => idx !== i) }))}
+                onAddRow={(sectionIndex) => setForm(f => ({
+                  ...f,
+                  sections: (f.sections ?? []).map((s, i) => i === sectionIndex ? { ...s, rows: [...s.rows, { description: '', quantity: 1, unit_price: 0, amount: 0 }] } : s),
+                }))}
+                onRemoveRow={(sectionIndex, rowIndex) => setForm(f => ({
+                  ...f,
+                  sections: (f.sections ?? []).map((s, i) => i === sectionIndex ? { ...s, rows: s.rows.filter((_, j) => j !== rowIndex) } : s),
+                }))}
+                onRowChange={(sectionIndex, rowIndex, field, value) => setForm(f => ({
+                  ...f,
+                  sections: (f.sections ?? []).map((s, i) => i === sectionIndex ? {
+                    ...s,
+                    rows: s.rows.map((r, j) => j === rowIndex ? { ...r, [field]: value } : r),
+                  } : s),
+                }))}
+              />
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#94a3b8' }}>Line Items</label>
+                  <button
+                    onClick={addLineItem}
+                    className="text-xs font-medium flex items-center gap-1 rounded-lg hover:bg-blue-50 transition-colors"
+                    style={{ color: '#2563eb' }}
+                  >
+                    <Plus size={12} /> Add Item
+                  </button>
+                </div>
 
-              <div className="space-y-2">
-                {form.line_items.map((item, index) => (
-                  <div key={index} className="flex gap-2 items-start rounded-lg border p-3" style={{ borderColor: '#e2e8f0', background: '#f8fafc' }}>
-                    <div className="flex-1 min-w-0">
-                      <input
-                        value={item.description}
-                        onChange={e => updateLineItem(index, 'description', e.target.value)}
-                        placeholder="Description of service or product"
-                        className="w-full px-2.5 py-2 text-sm rounded border outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 mb-2"
-                        style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
-                      />
-                      <div className="flex gap-2">
-                        <div className="flex-1">
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={item.quantity}
-                            onChange={e => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                            placeholder="Qty"
-                            className="w-full px-2.5 py-2 text-xs rounded border outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
-                            style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={item.unit_price}
-                            onChange={e => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                            placeholder="Unit price"
-                            className="w-full px-2.5 py-2 text-xs rounded border outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
-                            style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
-                          />
+                <div className="space-y-2">
+                  {form.line_items.map((item, index) => (
+                    <div key={index} className="flex gap-2 items-start rounded-lg border p-3" style={{ borderColor: '#e2e8f0', background: '#f8fafc' }}>
+                      <div className="flex-1 min-w-0">
+                        <input
+                          value={item.description}
+                          onChange={e => updateLineItem(index, 'description', e.target.value)}
+                          placeholder="Description of service or product"
+                          className="w-full px-2.5 py-2 text-sm rounded border outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 mb-2"
+                          style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
+                        />
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={item.quantity}
+                              onChange={e => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                              placeholder="Qty"
+                              className="w-full px-2.5 py-2 text-xs rounded border outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
+                              style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={item.unit_price}
+                              onChange={e => updateLineItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                              placeholder="Unit price"
+                              className="w-full px-2.5 py-2 text-xs rounded border outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
+                              style={{ borderColor: '#e2e8f0', background: '#fff', color: '#0f172a' }}
+                            />
+                          </div>
                         </div>
                       </div>
+                      <div className="text-right flex-shrink-0 mt-5">
+                        <p className="text-sm font-bold" style={{ color: '#0f172a' }}>{naira(item.amount)}</p>
+                        <button
+                          onClick={() => removeLineItem(index)}
+                          className="text-xs mt-1 hover:text-red-500 transition-colors"
+                          style={{ color: '#94a3b8' }}
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
-                    <div className="text-right flex-shrink-0 mt-5">
-                      <p className="text-sm font-bold" style={{ color: '#0f172a' }}>{naira(item.amount)}</p>
-                      <button
-                        onClick={() => removeLineItem(index)}
-                        className="text-xs mt-1 hover:text-red-500 transition-colors"
-                        style={{ color: '#94a3b8' }}
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+                  ))}
+                </div>
+              </>
+            )}
 
             {/* Additional charges */}
             <div className="rounded-xl border p-4" style={{ background: '#f8fafc', borderColor: '#e2e8f0' }}>
@@ -1037,7 +1345,7 @@ export function InvoicesPage() {
             {/* Actions */}
             <div className="flex items-center gap-3 justify-end pt-2">
               <button
-                onClick={resetForm}
+                onClick={() => resetForm()}
                 className="px-4 py-2.5 text-sm rounded-lg font-medium hover:bg-gray-100 transition-colors"
                 style={{ color: '#64748b' }}
               >
@@ -1083,3 +1391,14 @@ export function InvoicesPage() {
     </DashboardLayout>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
