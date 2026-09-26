@@ -32,7 +32,7 @@ async function initInvoicesTable(db) {
       discount        NUMERIC(12,2) NOT NULL DEFAULT 0,
       total           NUMERIC(12,2) NOT NULL DEFAULT 0,
       notes           TEXT NOT NULL DEFAULT '',
-      status          TEXT NOT NULL DEFAULT 'unpaid' CHECK (status IN ('unpaid', 'paid', 'overdue', 'cancelled')),
+      status          TEXT NOT NULL DEFAULT 'unpaid' CHECK (status IN ('unpaid', 'paid', 'overdue', 'cancelled', 'draft')),
       due_date        DATE,
       paid_date       TIMESTAMPTZ,
       bank_account_name   TEXT NOT NULL DEFAULT 'Izy Technologies Global Services Limited',

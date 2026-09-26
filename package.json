@@ -5,11 +5,9 @@
   "description": "Official website and digital platform for IZY Technologies Global Services Limited — Nigeria's premier energy solutions provider. Full Next.js app: pages + API in one deployable service.",
   "scripts": {
     "test:invoices": "node --test server/tests/invoices.test.js",
-    "dev": "next dev --webpack -H 0.0.0.0 -p ${PORT:-3000}",
-    "build": "next build --webpack",
-    "pages:build": "vite build",
-    "start": "node server.js",
-    "lint": "next lint"
+    "dev": "vite --host 0.0.0.0 --port 5000 &",
+    "build": "vite build",
+    "start": "node server.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1137.0",

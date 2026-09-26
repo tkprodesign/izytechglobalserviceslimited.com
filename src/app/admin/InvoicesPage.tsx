@@ -660,8 +660,17 @@ export function InvoicesPage() {
               <PlusCircle size={15} />
               New Invoice
             </button>
+            <button
+              onClick={() => { resetForm(); setDocsTab('sections'); }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-all hover:shadow-lg active:scale-[0.98] border border-[#1a5fab] bg-[#1a5fab14]"
+              style={{ color: '#1a5fab' }}
+            >
+              <LayoutDashboard size={15} />
+              Create with sections
+            </button>
           </div>
         </div>
+      </div>
 
         {error && (
           <div className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm mb-4" style={{ background: '#fef2f2', color: '#dc2626' }}>
@@ -966,27 +975,16 @@ export function InvoicesPage() {
                   Flat items
                 </button>
               </div>
-              <button
-                onClick={() => setMobileView('list')}
-                className="flex md:hidden items-center gap-1 text-xs font-medium"
-                style={{ color: '#2563eb' }}
-              >
-                <ChevronDown size={14} className="rotate-90" /> Back
-              </button>
-              {editing && (
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => {
-                    // Discarding the in-progress draft returns to the list.
-                    resetForm();
-                    setMobileView('list');
-                  }}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  onClick={() => setMobileView('list')}
+                  className="flex md:hidden items-center gap-1 text-xs font-medium"
+                  style={{ color: '#2563eb' }}
                 >
-                  <X size={15} style={{ color: '#94a3b8' }} />
+                  <ChevronDown size={14} className="rotate-90" /> Back
                 </button>
-              )}
+              </div>
             </div>
-          </div>
 
           <div className="p-5 space-y-5 overflow-y-auto max-h-[calc(100vh-20rem)]">
             {/* Invoice title */}

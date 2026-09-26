@@ -1,6 +1,6 @@
 # IZY Technologies Global Services Limited
 
-Official digital platform — a Next.js app serving the React site, Express API, and admin panel from one process.
+Official digital platform — a Vite + React SPA (admin & developer panels) plus an Express + PostgreSQL API, deployed from one Node process.
 
 **Brand naming:** The full legal name is **Izy Technologies Global Services Limited**. The preferred short alias is **Izy Tech Services**. Avoid using “IZY” as a standalone company reference in customer-facing copy.
 
@@ -28,7 +28,7 @@ The application runs as one workflow:
 
 | Workflow | Command | Port | Purpose |
 |---|---|---|---|
-| **Start application** | `PORT=5000 npm run dev` | 5000 | Next.js site, admin panel, and API |
+| **Start application** | `PORT=5000 npm run dev` | 5000 | Vite site + Express API |
 
 It starts automatically. The preview pane shows the site and admin panel, while `/api/*` is handled by the same server.
 
@@ -39,7 +39,7 @@ npm ci
 
 ## Stack
 
-- **App**: Next.js, React 18, TypeScript, Tailwind CSS v4, Framer Motion, Radix UI
+- **App**: Vite + React 18, TypeScript, Tailwind CSS v4, Framer Motion, Radix UI
 - **API**: Node.js, Express, PostgreSQL (`pg`), JWT auth
 - **Database**: Neon PostgreSQL (connection via `DATABASE_URL` secret)
 
@@ -110,24 +110,37 @@ The Email Manager reads inbound messages from Resend Receiving and sends through
 |---|---|
 | `SMARTSUPP_API` | Smartsupp REST API token (server-side only, never exposed to the browser). Verifies the account/agent state; agent profile photo and chat-box appearance are configured in the Smartsupp dashboard. |
 
-The public chat widget is loaded in `index.html` (Vite) and `app/layout.tsx` (Next.js) with the site key, brand color `#F0A20E`, rating enabled, and cross-subdomain cookies (`.izytechglobalservices.com`). Visitor identification is bridged in `src/lib/smartsupp.ts` and called after form submissions so agents see the visitor's name, email, phone and form type.
+The public chat widget is loaded in `index.html` (Vite) with the site key, brand color `#F0A20E`, rating enabled, and cross-subdomain cookies (`.izytechglobalservices.com`). Visitor identification is bridged in `src/lib/smartsupp.ts` and called after form submissions so agents see the visitor's name, email, phone and form type.
 
 ## Database
 
 Initial schema lives in `server/migrations/001_initial.sql` (tables: `contact_submissions`, `quote_requests`). Already applied to the Neon database.
 
+## Invoice sections + draft workflow (ongoing/admin)
+
+Invoices can be created from **structured sections** (title + rows) instead of flat line items. The admin editor in `src/app/admin/InvoicesPage.tsx` has two tabs — **Sections** and **Flat items** — and the backend flattens the sections into the same `line_items` column the PDF/email renderers consume.
+
+- **Payload shape:** `{ title, description?, rows: [{ description, quantity, unit_price, amount }] }`.
+- **`sectionsToPayload()`** maps client sections to that shape (`src/app/admin/InvoicesPage.tsx`).
+- **`flattenToLineItems(sections)`** in `server/invoices_endpoint.js` flattens sections into line items; both `POST /api/admin/invoices` and `PUT /api/admin/invoices/:id` accept and save `sections`, and recompute `total` from them.
+- **`POST /api/admin/invoices/:id/save-draft`** (same file) upserts the in-progress payload with `status='draft'`, recomputes `total` from persisted sections/line items, and returns `{ data, saved_as_draft: true }`.
+- The client **auto-saves on every keystroke** (800 ms debounce) to `POST /api/admin/invoices/:id/save-draft` and **resumes a draft** on revisit via `loadDraft()` (see the "Draft resuming" banner and `saved_as_draft` flag). Reopening a `draft` invoice restores its sections + fields so a cancelled tab or accidental exit never loses work.
+- The list table exposes a **Resume draft** control for `status='draft'` rows.
+
+## Cloudflare Pages environment variable
+
 ## Production deployment
 
-- **Application**: Next.js deployment (site and API together)
+- **Application**: Vite + Express deployment (site and API together)
 - **Database**: Neon PostgreSQL
 
 ## Project structure
 
 ```
-app/        Next.js route shell
-src/        React site, admin, and developer panels
+src/        Vite + React site, admin, and developer panels
 server/     Express API library and database initialization
-pages/api/  Next.js bridge for the Express API
+public/     Static assets
+dist/       Vite production build (served by Express)
 docs/       Design system, guides, attributions
 ```
 

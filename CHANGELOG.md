@@ -51,6 +51,18 @@ Format: newest first. Dates are UTC.
 
 ---
 
+## 2026-09-03 (agent)
+
+### Fixed — Deployment builders misaligned with the actual frontend
+
+- Switched `package.json` build/start scripts from the broken `next build --webpack`/Next.js pages+API surface to the real pipeline: `vite build` → `dist/`, then `node server.js` (Express serves the SPA + API). The `server.js` no longer requires Next.js.
+- Removed the stale Next.js route shell (`app/[[...path]]/page.tsx`, `app/layout.tsx`) and the `pages/api/[[...path]].ts` bridge; no file under `src/`/`app/` imports the `next` module any more.
+- Added a **Create with sections** button (patches `src/app/admin/InvoicesPage.tsx`) and wired `SectionsEditor.tsx` add/remove-section, add/remove-row, row-change, and tab controls through.
+- Persisted in-progress invoices as server-side drafts by including `draft` in the `invoices.status` CHECK in `server/invoices_endpoint.js`; the editor debounced-autosaves to `POST /api/admin/invoices/:id/save-draft` (800 ms) and resumes with `loadDraft()` on revisit.
+- Updated `server/README.md`, `README.md`, and `replit.md` to the actual Vite + Express architecture and the sections/draft workflow.
+
+---
+
 ## 2026-07-24
 
 ### Added — Projects feature (full implementation)

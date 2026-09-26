@@ -2,38 +2,39 @@
 
 Official website and digital platform for IZY Technologies Global Services Limited — Nigeria's premier energy solutions provider.
 
-## Architecture — single full Next.js app
+## Architecture — Vite + React SPA + Express API
 
-One Next.js project at the repo root contains **both the site and the API**:
+One Node/Express process serves both the frontend and the API. The frontend is a
+**Vite + React 18** SPA (client-side routing via `react-router`), pre-built with
+`vite build` into `dist/`. Express serves those static assets and all `/api/*`
+routes from the same process — no separate backend service, no Next.js.
 
 ```
-/                       Next.js app root (next build → node server.js)
-├── app/                App Router: layout + catch-all page serving the SPA
-├── pages/api/          API catch-all bridging every /api/* request to Express
-├── src/                The React app (site, admin & dev panels) — unchanged
+/                       Repo root
 ├── public/             Static assets (images, videos, favicon)
+├── dist/               Vite production build (generated; served by Express)
 ├── server/             Express API library (all routes, DB, email, PDF)
-├── server.js           Production entry: one process serves pages + API
-├── next.config.js      Next.js configuration
-└── Dockerfile          Container build for any Docker host
+├── server.js           Production entry: `node server.js` (0.0.0.0:$PORT)
+├── vite.config.ts      Vite config; `@` resolves to `src/`
+├── package.json        dev/build/start scripts
 ```
 
-- **Site**: client-side React app (react-router) mounted by `app/[[...path]]/page.tsx` — every URL renders exactly as before.
-- **API**: `pages/api/[[...path]].ts` hands every `/api/*` request to the Express app in `server/expressApp.js`. Real Node request/response objects, no translation layer.
-- **One deployment**: pages and API ship together; no separate backend service.
+- **Site**: client-side React app (react-router), consumed from `src/`.
+- **API**: Express routes under `server/expressApp.js`, mounted at `/api/*`.
+- **One deployment**: frontend + API ship together; the start command is `node server.js`.
 
 ## Quick Start
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000 (API included)
+npm run dev       # Vite dev server on 0.0.0.0:$PORT (default 5000)
 ```
 
 ## Production
 
 ```bash
-npm run build      # next build
-npm start          # node server.js  (serves pages + API on $PORT)
+npm run build     # vite build → dist/
+npm start         # node server.js  (serves pages + API on $PORT)
 ```
 
 Docker: `docker build -t izy . && docker run -p 3000:3000 izy`

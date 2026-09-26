@@ -1,8 +1,7 @@
 /**
  * Smartsupp live chat bridge.
  *
- * The chat widget script itself is loaded in index.html (Vite) and
- * app/layout.tsx (Next.js). This module only talks to the widget's JavaScript
+ * The chat widget script itself is loaded in index.html (Vite). This module only talks to the widget's JavaScript
  * API so the site can enrich visitor data (visitor identification) for the
  * support team.
  *
