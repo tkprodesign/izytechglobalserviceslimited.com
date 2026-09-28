@@ -222,7 +222,7 @@ export function Navbar() {
                 {count}
               </span>
             </Link>
-          )>
+          )}
           <a
             href={COMPANY_PHONE_TEL}
             className={`hidden 2xl:flex items-center gap-1.5 whitespace-nowrap text-xs transition-colors ${
