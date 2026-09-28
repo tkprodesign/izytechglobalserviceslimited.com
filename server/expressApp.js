@@ -304,6 +304,9 @@ async function initCoreTables() {
   `);
 
   await db.query('ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS phone TEXT');
+  await db.query("ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'new'");
+  await db.query("ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS internal_notes TEXT NOT NULL DEFAULT ''");
+  await db.query('ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()');
 
   await db.query(`
     CREATE TABLE IF NOT EXISTS quote_requests (
@@ -1316,6 +1319,8 @@ app.get('/api/admin/contacts', requireAuth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+app.patch('/api/admin/contacts/:id/follow-up', requireAuth, require('./routes/contactFollowup').createContactFollowupHandler(db));
 
 // ── Admin: Quotes ─────────────────────────────────────────────────────────────
 app.get('/api/admin/quotes', requireAuth, async (req, res) => {
