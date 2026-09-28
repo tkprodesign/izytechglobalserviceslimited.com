@@ -62,7 +62,7 @@ export function FounderPage() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 max-w-2xl">
+      <div className="max-w-2xl p-4 sm:p-6 lg:p-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-[#041627]" style={{ fontFamily: 'var(--font-display)' }}>
             Founder Profile

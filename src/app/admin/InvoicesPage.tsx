@@ -746,7 +746,7 @@ export function InvoicesPage() {
         {/* ═══ Invoice List ═══ */}
         <div className={`rounded-2xl border overflow-hidden ${mobileView === 'editor' ? 'hidden' : ''}`} style={{ background: '#fff', borderColor: '#e2e8f0' }}>
           {/* Filters */}
-          <div className="px-5 py-4 border-b flex items-center gap-3" style={{ borderColor: '#e2e8f0' }}>
+          <div className="px-4 py-4 border-b flex flex-wrap items-center gap-3 sm:px-5" style={{ borderColor: '#e2e8f0' }}>
             <div className="flex-1 relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#94a3b8' }} />
               <input
@@ -826,7 +826,7 @@ export function InvoicesPage() {
                     <p className="text-xs mt-0.5" style={{ color: '#dc2626' }}>-{naira(inv.discount)} discount</p>
                   )}
 
-                  <div className="mt-3 flex items-center gap-2">
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
                     <button
                       onClick={() => handleDownloadPdf(inv)}
                        disabled={generatingPdf || generatingAltBank}

@@ -825,7 +825,7 @@ export function ProjectsManagerPage() {
 
               {/* Toggles */}
               <div className="flex flex-col gap-4 pt-1">
-                <div className="flex gap-6">
+                <div className="flex flex-wrap gap-x-6 gap-y-2">
                   <Toggle label="Published" value={form.published} onChange={v => setf('published', v)} />
                   <Toggle label="Featured on homepage" value={form.featured} onChange={v => setf('featured', v)} />
                 </div>

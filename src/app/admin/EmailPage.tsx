@@ -456,7 +456,7 @@ export function EmailPage() {
       >
 
         {/* ═══ MAILROOM RAIL ═══ */}
-        <aside className="hidden md:flex min-h-0 w-[248px] flex-shrink-0 flex-col overflow-y-auto overscroll-contain p-3 text-white [&>*]:shrink-0" style={{ background: '#071b2d' }}>
+        <aside className="hidden xl:flex min-h-0 w-[248px] flex-shrink-0 flex-col overflow-y-auto overscroll-contain p-3 text-white [&>*]:shrink-0" style={{ background: '#071b2d' }}>
           <div className="px-3 py-3 mb-2">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs" style={{ background: '#f0a20e', color: '#071b2d' }}>
@@ -555,11 +555,11 @@ export function EmailPage() {
         </aside>
 
         {/* ═══ MESSAGE LIST ═══ */}
-        <div className={`min-h-0 flex-1 md:flex-[0_0_370px] flex flex-col border-r ${mobileView === 'detail' ? 'hidden md:flex' : 'flex'}`} style={{ background: '#fff', borderColor: '#e7ecf3' }}>
+        <div className={`min-h-0 flex-1 xl:flex-[0_0_370px] flex flex-col border-r ${mobileView === 'detail' ? 'hidden xl:flex' : 'flex'}`} style={{ background: '#fff', borderColor: '#e7ecf3' }}>
           {/* Header */}
           <div className="px-5 pt-5 pb-4 border-b" style={{ borderColor: '#e7ecf3' }}>
             {/* Mobile back to mailboxes */}
-            <div className="md:hidden mb-3">
+            <div className="xl:hidden mb-3">
               <button
                 onClick={() => navigate(dev ? '/dev/dashboard' : '/admin/dashboard')}
                 className="flex items-center gap-1 text-xs font-semibold" style={{ color: '#2563eb' }}
@@ -590,7 +590,7 @@ export function EmailPage() {
                 </button>
                 <button
                   onClick={() => { setComposeDefaults({ to: '', subject: '' }); setCompose(true); }}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-blue-50 transition-colors md:hidden"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-blue-50 transition-colors xl:hidden"
                   title="Compose"
                 >
                   <PenSquare size={14} style={{ color: '#2563eb' }} />
@@ -604,7 +604,7 @@ export function EmailPage() {
                 const acct = [ALL_MAIL, ...accounts].find(a => a.id === e.target.value);
                 if (acct) switchAccount(acct);
               }}
-              className="md:hidden w-full mb-3 px-3 py-2.5 text-sm rounded-xl border outline-none"
+              className="xl:hidden w-full mb-3 px-3 py-2.5 text-sm rounded-xl border outline-none"
               style={{ borderColor: '#e2e8f0', color: '#334155', background: '#f8fafc' }}
             >
               {[ALL_MAIL, ...accounts].map(acct => <option key={acct.id} value={acct.id}>{acct.label}</option>)}
@@ -743,7 +743,7 @@ export function EmailPage() {
         </div>
 
         {/* ═══ MESSAGE DETAIL ═══ */}
-        <div className={`min-h-0 flex-1 flex-col overflow-hidden ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}`}>
+        <div className={`min-h-0 flex-1 flex-col overflow-hidden ${mobileView === 'list' ? 'hidden xl:flex' : 'flex'}`}>
           {!selectedMeta ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-5 px-6">
               <div className="w-20 h-20 rounded-3xl flex items-center justify-center" style={{ background: '#eaf2ff' }}>
@@ -764,7 +764,7 @@ export function EmailPage() {
           ) : (
             <div className="flex h-full flex-col overflow-hidden">
               {/* Mobile back button */}
-              <div className="md:hidden px-4 py-2 border-b bg-white" style={{ borderColor: '#e7ecf3' }}>
+              <div className="xl:hidden px-4 py-2 border-b bg-white" style={{ borderColor: '#e7ecf3' }}>
                 <button
                   onClick={() => { setMobileView('list'); setSelected(null); setSelectedMeta(null); }}
                   className="flex items-center gap-1 text-xs font-medium" style={{ color: '#2563eb' }}

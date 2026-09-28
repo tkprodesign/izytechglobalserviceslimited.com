@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { DashboardLayout } from './DashboardLayout';
 import { getToken } from '../../lib/auth';
 import { ngDateTime } from '../../lib/ngtime';
+import { ArrowLeft } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
 
@@ -34,14 +35,14 @@ export function QuotesPage() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 max-w-6xl mx-auto">
+      <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold" style={{ color: 'var(--izy-navy)' }}>Quote Requests</h1>
           <p className="text-sm mt-1" style={{ color: '#5a6a82' }}>{quotes.length} total requests</p>
         </div>
 
-        <div className="flex gap-6">
-          <div className="flex-1 bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="flex flex-col gap-6 xl:flex-row">
+          <div className={`flex-1 overflow-hidden rounded-2xl bg-white shadow-sm ${selected ? 'hidden xl:block' : ''}`}>
             {loading ? (
               <div className="flex items-center justify-center h-40">
                 <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--izy-orange)', borderTopColor: 'transparent' }} />
@@ -74,7 +75,10 @@ export function QuotesPage() {
           </div>
 
           {selected && (
-            <div className="w-96 flex-shrink-0 bg-white rounded-2xl shadow-sm p-6 self-start sticky top-8">
+            <div className="w-full flex-shrink-0 self-start rounded-2xl bg-white p-4 shadow-sm sm:p-6 xl:sticky xl:top-8 xl:w-96">
+              <button type="button" onClick={() => setSelected(null)} className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-[#1a56db] xl:hidden">
+                <ArrowLeft size={16} /> Back to quote requests
+              </button>
               <div className="flex items-center gap-3 mb-5">
                 <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold" style={{ background: 'var(--izy-orange)' }}>
                   {selected.name[0]?.toUpperCase()}
