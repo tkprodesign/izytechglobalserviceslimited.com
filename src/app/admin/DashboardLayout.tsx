@@ -19,6 +19,10 @@ import {
   Eye,
   Mail,
   Inbox,
+  Share2,
+  Building2,
+  History,
+  UserRound,
 } from 'lucide-react';
 
 interface Props {
@@ -78,7 +82,12 @@ export function DashboardLayout({ children }: Props) {
     { to: '/admin/invoices', label: 'Invoices', icon: Receipt },
   ];
 
-
+  const companyContentItems: NavigationItem[] = [
+    { to: '/admin/socials', label: 'Social Media', icon: Share2 },
+    { to: '/admin/company-contact', label: 'Company Contact', icon: Building2 },
+    { to: '/admin/milestones', label: 'Milestones', icon: History },
+    { to: '/admin/founder', label: 'Founder Profile', icon: UserRound },
+  ];
 
   const navBase = 'flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all';
 
@@ -130,7 +139,8 @@ export function DashboardLayout({ children }: Props) {
         style={{ background: 'var(--izy-navy)' }}
       >
         <div className="flex items-center justify-between border-b px-4 py-5 md:px-5 md:py-6" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-          <div className="flex min-w-0 items-center gap-2.5">          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white"
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white"
               style={{ background: 'linear-gradient(135deg, #1a5fab 0%, #2d7dd2 100%)' }}
             >
               IZY
@@ -171,6 +181,13 @@ export function DashboardLayout({ children }: Props) {
           </p>
           {managementItems.map(item => renderNavItem(item))}
 
+          <div className="mt-5 border-t pt-4" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <p className="admin-sidebar-label mb-2 px-4 text-xs font-semibold uppercase tracking-wider" style={{ color: '#4a6a85' }}>
+              Company Content
+            </p>
+            {companyContentItems.map(item => renderNavItem(item))}
+          </div>
+
           {dev && (
             <>
               <div className="mt-5 border-t pt-4" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
@@ -189,8 +206,6 @@ export function DashboardLayout({ children }: Props) {
               </div>
             </>
           )}
-
-
         </nav>
 
         <div className="flex-shrink-0 border-t bg-[var(--izy-navy)] px-3 py-4" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
@@ -224,7 +239,8 @@ export function DashboardLayout({ children }: Props) {
           >
             <Menu size={21} />
           </button>
-          <div>              <p className="text-sm font-semibold" style={{ color: 'var(--izy-navy)' }}>Admin Panel</p>
+          <div>
+            <p className="text-sm font-semibold" style={{ color: 'var(--izy-navy)' }}>Admin Panel</p>
             <p className="text-[11px]" style={{ color: '#8fadc8' }}>CEO Access</p>
           </div>
         </header>

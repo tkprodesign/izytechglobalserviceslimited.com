@@ -3,12 +3,9 @@ import { NavLink, useNavigate } from 'react-router';
 import { getUser, removeToken } from '../../lib/auth';
 import logoIcon from '../../imports/izy-technologies_icon_v1.png';
 import {
-  LayoutDashboard,
   Mail,
   FileText,
-  Terminal,
   LogOut,
-  Activity,
   ShoppingBag,
   ClipboardList,
   ClipboardCheck,
@@ -21,10 +18,14 @@ import {
   MessageSquare,
   Eye,
   Server,
-  Database,
-  Cog,
   Receipt,
   FileOutput,
+  Activity,
+  Cog,
+  Share2,
+  Building2,
+  History,
+  UserRound,
 } from 'lucide-react';
 
 interface Props {
@@ -87,6 +88,13 @@ export function DevDashboardLayout({ children }: Props) {
     { to: '/admin/products', label: 'Store Products', icon: ShoppingBag },
     { to: '/admin/enquiries', label: 'Store Enquiries', icon: ClipboardList },
     { to: '/admin/invoices', label: 'Invoices', icon: Receipt },
+  ];
+
+  const companyContentItems: NavigationItem[] = [
+    { to: '/admin/socials', label: 'Social Media', icon: Share2 },
+    { to: '/dev/company-contact', label: 'Company Contact', icon: Building2 },
+    { to: '/admin/milestones', label: 'Milestones', icon: History },
+    { to: '/admin/founder', label: 'Founder Profile', icon: UserRound },
   ];
 
   const navBase = 'flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all';
@@ -189,6 +197,13 @@ export function DevDashboardLayout({ children }: Props) {
             Management
           </p>
           {managementItems.map(item => renderNavItem(item, 'management'))}
+
+          <div className="mt-5 border-t pt-4" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <p className="dev-sidebar-label mb-2 px-4 text-xs font-semibold uppercase tracking-wider" style={{ color: '#4a6a85' }}>
+              Company Content
+            </p>
+            {companyContentItems.map(item => renderNavItem(item, 'management'))}
+          </div>
 
           <div className="mt-5 border-t pt-4" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             <p className="dev-sidebar-label mb-2 px-4 text-xs font-semibold uppercase tracking-wider" style={{ color: '#4a6a85' }}>

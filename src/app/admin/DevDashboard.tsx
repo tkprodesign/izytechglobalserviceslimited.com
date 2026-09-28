@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { DevDashboardLayout } from './DevDashboardLayout';
-import { VersionSwitcher } from './VersionSwitcher';
 import { getToken, removeToken } from '../../lib/auth';
 import { ngDate } from '../../lib/ngtime';
 import { useNavigate } from 'react-router';
@@ -22,10 +21,8 @@ import {
   Server,
   Database,
   Activity,
-  Terminal,
   Wrench,
   MessageSquare,
-  Zap,
   FileOutput,
   RefreshCw,
 } from 'lucide-react';
@@ -253,7 +250,6 @@ export function DevDashboard() {
             <p className="text-sm" style={{ color: '#5a6a82' }}>System health, business metrics, and full platform access</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <VersionSwitcher current="original" originalPath="/dev/dashboard" v2Path="/dev/dashboard-v2" variant="dev" />
             <div className="flex items-center gap-2">
               {statusIcon(apiHealth)}
               <span className="text-xs font-medium" style={{ color: 'var(--izy-navy)' }}>API</span>
@@ -281,8 +277,9 @@ export function DevDashboard() {
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center h-40">
+          <div className="flex items-center justify-center h-40" role="status" aria-live="polite">
             <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: '#f26522', borderTopColor: 'transparent' }} />
+            <span className="sr-only">Loading command centre</span>
           </div>
         ) : (
           <>
@@ -401,7 +398,7 @@ export function DevDashboard() {
               <div className="bg-white rounded-2xl shadow-sm">
                 <div className="px-6 py-4 border-b flex items-center justify-between" style={{ borderColor: '#eef1f6' }}>
                   <h2 className="font-semibold text-sm" style={{ color: 'var(--izy-navy)' }}>Recent Contacts</h2>
-                  <a href="/admin/contacts" className="text-xs font-medium" style={{ color: '#f26522' }}>View all →</a>
+                  <Link to="/admin/contacts" className="text-xs font-medium" style={{ color: '#f26522' }}>View all →</Link>
                 </div>
                 <div className="divide-y" style={{ borderColor: '#eef1f6' }}>
                   {contacts.length === 0 ? (
@@ -428,7 +425,7 @@ export function DevDashboard() {
               <div className="bg-white rounded-2xl shadow-sm">
                 <div className="px-6 py-4 border-b flex items-center justify-between" style={{ borderColor: '#eef1f6' }}>
                   <h2 className="font-semibold text-sm" style={{ color: 'var(--izy-navy)' }}>Recent Quote Requests</h2>
-                  <a href="/admin/quotes" className="text-xs font-medium" style={{ color: '#f26522' }}>View all →</a>
+                  <Link to="/admin/quotes" className="text-xs font-medium" style={{ color: '#f26522' }}>View all →</Link>
                 </div>
                 <div className="divide-y" style={{ borderColor: '#eef1f6' }}>
                   {quotes.length === 0 ? (

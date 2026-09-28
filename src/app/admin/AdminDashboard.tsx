@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { DashboardLayout } from './DashboardLayout';
-import { VersionSwitcher } from './VersionSwitcher';
 import { getToken } from '../../lib/auth';
 import { ngDate } from '../../lib/ngtime';
 import {
@@ -136,7 +135,6 @@ export function AdminDashboard() {
             <p className="text-sm mt-1" style={{ color: '#5a6a82' }}>Overview of incoming contacts and quote requests</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <VersionSwitcher current="original" originalPath="/admin/dashboard" v2Path="/admin/dashboard-v2" variant="admin" />
             {lastUpdated && <span className="text-xs" style={{ color: '#8fadc8' }}>Updated {lastUpdated.toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' })}</span>}
             <button type="button" onClick={() => setRefreshKey(key => key + 1)} disabled={refreshing} className="inline-flex items-center gap-2 rounded-lg border border-[#d8e0e7] bg-white px-3 py-2 text-sm font-semibold disabled:opacity-50" style={{ color: 'var(--izy-navy)' }}>
               <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} /> Refresh
@@ -152,8 +150,9 @@ export function AdminDashboard() {
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center h-40">
+          <div className="flex items-center justify-center h-40" role="status" aria-live="polite">
             <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--izy-blue)', borderTopColor: 'transparent' }} />
+            <span className="sr-only">Loading dashboard</span>
           </div>
         ) : (
           <>
@@ -207,7 +206,7 @@ export function AdminDashboard() {
             <div className="bg-white rounded-2xl shadow-sm mb-6">
               <div className="px-6 py-4 border-b flex items-center justify-between" style={{ borderColor: '#eef1f6' }}>
                 <h2 className="font-semibold text-sm" style={{ color: 'var(--izy-navy)' }}>Recent Contacts</h2>
-                <a href="/admin/contacts" className="text-xs font-medium" style={{ color: 'var(--izy-blue)' }}>View all →</a>
+                <Link to="/admin/contacts" className="text-xs font-medium" style={{ color: 'var(--izy-blue)' }}>View all →</Link>
               </div>
               <div className="divide-y" style={{ borderColor: '#eef1f6' }}>
                 {contacts.length === 0 ? (
@@ -234,7 +233,7 @@ export function AdminDashboard() {
             <div className="bg-white rounded-2xl shadow-sm">
               <div className="px-6 py-4 border-b flex items-center justify-between" style={{ borderColor: '#eef1f6' }}>
                 <h2 className="font-semibold text-sm" style={{ color: 'var(--izy-navy)' }}>Recent Quote Requests</h2>
-                <a href="/admin/quotes" className="text-xs font-medium" style={{ color: 'var(--izy-blue)' }}>View all →</a>
+                <Link to="/admin/quotes" className="text-xs font-medium" style={{ color: 'var(--izy-blue)' }}>View all →</Link>
               </div>
               <div className="divide-y" style={{ borderColor: '#eef1f6' }}>
                 {quotes.length === 0 ? (
