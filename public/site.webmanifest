@@ -1,0 +1,16 @@
+{
+  "name": "Izy Tech Services",
+  "short_name": "Izy Tech",
+  "description": "Future-ready solar, security, electrical and technology solutions across Nigeria.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#041627",
+  "theme_color": "#041627",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -91,6 +91,7 @@ import { Contact } from "./sections/Contact";
 import { Footer } from "./sections/Footer";
 import { CustomCursor } from "./components/CustomCursor";
 import { ScrollProgress } from "./components/ScrollProgress";
+import { SeoManager } from "./components/SeoManager";
 
 // Admin panel
 import { LoginPage } from "./admin/LoginPage";
@@ -239,6 +240,7 @@ export default function App() {
     <CartProvider>
     <NavigationScroll />
     <AuthSessionGuard />
+    <SeoManager />
     <SmartsuppWidget />
     <Routes>
       {/* Public site */}

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /dev/
+Disallow: /assessment/
+
+Sitemap: https://izytechglobalservices.com/sitemap.xml
