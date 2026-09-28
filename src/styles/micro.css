@@ -101,6 +101,13 @@ html {
   scroll-behavior: smooth;
 }
 
+html[data-panel-route="true"] #chat-application-iframe,
+html[data-panel-route="true"] #smartsupp-widget-container,
+html[data-panel-route="true"] #widgetPopupFrame,
+html[data-panel-route="true"] #widgetButtonFrame {
+  display: none !important;
+}
+
 /* Selection color */
 ::selection {
   background: rgba(240, 162, 14, 0.25);

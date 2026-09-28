@@ -162,11 +162,57 @@ function PublicFloatingActions() {
   return <WhatsAppFloatingButton />;
 }
 
+type SmartsuppQueue = ((...args: unknown[]) => void) & { _: unknown[][] };
+
+function SmartsuppWidget() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    const isPanel = pathname.startsWith('/admin') || pathname.startsWith('/dev');
+
+    if (isPanel) {
+      document.documentElement.dataset.panelRoute = 'true';
+      return;
+    }
+
+    delete document.documentElement.dataset.panelRoute;
+
+    const chatWindow = window as Window & {
+      _smartsupp?: Record<string, unknown>;
+      smartsupp?: SmartsuppQueue;
+    };
+    chatWindow._smartsupp = {
+      ...chatWindow._smartsupp,
+      key: '7b17927f5d4df272347f716050aeead77bfd9b6d',
+      color: '#F0A20E',
+      ratingEnabled: true,
+      cookieDomain: '.izytechglobalservices.com',
+    };
+
+    if (!chatWindow.smartsupp) {
+      const queue = ((...args: unknown[]) => queue._.push(args)) as SmartsuppQueue;
+      queue._ = [];
+      chatWindow.smartsupp = queue;
+    }
+
+    if (!document.querySelector('script[data-smartsupp-loader]')) {
+      const script = document.createElement('script');
+      script.async = true;
+      script.dataset.smartsuppLoader = 'true';
+      script.src = 'https://www.smartsuppchat.com/loader.js?';
+      document.head.appendChild(script);
+    }
+  }, [pathname]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <CartProvider>
     <NavigationScroll />
     <AuthSessionGuard />
+    <SmartsuppWidget />
     <Routes>
       {/* Public site */}
       <Route path="/" element={<PublicSite />} />
