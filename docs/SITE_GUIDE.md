@@ -78,7 +78,7 @@ Website for Izy Tech/
 - Headline: **"Power The Future. Today."** — words animate in one at a time on load.
 - Subheadline paragraph.
 - Two CTA buttons: **GET A FREE QUOTE** (gold, shimmer) · **OUR SERVICES** (outline).
-- Stats bar anchored to the bottom: 1,000+ Jobs Delivered · 8+ Years · 98% Satisfaction · 24/7 Support.
+- Stats bar anchored to the bottom: 1,000+ Jobs Delivered · 8+ Years · 6 Service Areas · 24/7 Support.
 - Background image parallax-scrolls at 28% of page scroll rate.
 
 **Content to edit**
@@ -147,7 +147,7 @@ Website for Izy Tech/
 
 **What it shows**
 - **Story grid**: company logo mark + animated timeline of milestones (2012–2024) on the right; company description + CTA buttons on the left.
-- **Counter bar**: four numbers count up when scrolled into view (1,000+, 8+, 36, 98%).
+- **Counter bar**: four numbers count up when scrolled into view (1,000+, 8+, 36 States Covered, 6 Service Areas).
 - **Why Choose IZY grid**: four cards — Certified & Licensed · End-to-End Service · Expert Team · Nationwide Reach.
 
 **Content to edit**
@@ -199,7 +199,7 @@ Website for Izy Tech/
 **What it shows**
 - Dark navy background (matches testimonials, unified bottom-of-page feel).
 - Left column: three contact info cards (Phone · Email · Head Office) + Emergency CTA panel.
-- Right column: quote request form — Name · Phone · Email · Service dropdown · Project details · Submit.
+- Right column: project enquiry / site assessment form — starts with a low-friction project enquiry and can switch to the site-assessment workflow when a field visit is required.
 - On submit: checkmark success state with "Send another message" reset.
 
 **Content to edit**
@@ -291,8 +291,8 @@ pnpm run build
 | **Button shimmer** | `.btn-shimmer` class in `micro.css` |
 | **CTA button labels** | Each section file, search for `GET A FREE QUOTE` |
 | **Company tagline** | `"Power the Future, Future-Ready Solutions, Today."` |
-| **Contact email** | `info@izytechnologies.com` — `Contact.tsx` + `Footer.tsx` |
-| **Contact phone** | `+234 800 000 0000` — `Navbar.tsx`, `Contact.tsx`, `Footer.tsx` |
+| **Contact email** | `info@izytechglobalservices.com` — `Contact.tsx` + `Footer.tsx` |
+| **Contact phone** | `+234 810 126 2814` — `Navbar.tsx`, `Contact.tsx`, `Footer.tsx` |
 | **Counter animation** | `About.tsx` → `Counter` component at the top of the file |
 | **Custom cursor** | `components/CustomCursor.tsx` |
 | **Dark nav (scrolled)** | `Navbar.tsx` → `scrolled` state, threshold 60 px |

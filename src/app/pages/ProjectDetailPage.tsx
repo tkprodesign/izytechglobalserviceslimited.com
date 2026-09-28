@@ -52,6 +52,8 @@ function RelatedProjects({ category, excludeSlug }: { category: string; excludeS
                     <img
                       src={img}
                       alt={p.title}
+                      loading="lazy"
+                      decoding="async"
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   )}
@@ -200,6 +202,8 @@ export function ProjectDetailPage() {
                       key={image}
                       src={image}
                       alt={`${project.title} view ${index + 2}`}
+                      loading="lazy"
+                      decoding="async"
                       className="h-56 w-full object-cover"
                     />
                   ))}

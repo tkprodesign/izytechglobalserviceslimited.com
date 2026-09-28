@@ -129,7 +129,7 @@ export function TestimonialsPage() {
         <div className="max-w-7xl mx-auto px-6 py-6 grid grid-cols-3 gap-6 text-center">
           {[
             { value: "1,000+", label: "Projects Delivered" },
-            { value: "98%", label: "Client Satisfaction" },
+            { value: "6", label: "Service Areas" },
             { value: "8+", label: "Years of Excellence" },
           ].map(({ value, label }) => (
             <div key={label}>
@@ -152,7 +152,9 @@ export function TestimonialsPage() {
             <Quote size={36} style={{ color: "rgba(240,162,14,0.2)" }} />
             <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={prev}
+                aria-label="Previous testimonial"
                 className="w-10 h-10 border border-white/15 flex items-center justify-center text-white/50 hover:text-white hover:border-white/40 transition-all"
               >
                 <ChevronLeft size={17} />
@@ -161,7 +163,9 @@ export function TestimonialsPage() {
                 {String(idx + 1).padStart(2, "0")} / {String(testimonials.length).padStart(2, "0")}
               </span>
               <button
+                type="button"
                 onClick={next}
+                aria-label="Next testimonial"
                 className="w-10 h-10 border border-white/15 flex items-center justify-center text-white/50 hover:text-white hover:border-white/40 transition-all"
               >
                 <ChevronRight size={17} />

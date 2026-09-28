@@ -292,7 +292,7 @@ export function About() {
             { to: 1000, suffix: "+", label: "Jobs Delivered" },
             { to: 8,    suffix: "+", label: "Years of Excellence" },
             { to: 36,   suffix: "",  label: "States Covered" },
-            { to: 98,   suffix: "%", label: "Client Satisfaction" },
+            { to: 6,    suffix: "",  label: "Service Areas" },
           ].map(({ to, suffix, label }) => (
             <div key={label} className="px-8 py-7 text-center">
               <div

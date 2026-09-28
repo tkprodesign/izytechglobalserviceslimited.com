@@ -85,3 +85,18 @@ Before editing:
 7. Do not continue past a failed Cloudflare or Render deployment; diagnose and repair it first.
 8. Verify `https://izytech-api.onrender.com/api/health` after backend changes.
 9. Never expose, log, or commit secret values.
+
+
+## 7. Public Site Upgrade
+
+Recent public-site work on `main`:
+- `73b3810` — added production Open Graph/Twitter sharing metadata, a branded social-share card, route-aware SEO titles/descriptions, canonical handling, Organization/LocalBusiness structured data, `robots.txt`, `sitemap.xml`, and a web manifest.
+- `afbbbc8` — added route-level code splitting, deferred Smartsupp loading, reduced-motion navigation handling, a company credential/trust strip, and a lower-friction project-enquiry-first conversion flow.
+- `5457117` — optimized below-the-fold image loading, video posters/preload behavior, and public media/testimonial accessibility.
+
+Public-site rules:
+- Keep the root Open Graph tags in `index.html`; social crawlers often do not execute the React app.
+- Keep private routes `noindex` and excluded from the sitemap.
+- New public routes should receive an entry in `SeoManager.tsx` and, where appropriate, `public/sitemap.xml`.
+- Do not reintroduce the unsupported 98% satisfaction statistic unless there is a maintained source for it.
+- Initial lead capture should remain low-friction; site assessment is a distinct next step for projects that require a field visit.
