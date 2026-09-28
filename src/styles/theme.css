@@ -191,6 +191,32 @@
 .dev-shell.dev-shell {
   height: 100vh;
   overflow: hidden;
+  scrollbar-color: rgba(143, 173, 200, 0.4) transparent;
+  scrollbar-width: thin;
+}
+
+.admin-shell ::-webkit-scrollbar,
+.dev-shell ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.admin-shell ::-webkit-scrollbar-track,
+.dev-shell ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-shell ::-webkit-scrollbar-thumb,
+.dev-shell ::-webkit-scrollbar-thumb {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background-color: rgba(143, 173, 200, 0.38);
+  background-clip: padding-box;
+}
+
+.admin-shell ::-webkit-scrollbar-thumb:hover,
+.dev-shell ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(143, 173, 200, 0.72);
 }
 
 @supports (height: 100dvh) {

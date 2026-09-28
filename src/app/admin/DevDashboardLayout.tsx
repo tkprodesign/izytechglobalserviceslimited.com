@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router';
 import { getUser, removeToken } from '../../lib/auth';
+import logoIcon from '../../imports/izy-technologies_icon_v1.png';
 import {
   LayoutDashboard,
   Mail,
@@ -213,11 +214,8 @@ export function DevDashboardLayout({ children }: Props) {
         {/* User */}
         <div className="border-t px-3 py-4" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <div className="mb-1 flex items-center gap-3 px-4 py-2">
-            <div
-              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-              style={{ background: 'linear-gradient(135deg, #f26522 0%, #ff8a50 100%)' }}
-            >
-              {user?.email?.[0]?.toUpperCase()}
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-white/15">
+              <img src={logoIcon} alt="Izy Tech" className="h-full w-full object-cover" />
             </div>
             <div className="dev-sidebar-label min-w-0">
               <p className="truncate text-xs font-medium text-white">{user?.email}</p>
