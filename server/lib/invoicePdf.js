@@ -44,7 +44,7 @@ function fmtDate(d) {
   });
 }
 
-const FOOTER_H = 58;
+const FOOTER_H = 71;
 const CONTENT_BOTTOM_GAP = 14;
 const ITEM_LINE_H = 11.5;
 
@@ -651,17 +651,17 @@ function generateInvoicePdf(inv, options = {}) {
         doc.text(text, (W - doc.widthOfString(text)) / 2, y, { lineBreak: false });
       };
       doc.fillColor(MUTED).font('body');
-      centeredFooterLine(COMPANY.legal, 9.5, pageH - 48);
-      centeredFooterLine(COMPANY.address, 9, pageH - 35);
+      centeredFooterLine(COMPANY.legal, 9.5, pageH - 61);
+      centeredFooterLine(COMPANY.address, 9, pageH - 48);
       const footerContactParts = [
         COMPANY.registration,
         ...(options.hideCompanyContact ? [] : [COMPANY.phone]),
-        ...(options.includeFooterEmails
-          ? [COMPANY.email, COMPANY.infoEmail]
-          : (options.hideCompanyContact ? [] : [COMPANY.email])),
         COMPANY.site,
       ];
-      centeredFooterLine(footerContactParts.join('  \u00b7  '), 8.75, pageH - 22);
+      centeredFooterLine(footerContactParts.join('  \u00b7  '), 8.75, pageH - 35);
+      if (!options.hideCompanyContact || options.includeFooterEmails) {
+        centeredFooterLine([COMPANY.email, COMPANY.infoEmail].join('  \u00b7  '), 8.75, pageH - 22);
+      }
       const pageLabel = `Page ${i - range.start + 1} of ${range.count}`;
       doc.fontSize(8).text(pageLabel, RIGHT - doc.widthOfString(pageLabel), pageH - 9, {
         lineBreak: false,
