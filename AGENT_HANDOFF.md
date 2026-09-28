@@ -1,61 +1,81 @@
 # AGENT & DEVELOPER HANDOFF STATE
 
 ## Overview
-This document records the exact state of the project, architecture, deployment targets, and recent fixes for any AI agent (Codex, Copilot, Antigravity, Claude) or developer picking up work in this repository.
-
----
+This document records the current architecture, deployment targets, control-panel state, and continuity rules for any developer or coding agent working on the repository.
 
 ## 1. System Architecture
 
 | Component | Technology | Hosting / Platform | Production URL |
 | :--- | :--- | :--- | :--- |
-| **Frontend** | Next.js (App Router), React, Tailwind CSS | Cloudflare Pages (`izytech-website`) | `https://izytechglobalservices.com` |
-| **Backend** | Node.js, Express (`server/expressApp.js`) | Render (`srv-d9hd617avr4c73ebtj9g`) | `https://izytech-api.onrender.com` |
-| **Database** | PostgreSQL | Render Managed Postgres | Connected via internal connection string |
-| **Health Check** | `/api/health` | Render API | `https://izytech-api.onrender.com/api/health` |
+| Frontend | React / Vite + Tailwind CSS | Cloudflare Pages (`izytech-website`) | `https://izytechglobalservices.com` |
+| Backend API | Node.js / Express (`server/expressApp.js`) | Render (`srv-d9hd617avr4c73ebtj9g`) | `https://izytech-api.onrender.com` |
+| Database | PostgreSQL via `DATABASE_URL` | External managed PostgreSQL (shown as Neon in the developer UI) | Private |
+| Health Check | `/api/health` | Render API service | `https://izytech-api.onrender.com/api/health` |
 
----
+## 2. Credentials and Environment
 
-## 2. Environment Variables & Keys
+Deployment credentials and application secrets must stay outside the repository. Never commit local environment files or print secret values.
 
-- Primary local credentials file: `C:\Users\LENOVO\Downloads\izy.env.txt`
-  - `RENDER_API_KEY`: For querying Render deploys and service health.
-  - `CLOUDFLARE_API_TOKEN` & `CLOUDFLARE_ACCOUNT_ID`: For querying Cloudflare Pages deployments.
+GitHub Actions repository secrets currently expected by deployment workflows:
+- `RENDER_API_KEY`
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `NEON_API_KEY` (pre-existing)
 
----
+Render itself must have the application environment variables required by the backend, including `DATABASE_URL`, `SESSION_SECRET`, email credentials, and the other variables reported as boolean presence flags in the developer System Info page.
 
-## 3. Work Completed Today (All Pushed & Live on `main`)
+## 3. Current Admin / Developer Panel State
 
-1. **`d8b65c8` - Restore invoice summary statistics on desktop (`src/app/admin/InvoicesPage.tsx`)**:
-   - Fixed missing Total Invoices, Pending, Paid, and Total Revenue stat cards by moving them out of `md:hidden` into a responsive desktop/mobile grid above the invoice list.
-   - Deployed live on Cloudflare Pages and Render (`dep-dat6icoae00c73bp6ee0`).
-2. **`15469eb` - Apply site icon across app entry points (`app/layout.tsx`, `index.html`, `src/app/admin/LoginPage.tsx`)**:
-   - Standardized `/favicon.png` across Next.js and Vite app entry points and added official brand image to the admin login page.
-3. **`6a58d56` - Polish admin and developer panel chrome**:
-   - Styled admin layout headers, navigation bars, and theme variables in `src/styles/theme.css`.
-4. **`c326cad` & `80a9d27` - Mobile email manager**:
-   - Fixed mailbox layout, scroll containers, and overflow bugs on small viewports.
-5. **`6c9c8ca` - Transient database startup retry logic (`server/expressApp.js`)**:
-   - Added automatic exponential retry loops on server launch to prevent downtime during cold starts.
-6. **`9e5ef8d` & `d9fa5d1` - Smartsupp chat isolation**:
-   - Smartsupp live chat widget is automatically hidden when navigating admin or developer dashboards.
-7. **`4265e5e` to `8ae1e04` - AltPower lead capture and contact activity**:
-   - AltPower solar calculator submissions are automatically persisted as leads in the contacts table.
-   - Contact follow-up actions and activity logs are tracked.
+There is no V2 dashboard anymore. The approved V2 work was merged into the primary routes:
+- Admin: `/admin/dashboard`
+- Developer: `/dev/dashboard`
 
----
+The temporary `/admin/dashboard-v2` and `/dev/dashboard-v2` routes and duplicate V2 components were removed.
 
-## 4. Current State
-- **Branch:** `main`
-- **Working Tree:** Clean, synchronized with `origin/main`.
-- **API Health:** Verified `ok` (`https://izytech-api.onrender.com/api/health`).
-- **Frontend Status:** Verified live and matching latest commit.
+Current panel improvements include:
+- responsive primary Admin and Developer layouts
+- Company Content navigation groups
+- developer-to-admin context switching on the normal routes
+- password show/hide on the shared login screen
+- Admin "Needs attention" operational counts for new contacts, assessment actions, new store enquiries, unpaid invoices, and overdue invoices
+- reusable authenticated request handling in `src/lib/adminApi.ts`
+- consistent expired/unauthorized-session redirects on the touched developer views
+- truthful database connectivity probing in `/api/dev/system`
+- production `SESSION_SECRET` fail-closed validation
+- login brute-force throttling
+- mobile card views for the wide Site Analytics visitor tables
+- regular Quote Requests separated from Site Assessment records
 
----
+## 4. Important Recent Commits
 
-## 5. Continuity Instructions for Next Agent / Codex
+- `1e774b3` - Merge V2 dashboards into the primary Admin and Developer panels; remove V2 routes/components.
+- `2cee62d` - Harden panel authentication, add reusable authenticated API helper, truthful DB health, and Admin operational metrics.
+- `274a0a2` - Improve mobile Site Analytics, separate quotes from site assessments, and add Control Panel CI.
+- Earlier continuity commits remain in Git history, including invoice/statistics, panel chrome, email mobile fixes, database retry, Smartsupp isolation, and AltPower/contact follow-up work.
 
-- To check deployment status:
-  - Query Render: `GET https://api.render.com/v1/services/srv-d9hd617avr4c73ebtj9g/deploys?limit=1`
-  - Query Cloudflare: `GET https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/pages/projects/izytech-website/deployments?per_page=1`
-- Always verify API health (`/api/health`) after backend changes.
+## 5. Regression and Deployment Checks
+
+`.github/workflows/control-panel-ci.yml` runs:
+- `npm ci`
+- `npm run pages:build`
+- `node --check server/expressApp.js`
+- AltPower tests
+- contact follow-up tests
+- invoice tests
+
+`.github/workflows/notify-render.yml` handles backend-changing pushes. It finds an existing Render deploy for the exact commit or triggers that exact commit through the Render API, waits for a terminal deployment status, and then verifies `/api/health` returns `status=ok`.
+
+Cloudflare Pages is connected to `main` and reports its build/deploy status back to GitHub.
+
+## 6. Continuity Rules
+
+Before editing:
+1. Pull or read the latest `origin/main`.
+2. Do not recreate V2 dashboards.
+3. Preserve the shared database, authentication, invoices, email manager, projects, store, assessments, analytics privacy boundaries, and public-site behaviour.
+4. Make changes in logical batches.
+5. Run relevant tests/builds.
+6. Push completed work to `main`.
+7. Do not continue past a failed Cloudflare or Render deployment; diagnose and repair it first.
+8. Verify `https://izytech-api.onrender.com/api/health` after backend changes.
+9. Never expose, log, or commit secret values.

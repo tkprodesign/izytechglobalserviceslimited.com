@@ -1,50 +1,50 @@
 # GitHub Copilot & Codex Instructions for IzyTech Global Services
 
-This repository contains the full stack web application for **IzyTech Global Services Limited** (`https://izytechglobalservices.com`).
-
----
+This repository contains the production web application for **IzyTech Global Services Limited** (`https://izytechglobalservices.com`).
 
 ## 1. Architecture & Deployment Stack
 
-- **Frontend:** Next.js (App Router) + React / Vite + Tailwind CSS.
-  - Deployed on **Cloudflare Pages** (Project: `izytech-website`).
-  - Production URL: `https://izytechglobalservices.com`
-- **Backend API:** Node.js / Express (`server/expressApp.js`).
-  - Deployed on **Render** (Service ID: `srv-d9hd617avr4c73ebtj9g`).
-  - API Base URL: `https://izytech-api.onrender.com`
-  - Health check endpoint: `https://izytech-api.onrender.com/api/health`
-- **Database:** PostgreSQL on Render.
-  - Startup connection retry logic is implemented in `server/expressApp.js` to handle cold starts gracefully.
-- **Environment & Credentials:**
-  - Local credentials file: `C:\Users\LENOVO\Downloads\izy.env.txt` (contains `RENDER_API_KEY`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`).
+- **Frontend:** React / Vite + Tailwind CSS.
+  - Cloudflare Pages project: `izytech-website`
+  - Production: `https://izytechglobalservices.com`
+- **Backend API:** Node.js / Express in `server/expressApp.js`.
+  - Render service: `srv-d9hd617avr4c73ebtj9g`
+  - API: `https://izytech-api.onrender.com`
+  - Health: `https://izytech-api.onrender.com/api/health`
+- **Database:** PostgreSQL through `DATABASE_URL`.
+- **Credentials:** deployment credentials and application secrets are stored outside the repository and in approved platform secret stores. Never commit local environment files or print secret values.
 
----
+## 2. Admin / Developer Control Panels
 
-## 2. Recent Key Changes & Status (Synchronized on `main`)
+The V2 experiment has been completed and merged. Do not recreate or reference V2 routes.
 
-- **Invoice Summary Cards (`src/app/admin/InvoicesPage.tsx` - commit `d8b65c8`):**
-  - Restored the 4 statistics cards (`Total Invoices`, `Pending`, `Paid`, `Total Revenue`) for desktop and mobile above the invoice list (`xl:grid-cols-4`).
-- **Site Branding & Favicon (`app/layout.tsx`, `index.html`, `src/app/admin/LoginPage.tsx` - commit `15469eb`):**
-  - Configured `/favicon.png` across all entry points and updated the admin login header with the official brand logo.
-- **Admin/Developer Panel Polish (`src/app/admin/DashboardLayout.tsx`, `DevDashboardLayout.tsx`, `src/styles/theme.css` - commit `6a58d56`):**
-  - Unified theme chrome, responsive spacing, and navigation container styling.
-- **Mobile Email Manager (`src/app/admin/EmailPage.tsx` - commit `c326cad`, `80a9d27`):**
-  - Fixed sidebar scrolling and mobile overflow issues.
-- **Database Resilience (`server/expressApp.js` - commit `6c9c8ca`):**
-  - Implemented retry logic for transient database startup connections.
-- **Smartsupp Live Chat:**
-  - Dynamically hidden across admin and developer panels during navigation to prevent UI overlay conflicts.
-- **Lead Capture & Follow-up Tracking:**
-  - AltPower solar calculator inputs capture user leads into contacts.
-  - Follow-up activity log and actions added to contact management.
+Primary routes:
+- `/admin/dashboard`
+- `/dev/dashboard`
 
----
+Developer-only routes must continue to use the developer role guard. Developers may access permitted Admin areas; Admin users must be redirected away from developer-only pages.
 
-## 3. Deployment & Verification Workflow
+Keep the existing shared features and data model. Do not create duplicate Admin/Developer versions of contacts, quotes, assessments, email, invoices, projects, store data, or company content.
 
-When making code changes:
-1. Ensure the code compiles cleanly and lint checks pass.
-2. Commit with concise, descriptive commit messages and push to `origin/main`.
-3. Verify deployments:
-   - Check Cloudflare Pages status for the frontend build.
-   - Check Render API deployment status and ensure `https://izytech-api.onrender.com/api/health` returns `{"status":"ok"}`.
+## 3. Current Control-Panel Conventions
+
+- `src/lib/adminApi.ts` is the reusable authenticated request helper for new/touched panel API calls.
+- Admin dashboard operational counts come from `/api/admin/stats`.
+- `/api/dev/system` must report real database connectivity and must expose only boolean secret-presence information, never values.
+- Site Analytics is consent-based; do not weaken its privacy boundaries or expose persistent visitor identities.
+- Regular quote lists must exclude `request_type='site_assessment'`; assessments have their own workflow.
+- Production must not start without `SESSION_SECRET`.
+- Preserve login throttling and role checks.
+
+## 4. Build, Test, Deploy
+
+For meaningful changes:
+1. Start from latest `main`.
+2. Run the relevant build/tests.
+3. Commit with a concise descriptive message and push to `origin/main`.
+4. Confirm the Cloudflare Pages deployment succeeds.
+5. For backend changes, confirm the Render workflow succeeds and `/api/health` returns `status=ok`.
+6. Stop and repair failures before stacking unrelated changes.
+
+Automated regression checks are in `.github/workflows/control-panel-ci.yml`.
+Backend deployment verification is in `.github/workflows/notify-render.yml`.
