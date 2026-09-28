@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { DashboardLayout } from './DashboardLayout';
 import { getToken } from '../../lib/auth';
 import { ngDateTime } from '../../lib/ngtime';
-import { Download, Mail, MessageCircle, Phone, Save, Search } from 'lucide-react';
+import { Download, History, Mail, MessageCircle, Phone, Save, Search } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
 const followUpStatuses = [
@@ -25,6 +25,15 @@ interface Contact {
   status?: FollowUpStatus;
   internal_notes?: string;
   updated_at?: string;
+}
+
+interface FollowUpEvent {
+  id: number;
+  event_type: 'status' | 'note';
+  from_value: string;
+  to_value: string;
+  actor: string;
+  created_at: string;
 }
 
 function fmt(iso: string) {
@@ -60,6 +69,9 @@ export function ContactsPage() {
   const [selected, setSelected] = useState<Contact | null>(null);
   const [followUpStatus, setFollowUpStatus] = useState<FollowUpStatus>('new');
   const [internalNotes, setInternalNotes] = useState('');
+  const [activity, setActivity] = useState<FollowUpEvent[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityError, setActivityError] = useState('');
   const [savingFollowUp, setSavingFollowUp] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [saveError, setSaveError] = useState(false);
@@ -93,6 +105,8 @@ export function ContactsPage() {
     setSelected(contact);
     setFollowUpStatus(contact.status ?? 'new');
     setInternalNotes(contact.internal_notes ?? '');
+    setActivity([]);
+    setActivityError('');
     setSaveMessage('');
     setSaveError(false);
   }
@@ -118,6 +132,7 @@ export function ContactsPage() {
       setSelected(updated);
       setFollowUpStatus(updated.status ?? 'new');
       setInternalNotes(updated.internal_notes ?? '');
+      setActivity(result.activity ?? []);
       setSaveMessage('Follow-up saved');
     } catch (error) {
       setSaveError(true);
@@ -133,6 +148,27 @@ export function ContactsPage() {
       .then(d => setContacts(d.data ?? []))
       .finally(() => setLoading(false));
   }, [token]);
+
+  useEffect(() => {
+    if (!selected) return;
+    let active = true;
+    setActivityLoading(true);
+    setActivityError('');
+    fetch(`${API}/api/admin/contacts/${selected.id}/activity`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async response => {
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Could not load follow-up history.');
+        return result;
+      })
+      .then(result => { if (active) setActivity(result.data ?? []); })
+      .catch(error => {
+        if (active) setActivityError(error instanceof Error ? error.message : 'Could not load follow-up history.');
+      })
+      .finally(() => { if (active) setActivityLoading(false); });
+    return () => { active = false; };
+  }, [selected?.id, token]);
 
   return (
     <DashboardLayout>
@@ -308,6 +344,39 @@ export function ContactsPage() {
                 <p className="text-xs font-medium mb-1" style={{ color: '#5a6a82' }}>Message</p>
                 <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--izy-navy)' }}>{selected.message}</p>
               </div>
+              <section className="mt-5 border-t pt-4" style={{ borderColor: '#eef1f6' }} aria-label="Follow-up history">
+                <div className="mb-3 flex items-center gap-2">
+                  <History size={15} style={{ color: 'var(--izy-blue)' }} />
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--izy-navy)' }}>Follow-up history</h3>
+                </div>
+                {activityLoading ? (
+                  <p className="text-xs" style={{ color: '#8fadc8' }}>Loading history…</p>
+                ) : activityError ? (
+                  <p role="alert" className="text-xs text-red-700">{activityError}</p>
+                ) : activity.length === 0 ? (
+                  <p className="text-xs" style={{ color: '#8fadc8' }}>No follow-up changes recorded yet.</p>
+                ) : (
+                  <ol className="space-y-3">
+                    {activity.map(event => (
+                      <li key={event.id} className="border-l-2 border-[#dce7f2] pl-3">
+                        <p className="text-xs font-semibold" style={{ color: 'var(--izy-navy)' }}>
+                          {event.event_type === 'status'
+                            ? `Status: ${followUpStatuses.find(status => status.value === event.from_value)?.label ?? event.from_value} → ${followUpStatuses.find(status => status.value === event.to_value)?.label ?? event.to_value}`
+                            : 'Internal notes updated'}
+                        </p>
+                        {event.event_type === 'note' && (
+                          <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed" style={{ color: '#5a6a82' }}>
+                            {event.to_value || 'Notes cleared'}
+                          </p>
+                        )}
+                        <p className="mt-1 text-[10px]" style={{ color: '#8fadc8' }}>
+                          {event.actor} · {fmt(event.created_at)}
+                        </p>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </section>
               <p className="text-xs" style={{ color: '#8fadc8' }}>{fmt(selected.created_at)}</p>
             </div>
           )}

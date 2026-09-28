@@ -307,6 +307,17 @@ async function initCoreTables() {
   await db.query("ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'new'");
   await db.query("ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS internal_notes TEXT NOT NULL DEFAULT ''");
   await db.query('ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()');
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS contact_followup_events (
+      id SERIAL PRIMARY KEY,
+      contact_id INTEGER NOT NULL REFERENCES contact_submissions(id) ON DELETE CASCADE,
+      event_type TEXT NOT NULL CHECK (event_type IN ('status', 'note')),
+      from_value TEXT NOT NULL,
+      to_value TEXT NOT NULL,
+      actor TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
 
   await db.query(`
     CREATE TABLE IF NOT EXISTS quote_requests (
@@ -1320,7 +1331,9 @@ app.get('/api/admin/contacts', requireAuth, async (req, res) => {
   }
 });
 
-app.patch('/api/admin/contacts/:id/follow-up', requireAuth, require('./routes/contactFollowup').createContactFollowupHandler(db));
+const contactFollowup = require('./routes/contactFollowup');
+app.get('/api/admin/contacts/:id/activity', requireAuth, contactFollowup.createContactFollowupActivityHandler(db));
+app.patch('/api/admin/contacts/:id/follow-up', requireAuth, contactFollowup.createContactFollowupHandler(db));
 
 // ── Admin: Quotes ─────────────────────────────────────────────────────────────
 app.get('/api/admin/quotes', requireAuth, async (req, res) => {
