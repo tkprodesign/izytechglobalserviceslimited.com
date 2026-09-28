@@ -290,7 +290,8 @@ export default function App() {
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/assessment/:token" element={<AssessmentPaymentPage />} />
       <Route path="/store" element={<StorePage />} />
-      <Route path="/store/enquire" element={<StoreEnquiryPage />} />
+      <Route path="/store/request" element={<StoreEnquiryPage />} />
+      <Route path="/store/enquire" element={<Navigate to="/store/request" replace />} />
       <Route path="/cookies" element={<CookiePolicyPage />} />
 
       {/* Auth */}

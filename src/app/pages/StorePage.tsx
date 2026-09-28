@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ShoppingCart, ArrowRight, Tag, Zap, Sun, Shield, Home, Cpu, Filter, Star, CheckCircle } from "lucide-react";
+import { PlusCircle, ArrowRight, Tag, Zap, Sun, Shield, Home, Cpu, Filter, Star, CheckCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { PageLayout } from "../components/PageLayout";
 import { useCart } from "../contexts/CartContext";
@@ -130,8 +130,11 @@ function ProductCard({ product }: { product: Product }) {
         {/* CTA */}
         {product.in_stock ? (
           <button
+            type="button"
+            disabled={inBasket}
+            aria-pressed={inBasket}
             onClick={handleAdd}
-            className="flex items-center justify-center gap-2 py-3 text-xs font-bold tracking-wider transition-all"
+            className="flex items-center justify-center gap-2 py-3 text-xs font-bold tracking-wider transition-all disabled:cursor-default"
             style={{
               background: inBasket
                 ? "rgba(16,185,129,0.1)"
@@ -143,9 +146,9 @@ function ProductCard({ product }: { product: Product }) {
             }}
           >
             {inBasket ? (
-              <><CheckCircle size={13} /> ADDED TO ENQUIRY</>
+              <><CheckCircle size={13} /> SELECTED</>
             ) : (
-              <><ShoppingCart size={13} /> ADD TO ENQUIRY</>
+              <><PlusCircle size={13} /> SELECT PRODUCT</>
             )}
           </button>
         ) : (
@@ -266,7 +269,7 @@ export function StorePage() {
         </div>
       </div>
 
-      {/* ── Floating enquiry bar ── */}
+      {/* ── Floating selection bar ── */}
       <AnimatePresence>
         {count > 0 && (
           <motion.div
@@ -278,7 +281,7 @@ export function StorePage() {
             style={{ transform: "translateX(-50%)" }}
           >
             <button
-              onClick={() => navigate("/store/enquire")}
+              onClick={() => navigate("/store/request")}
               className="flex items-center gap-4 px-7 py-4 shadow-xl shadow-black/20 font-bold text-sm tracking-wider"
               style={{
                 background: "linear-gradient(135deg,#F0A20E 0%,#FFB830 100%)",
@@ -293,7 +296,7 @@ export function StorePage() {
               >
                 {count}
               </span>
-              PROCEED TO ENQUIRY
+              REVIEW SELECTION
               <ArrowRight size={15} />
             </button>
           </motion.div>

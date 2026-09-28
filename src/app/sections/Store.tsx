@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 import { Link } from "react-router";
 import { useEffect, useState } from "react";
-import { Sun, Zap, Shield, Home, ArrowRight, ShoppingCart, Star, CheckCircle } from "lucide-react";
+import { Sun, Zap, Shield, Home, ArrowRight, PlusCircle, Star, CheckCircle } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
 import { fetchStoreProducts, type StoreProduct } from "../../lib/store";
 
@@ -164,6 +164,9 @@ export function Store() {
                   </div>
 
                   <button
+                    type="button"
+                    disabled={inBasket}
+                    aria-pressed={inBasket}
                     onClick={() =>
                       add({
                         id: product.id,
@@ -175,7 +178,7 @@ export function Store() {
                         image: product.images?.[0],
                       })
                     }
-                    className="flex items-center justify-center gap-2 py-2.5 text-xs font-bold tracking-wider transition-all"
+                    className="flex items-center justify-center gap-2 py-2.5 text-xs font-bold tracking-wider transition-all disabled:cursor-default"
                     style={{
                       background: inBasket
                         ? "rgba(16,185,129,0.1)"
@@ -187,9 +190,9 @@ export function Store() {
                     }}
                   >
                     {inBasket ? (
-                      <><CheckCircle size={12} /> ADDED TO ENQUIRY</>
+                      <><CheckCircle size={12} /> SELECTED</>
                     ) : (
-                      <><ShoppingCart size={12} /> ADD TO ENQUIRY</>
+                      <><PlusCircle size={12} /> SELECT PRODUCT</>
                     )}
                   </button>
                 </div>

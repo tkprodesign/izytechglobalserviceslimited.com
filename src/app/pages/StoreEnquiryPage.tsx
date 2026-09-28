@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, CheckCircle, Package, ArrowLeft } from "lucide-react";
+import { Trash2, Plus, Minus, ArrowRight, CheckCircle, Package, ArrowLeft, AlertCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { PageLayout } from "../components/PageLayout";
 import { useCart } from "../contexts/CartContext";
@@ -22,6 +22,7 @@ export function StoreEnquiryPage() {
   const [form, setForm] = useState<FormState>(empty);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   function set(k: keyof FormState) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -33,6 +34,7 @@ export function StoreEnquiryPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
+    setSubmitError("");
     try {
       const payload = {
         ...form,
@@ -43,19 +45,26 @@ export function StoreEnquiryPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error('Server error');
+
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(body?.error || 'We could not send your request right now.');
+      }
+
       setSubmitted(true);
       clear();
-    } catch {
-      // If backend is not yet reachable, still show success (form will be wired once backend is live)
-      setSubmitted(true);
-      clear();
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "We couldn't send your request. Your selection is still here, so please try again."
+      );
     } finally {
       setSubmitting(false);
     }
   }
 
-  // ── Empty cart ──
+  // ── Empty selection ──
   if (items.length === 0 && !submitted) {
     return (
       <PageLayout>
@@ -64,20 +73,20 @@ export function StoreEnquiryPage() {
             <div className="flex items-center gap-3 mb-4">
               <div className="w-6 h-px" style={{ background: "#F0A20E" }} />
               <span className="text-xs font-semibold tracking-widest uppercase" style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}>
-                Enquiry Basket
+                Your Selection
               </span>
             </div>
             <h1 className="text-white" style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2rem,4vw,3.2rem)", fontWeight: 800, letterSpacing: "-0.03em" }}>
-              Your basket is empty
+              No products selected yet
             </h1>
           </div>
         </div>
         <div className="py-24 flex flex-col items-center gap-6" style={{ background: "#f5f6f8" }}>
           <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: "rgba(240,162,14,0.1)" }}>
-            <ShoppingCart size={34} style={{ color: "#F0A20E" }} strokeWidth={1.5} />
+            <Package size={34} style={{ color: "#F0A20E" }} strokeWidth={1.5} />
           </div>
           <p className="text-[#041627]/50 text-base" style={{ fontFamily: "var(--font-body)" }}>
-            You haven't added any products yet.
+            Choose the products you’re interested in, then review your selection here.
           </p>
           <Link
             to="/store"
@@ -100,11 +109,11 @@ export function StoreEnquiryPage() {
             <div className="flex items-center gap-3 mb-4">
               <div className="w-6 h-px" style={{ background: "#F0A20E" }} />
               <span className="text-xs font-semibold tracking-widest uppercase" style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}>
-                Enquiry Sent
+                Request Sent
               </span>
             </div>
             <h1 className="text-white" style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2rem,4vw,3.2rem)", fontWeight: 800, letterSpacing: "-0.03em" }}>
-              We've received your enquiry
+              We've received your product request
             </h1>
           </div>
         </div>
@@ -114,10 +123,10 @@ export function StoreEnquiryPage() {
           </div>
           <div>
             <h2 className="text-[#041627] font-bold mb-2" style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", letterSpacing: "-0.02em" }}>
-              Enquiry submitted successfully
+              Request submitted successfully
             </h2>
             <p className="text-[#041627]/50 max-w-md text-sm leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-              One of our product specialists will review your list and get back to you within 24 hours with availability and recommended configurations.
+              Our product team will review your selection and follow up with current pricing, availability, recommended configurations and installation options.
             </p>
           </div>
           <Link
@@ -132,7 +141,7 @@ export function StoreEnquiryPage() {
     );
   }
 
-  // ── Main enquiry page ──
+  // ── Product request page ──
   return (
     <PageLayout>
       {/* Hero */}
@@ -143,14 +152,14 @@ export function StoreEnquiryPage() {
             <div className="flex items-center gap-3 mb-5">
               <div className="w-6 h-px" style={{ background: "#F0A20E" }} />
               <span className="text-xs font-semibold tracking-widest uppercase" style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}>
-                Enquiry Basket
+                Your Selection
               </span>
             </div>
             <h1
               className="text-white mb-4"
               style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2rem,5vw,3.6rem)", fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1.05 }}
             >
-              Review & Submit Enquiry
+              Review Your Selection
             </h1>
             <p className="text-white/45 text-sm" style={{ fontFamily: "var(--font-body)" }}>
               {count} item{count !== 1 ? "s" : ""} selected · Our team will respond within 24 hours with pricing and availability.
@@ -250,6 +259,13 @@ export function StoreEnquiryPage() {
                     />
                   </Field>
 
+                  {submitError && (
+                    <div role="alert" className="flex items-start gap-2 border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                      <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                      <span>{submitError} Your selected products have been kept.</span>
+                    </div>
+                  )}
+
                   <button
                     type="submit"
                     disabled={submitting}
@@ -270,7 +286,7 @@ export function StoreEnquiryPage() {
                         SENDING…
                       </span>
                     ) : (
-                      <><ArrowRight size={15} /> SUBMIT ENQUIRY</>
+                      <><ArrowRight size={15} /> REQUEST PRICING & AVAILABILITY</>
                     )}
                   </button>
                 </form>
@@ -352,7 +368,7 @@ export function StoreEnquiryPage() {
                     className="flex items-center gap-1.5 text-xs text-[#041627]/40 hover:text-[#041627] transition-colors"
                     style={{ fontFamily: "var(--font-ui)" }}
                   >
-                    <ArrowLeft size={11} /> Add more products
+                    <ArrowLeft size={11} /> Select More Products
                   </Link>
                 </div>
               </div>

@@ -38,11 +38,16 @@ const publicRoutes: Record<string, SeoConfig> = {
   },
   '/store': {
     title: 'Energy & Technology Store | Izy Tech Services',
-    description: 'Browse selected solar, energy and technology products from Izy Tech Services and send a direct product enquiry.',
+    description: 'Browse selected solar, energy and technology products from Izy Tech Services, select what you need, and request current pricing and availability.',
+  },
+  '/store/request': {
+    title: 'Review Product Selection | Izy Tech Services',
+    description: 'Review selected products and request current pricing, availability, configuration guidance and installation options from Izy Tech Services.',
+    noIndex: true,
   },
   '/store/enquire': {
-    title: 'Product Enquiry | Izy Tech Services',
-    description: 'Send a product enquiry to Izy Tech Services and our team will respond with availability, project guidance and next steps.',
+    title: 'Review Product Selection | Izy Tech Services',
+    description: 'Review selected products and request current pricing and availability from Izy Tech Services.',
     noIndex: true,
   },
   '/cookies': {

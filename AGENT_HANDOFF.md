@@ -105,3 +105,22 @@ Public-site rules:
 
 ### Public-site deployment verification
 The public-site upgrade batches above were each pushed to `main`, passed Control Panel CI, and deployed successfully through Cloudflare Pages. They did not change backend code, so a Render deployment was not required for these batches.
+
+
+## 8. Store Selection Language
+
+The public store is not an e-commerce checkout and must not use cart-style purchase wording or "Add to Enquiry".
+The approved customer flow is:
+
+**SELECT → REVIEW → REQUEST PRICING**
+
+Visible terminology:
+- Product CTA: `SELECT PRODUCT`
+- Selected state: `SELECTED`
+- Floating CTA: `REVIEW SELECTION`
+- Review page: `Your Selection` / `Review Your Selection`
+- Final action: `REQUEST PRICING & AVAILABILITY`
+
+The public review route is `/store/request`. The older `/store/enquire` URL redirects to it for compatibility. The backend endpoint remains `/api/store/enquire` as an internal API contract.
+
+Important: failed store request submissions must never display success or clear the user's selection.
