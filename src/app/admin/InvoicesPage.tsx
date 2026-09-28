@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { DashboardLayout } from './DashboardLayout';
 import { SectionsEditor } from './SectionsEditor';
+import { appendInvoiceSection } from '../../lib/invoiceSections';
 import { getToken, removeToken } from '../../lib/auth';
 import { ngDate, ngDateTime } from '../../lib/ngtime';
 import {
@@ -303,7 +304,7 @@ export function InvoicesPage() {
   const SECTIONS_TAB = 'sections';
   const FLAT_TAB = 'flat';
 
-  const [docsTab, setDocsTab] = useState<'sections' | 'flat'>(SECTIONS_TAB);
+  const [docsTab, setDocsTab] = useState<'sections' | 'flat'>(FLAT_TAB);
   const [draftToResume, setDraftToResume] = useState<number | null>(null);
 
   function resetForm(referenceInvoiceId?: number) {
@@ -374,6 +375,11 @@ export function InvoicesPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to resume draft');
     }
+  }
+
+  function addSection() {
+    setForm(f => appendInvoiceSection(f));
+    setDocsTab(SECTIONS_TAB);
   }
 
   function isSectionedForm(): boolean {
@@ -721,14 +727,7 @@ export function InvoicesPage() {
               <PlusCircle size={15} />
               New Invoice
             </button>
-            <button
-              onClick={() => { resetForm(); setDocsTab('sections'); }}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-all hover:shadow-lg active:scale-[0.98] border border-[#1a5fab] bg-[#1a5fab14]"
-              style={{ color: '#1a5fab' }}
-            >
-              <LayoutDashboard size={15} />
-              Create with sections
-            </button>
+
           </div>
         </div>
       </div>
@@ -850,8 +849,8 @@ export function InvoicesPage() {
                       style={{ borderColor: '#e2e8f0', color: '#334155' }}
                     >
                       <PlusCircle size={13} />
-                      <span className="hidden sm:inline">Sections</span>
-                      <span className="sm:hidden">New</span>
+                      <span className="hidden sm:inline">Edit</span>
+                      <span className="sm:hidden">Edit</span>
                     </button>
                     {inv.status === 'draft' && (
                       <button
@@ -947,7 +946,7 @@ export function InvoicesPage() {
                         <button
                           onClick={() => openEdit(inv)}
                           className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                          title="Create with sections"
+                          title="Edit invoice"
                         >
                           <LayoutDashboard size={14} style={{ color: '#334155' }} />
                         </button>
@@ -1021,21 +1020,6 @@ export function InvoicesPage() {
               )}
             </div>
             <div className="flex items-center gap-2">
-              {/* Sections vs flat editor tab */}
-              <div className="flex items-center border-b border-border/40">
-                <button
-                  onClick={() => setDocsTab(SECTIONS_TAB)}
-                  className={`px-3 py-1.5 text-[11px] font-semibold transition-colors ${docsTab === SECTIONS_TAB ? 'text-[#1a5fab]' : 'text-muted-foreground hover:text-foreground'}`}
-                >
-                  Sections
-                </button>
-                <button
-                  onClick={() => setDocsTab(FLAT_TAB)}
-                  className={`px-3 py-1.5 text-[11px] font-semibold transition-colors ${docsTab === FLAT_TAB ? 'text-[#1a5fab]' : 'text-muted-foreground hover:text-foreground'}`}
-                >
-                  Flat items
-                </button>
-              </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setMobileView('list')}
@@ -1047,7 +1031,8 @@ export function InvoicesPage() {
               </div>
             </div>
 
-          <div className="p-5 space-y-5 overflow-y-auto max-h-[calc(100vh-20rem)]">
+          </div>
+          <div className="p-5 space-y-5">
             {/* Invoice title */}
             <div>
               <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#94a3b8' }}>Invoice Title</label>
@@ -1174,16 +1159,7 @@ export function InvoicesPage() {
               <SectionsEditor
                 sections={form.sections}
                 onChange={(next) => setForm(prev => ({ ...prev, ...(next as Partial<FormState>) }))}
-                onAddSection={() => setForm(f => ({
-                  ...f,
-                  sections: [...(f.sections ?? []), {
-                    title: '',
-                    description: '',
-                    logistics: '0',
-                    service_charge: '0',
-                    rows: [{ description: '', quantity: 1, unit_price: 0, amount: 0 }],
-                  }],
-                }))}
+                onAddSection={addSection}
                 onRemoveSection={(i) => setForm(f => ({ ...f, sections: (f.sections ?? []).filter((_, idx) => idx !== i) }))}
                 onAddRow={(sectionIndex) => setForm(f => ({
                   ...f,
@@ -1283,6 +1259,13 @@ export function InvoicesPage() {
                   ))}
                 </div>
               </>
+            )}
+
+            {docsTab === FLAT_TAB && (
+              <button type="button" onClick={addSection}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-semibold text-blue-600 hover:bg-blue-50">
+                <Plus size={14} /> Add section
+              </button>
             )}
 
             {/* Additional charges */}
@@ -1475,7 +1458,6 @@ export function InvoicesPage() {
         {sendingError && <p className="text-center text-sm mt-3 text-red-600 flex items-center justify-center gap-2"><AlertCircle size={14} /> {sendingError}</p>}
         {generatingPdf && <p className="text-center text-sm mt-3 text-blue-600">Generating PDF…</p>}
         {generatingAltBank && <p className="text-center text-sm mt-3 text-cyan-700">Generating Alternative Bank funding letter…</p>}
-      </div>
     </DashboardLayout>
   );
 }

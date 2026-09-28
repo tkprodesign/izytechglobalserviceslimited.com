@@ -23,6 +23,7 @@ const db = {
       record.id = nextId++;
       record.created_at = '2026-09-25T12:00:00Z';
       record.line_items = JSON.parse(record.line_items);
+      record.sections = JSON.parse(record.sections || '[]');
       records.set(record.id, record);
       return { rows: [record] };
     }
@@ -33,6 +34,7 @@ const db = {
         if (match[1] !== 'id') record[match[1]] = values[Number(match[2]) - 1];
       }
       record.line_items = JSON.parse(record.line_items);
+      record.sections = JSON.parse(record.sections || '[]');
       return { rows: [record] };
     }
     if (sql.startsWith('SELECT * FROM invoices WHERE id')) {
@@ -163,3 +165,50 @@ for (const status of ['paid', 'overdue', 'cancelled']) {
     }
   });
 }
+
+const ts = require('typescript');
+const fs = require('node:fs');
+const path = require('node:path');
+const sectionModule = { exports: {} };
+new Function('exports', ts.transpileModule(fs.readFileSync(path.join(__dirname, '../../src/lib/invoiceSections.ts'), 'utf8'),
+  { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(sectionModule.exports);
+const { appendInvoiceSection } = sectionModule.exports;
+
+test('Add section preserves existing items and charges, then saves and reloads both sections', async () => {
+  const original = { ...invoice(), sections: [], logistics: '250', service_charge: '100' };
+  const converted = appendInvoiceSection(original);
+  assert.equal(converted.sections.length, 2);
+  assert.deepEqual(converted.sections[0].rows, original.line_items);
+  assert.equal(converted.sections[0].logistics, '250');
+  assert.equal(converted.sections[0].service_charge, '100');
+  assert.equal(original.sections.length, 0);
+  converted.sections[1].title = 'Maintenance';
+  converted.sections[1].rows = [{ description: 'Maintenance service', quantity: 1, unit_price: 500, amount: 500 }];
+  const saved = await save(converted);
+  assert.equal(saved.status, 201);
+  assert.equal(saved.data.subtotal, 2500);
+  assert.equal(saved.data.logistics, 250);
+  assert.equal(saved.data.service_charge, 100);
+  assert.equal(saved.data.total, 3063.75);
+  const response = await fetch(base + '/' + saved.data.id);
+  const loaded = (await response.json()).data;
+  assert.equal(loaded.sections.length, 2);
+  assert.equal(loaded.sections[1].title, 'Maintenance');
+  const added = appendInvoiceSection({ ...converted, sections: loaded.sections });
+  added.sections[2].title = 'Additional work';
+  added.sections[2].rows = [{ description: 'Extra service', quantity: 2, unit_price: 100, amount: 200 }];
+  const updated = await save(added, saved.data.id);
+  assert.equal(updated.status, 200);
+  assert.equal(updated.data.total, 3278.75);
+  for (const endpoint of ['pdf', 'alt-bank-pdf']) {
+    const pdf = await fetch(`${base}/${saved.data.id}/${endpoint}`);
+    assert.equal(pdf.status, 200);
+    assert.ok((await pdf.arrayBuffer()).byteLength > 1000);
+  }
+});
+
+test('Add section on an empty invoice starts with one section', () => {
+  const result = appendInvoiceSection({ sections: [], line_items: [{description:'',quantity:1,unit_price:0,amount:0}], logistics:'0',service_charge:'0' });
+  assert.equal(result.sections.length,1);
+  assert.equal(result.sections[0].rows.length,1);
+});

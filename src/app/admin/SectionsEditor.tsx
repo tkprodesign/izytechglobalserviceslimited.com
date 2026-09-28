@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Plus, Trash2, PlusCircle } from 'lucide-react';
 
@@ -50,7 +50,14 @@ export function SectionsEditor({
   onRemoveRow,
   onRowChange,
 }: SectionsEditorProps) {
-  const [expanded, setExpanded] = useState<number | null>(sections.findIndex(s => Array.isArray(s.rows) && s.rows.length > 0) === -1 ? null : 0);
+  const [expanded, setExpanded] = useState<number | null>(sections.length ? sections.length - 1 : null);
+
+  const previousCount = useRef(sections.length);
+  useEffect(() => {
+    if (sections.length > previousCount.current) setExpanded(sections.length - 1);
+    if (sections.length < previousCount.current) setExpanded(sections.length ? 0 : null);
+    previousCount.current = sections.length;
+  }, [sections.length]);
 
   function toggleSection(index: number) {
     setExpanded(prev => prev === index ? null : index);
@@ -64,13 +71,12 @@ export function SectionsEditor({
     <div className="space-y-4">
       {sections.map((section, sectionIndex) => (
         <div key={sectionIndex} className="rounded-xl border overflow-hidden" style={{ borderColor: '#e2e8f0', background: '#f8fafc' }}>
-          <button
-            type="button"
-            onClick={() => toggleSection(sectionIndex)}
+          <div
             className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
             style={{ color: '#0f172a' }}
           >
-            <div className="flex items-center gap-2">
+            <button type="button" onClick={() => toggleSection(sectionIndex)}
+              aria-expanded={expanded === sectionIndex} className="flex flex-1 items-center gap-2 text-left">
               <PlusCircle size={14} style={{ color: '#f26522' }} />
               <span className="text-sm font-semibold" style={{ color: '#0f172a' }}>
                 {sectionTitle(section)}
@@ -80,7 +86,7 @@ export function SectionsEditor({
                   — {section.description}
                 </span>
               ) : null}
-            </div>
+            </button>
             <div className="flex items-center gap-2">
               <span className="text-xs tabular-nums" style={{ color: '#64748b' }}>
                 {Array.isArray(section.rows) ? section.rows.reduce((sum, r) => sum + Number(r.amount || 0), 0) : 0} ₦
@@ -98,7 +104,7 @@ export function SectionsEditor({
                 <Trash2 size={13} />
               </button>
             </div>
-          </button>
+          </div>
 
           {expanded === sectionIndex ? (
             <div className="px-4 pb-4 space-y-3 border-t border-border/30">
@@ -227,7 +233,7 @@ export function SectionsEditor({
 
       <button
         type="button"
-        onClick={onAddSection}
+        onClick={() => { setExpanded(sections.length); onAddSection(); }}
         className="flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold text-[#f26522] hover:bg-[#fffbeb] transition-colors border-[#fde68a]"
         style={{ borderColor: '#fde68a', background: '#fff' }}
       >
