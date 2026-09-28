@@ -59,7 +59,7 @@ function fieldClass(dark: boolean) {
 
 export function SiteAssessmentForm({ dark = false }: { dark?: boolean }) {
   const [searchParams] = useSearchParams();
-  const [requestKind, setRequestKind] = useState<"site_assessment" | "general">("site_assessment");
+  const [requestKind, setRequestKind] = useState<"site_assessment" | "general">("general");
   const [form, setForm] = useState<SiteAssessmentPayload>({
     name: "",
     email: "",
@@ -195,23 +195,25 @@ export function SiteAssessmentForm({ dark = false }: { dark?: boolean }) {
     <form onSubmit={handleSubmit} className="space-y-5" style={{ fontFamily: "var(--font-body)" }}>
       <div className="mb-6">
         <h3 className={textClass} style={{ fontFamily: "var(--font-display)", fontSize: "1.2rem", fontWeight: 700 }}>
-          Request a Site Assessment
+          {requestKind === "site_assessment" ? "Request a Site Assessment" : "Start with a Project Enquiry"}
         </h3>
         <p className={`text-sm mt-1 leading-relaxed ${mutedClass}`}>
-          For field projects, submit your details and address. We review the request first, then send the assessment charge and payment instructions.
+          {requestKind === "site_assessment"
+            ? "For field projects, submit your site details. We review the request first, then send the assessment charge and payment instructions."
+            : "Tell us what you need. Start with a quick enquiry and, if a site visit is necessary, our team will guide you into the assessment process."}
         </p>
       </div>
 
       <div>
         <label className={labelClass}>What do you need help with? *</label>
         <select value={requestKind} onChange={event => setRequestKind(event.target.value as "site_assessment" | "general")} className={fieldClass(dark)}>
-          <option value="site_assessment">On-site project assessment</option>
-          <option value="general">General question or remote advice</option>
+          <option value="general">Project enquiry / ask a question</option>
+          <option value="site_assessment">Request an on-site project assessment</option>
         </select>
         <p className={`text-xs mt-2 ${mutedClass}`}>
           {requestKind === "site_assessment"
             ? "A site assessment fee is sent after our team reviews your request."
-            : "For questions that do not require a field visit, send a general enquiry instead."}
+            : "No assessment fee is required for an initial project enquiry."}
         </p>
       </div>
 

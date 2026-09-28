@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from "react-router";
-import { useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import "../styles/fonts.css";
 import "../styles/micro.css";
 import { getToken, getUser, loginPathForRoute } from "../lib/auth";
@@ -28,14 +28,16 @@ function NavigationScroll() {
         const el = document.getElementById(id);
         if (el) {
           const top = el.getBoundingClientRect().top + window.scrollY - NAVBAR_H;
-          window.scrollTo({ top, behavior: "smooth" });
+          const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          window.scrollTo({ top, behavior: reduceMotion ? "auto" : "smooth" });
         } else if (retries > 0) {
           setTimeout(() => attempt(retries - 1), 60);
         }
       };
       setTimeout(() => attempt(5), 60);
     } else if (pathnameChanged) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
     }
   }, [location]);
 
@@ -80,6 +82,7 @@ function AuthSessionGuard() {
 // Public site
 import { Navbar } from "./sections/Navbar";
 import { Hero } from "./sections/Hero";
+import { TrustStrip } from "./sections/TrustStrip";
 import { Marquee } from "./sections/Marquee";
 import { Services } from "./sections/Services";
 import { Statement } from "./sections/Statement";
@@ -93,42 +96,56 @@ import { CustomCursor } from "./components/CustomCursor";
 import { ScrollProgress } from "./components/ScrollProgress";
 import { SeoManager } from "./components/SeoManager";
 
-// Admin panel
-import { LoginPage } from "./admin/LoginPage";
-import { AdminDashboard } from "./admin/AdminDashboard";
-import { ContactsPage } from "./admin/ContactsPage";
-import { QuotesPage } from "./admin/QuotesPage";
-import { DevSystemPage } from "./admin/DevSystemPage";
-import { DevDashboard } from "./admin/DevDashboard";
-import { ServicesContentPage } from "./admin/ServicesContentPage";
-import { EmailPage } from "./admin/EmailPage";
-import { SocialsPage } from "./admin/SocialsPage";
+// Route-level pages are lazy-loaded so public visitors do not download
+// admin, developer, invoice, analytics and other workspace code up front.
 import { ProtectedRoute } from "./admin/ProtectedRoute";
-import { StoreProductsPage } from "./admin/StoreProductsPage";
-import { StoreEnquiriesPage } from "./admin/StoreEnquiriesPage";
-import { MilestonesPage } from "./admin/MilestonesPage";
-import { FounderPage } from "./admin/FounderPage";
-import { ProjectsManagerPage } from "./admin/ProjectsManagerPage";
-import { TestimonialsManagerPage } from "./admin/TestimonialsManagerPage";
-import { SiteAssessmentsPage } from "./admin/SiteAssessmentsPage";
-import { CompanyContactPage } from "./admin/CompanyContactPage";
-import { InvoicesPage } from "./admin/InvoicesPage";
-import { SiteAnalyticsPage } from "./admin/SiteAnalyticsPage";
-import { CustomPdfPage } from "./admin/CustomPdfPage";
-import { AboutPage } from "./pages/AboutPage";
-import { ServicesPage } from "./pages/ServicesPage";
-import { ProjectsPage } from "./pages/ProjectsPage";
-import { ProjectDetailPage } from "./pages/ProjectDetailPage";
-import { TestimonialsPage } from "./pages/TestimonialsPage";
-import { ContactPage } from "./pages/ContactPage";
-import { StorePage } from "./pages/StorePage";
-import { StoreEnquiryPage } from "./pages/StoreEnquiryPage";
-import { AssessmentPaymentPage } from "./pages/AssessmentPaymentPage";
 import { Store } from "./sections/Store";
 import { CartProvider } from "./contexts/CartContext";
 import { WhatsAppFloatingButton } from "./components/WhatsAppFloatingButton";
 import { CookieConsent } from "./components/CookieConsent";
-import { CookiePolicyPage } from "./pages/CookiePolicyPage";
+
+const LoginPage = lazy(() => import("./admin/LoginPage").then(m => ({ default: m.LoginPage })));
+const AdminDashboard = lazy(() => import("./admin/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
+const ContactsPage = lazy(() => import("./admin/ContactsPage").then(m => ({ default: m.ContactsPage })));
+const QuotesPage = lazy(() => import("./admin/QuotesPage").then(m => ({ default: m.QuotesPage })));
+const DevSystemPage = lazy(() => import("./admin/DevSystemPage").then(m => ({ default: m.DevSystemPage })));
+const DevDashboard = lazy(() => import("./admin/DevDashboard").then(m => ({ default: m.DevDashboard })));
+const ServicesContentPage = lazy(() => import("./admin/ServicesContentPage").then(m => ({ default: m.ServicesContentPage })));
+const EmailPage = lazy(() => import("./admin/EmailPage").then(m => ({ default: m.EmailPage })));
+const SocialsPage = lazy(() => import("./admin/SocialsPage").then(m => ({ default: m.SocialsPage })));
+const StoreProductsPage = lazy(() => import("./admin/StoreProductsPage").then(m => ({ default: m.StoreProductsPage })));
+const StoreEnquiriesPage = lazy(() => import("./admin/StoreEnquiriesPage").then(m => ({ default: m.StoreEnquiriesPage })));
+const MilestonesPage = lazy(() => import("./admin/MilestonesPage").then(m => ({ default: m.MilestonesPage })));
+const FounderPage = lazy(() => import("./admin/FounderPage").then(m => ({ default: m.FounderPage })));
+const ProjectsManagerPage = lazy(() => import("./admin/ProjectsManagerPage").then(m => ({ default: m.ProjectsManagerPage })));
+const TestimonialsManagerPage = lazy(() => import("./admin/TestimonialsManagerPage").then(m => ({ default: m.TestimonialsManagerPage })));
+const SiteAssessmentsPage = lazy(() => import("./admin/SiteAssessmentsPage").then(m => ({ default: m.SiteAssessmentsPage })));
+const CompanyContactPage = lazy(() => import("./admin/CompanyContactPage").then(m => ({ default: m.CompanyContactPage })));
+const InvoicesPage = lazy(() => import("./admin/InvoicesPage").then(m => ({ default: m.InvoicesPage })));
+const SiteAnalyticsPage = lazy(() => import("./admin/SiteAnalyticsPage").then(m => ({ default: m.SiteAnalyticsPage })));
+const CustomPdfPage = lazy(() => import("./admin/CustomPdfPage").then(m => ({ default: m.CustomPdfPage })));
+
+const AboutPage = lazy(() => import("./pages/AboutPage").then(m => ({ default: m.AboutPage })));
+const ServicesPage = lazy(() => import("./pages/ServicesPage").then(m => ({ default: m.ServicesPage })));
+const ProjectsPage = lazy(() => import("./pages/ProjectsPage").then(m => ({ default: m.ProjectsPage })));
+const ProjectDetailPage = lazy(() => import("./pages/ProjectDetailPage").then(m => ({ default: m.ProjectDetailPage })));
+const TestimonialsPage = lazy(() => import("./pages/TestimonialsPage").then(m => ({ default: m.TestimonialsPage })));
+const ContactPage = lazy(() => import("./pages/ContactPage").then(m => ({ default: m.ContactPage })));
+const StorePage = lazy(() => import("./pages/StorePage").then(m => ({ default: m.StorePage })));
+const StoreEnquiryPage = lazy(() => import("./pages/StoreEnquiryPage").then(m => ({ default: m.StoreEnquiryPage })));
+const AssessmentPaymentPage = lazy(() => import("./pages/AssessmentPaymentPage").then(m => ({ default: m.AssessmentPaymentPage })));
+const CookiePolicyPage = lazy(() => import("./pages/CookiePolicyPage").then(m => ({ default: m.CookiePolicyPage })));
+
+function RouteLoading() {
+  return (
+    <div className="flex min-h-[45vh] items-center justify-center bg-[#f7f8fa]" role="status" aria-live="polite">
+      <div className="flex items-center gap-3 text-sm font-medium text-[#5a6a82]">
+        <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#1d70c9]/25 border-t-[#1d70c9]" />
+        Loading…
+      </div>
+    </div>
+  );
+}
 
 function PublicSite() {
   return (
@@ -138,6 +155,7 @@ function PublicSite() {
       <Navbar />
       <main>
         <Hero />
+        <TrustStrip />
         <Marquee />
         <Services />
         <Statement />
@@ -223,13 +241,31 @@ function SmartsuppWidget() {
       chatWindow.smartsupp = queue;
     }
 
-    if (!document.querySelector('script[data-smartsupp-loader]')) {
+    const loadChat = () => {
+      if (document.querySelector('script[data-smartsupp-loader]')) return;
       const script = document.createElement('script');
       script.async = true;
       script.dataset.smartsuppLoader = 'true';
       script.src = 'https://www.smartsuppchat.com/loader.js?';
       document.head.appendChild(script);
-    }
+    };
+
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    const interactionEvents: Array<keyof WindowEventMap> = ['pointerdown', 'keydown', 'touchstart'];
+    interactionEvents.forEach(event => window.addEventListener(event, loadChat, { once: true, passive: true }));
+
+    const idleId = idleWindow.requestIdleCallback
+      ? idleWindow.requestIdleCallback(loadChat, { timeout: 3500 })
+      : window.setTimeout(loadChat, 3000);
+
+    return () => {
+      interactionEvents.forEach(event => window.removeEventListener(event, loadChat));
+      if (idleWindow.cancelIdleCallback && idleWindow.requestIdleCallback) idleWindow.cancelIdleCallback(idleId);
+      else window.clearTimeout(idleId);
+    };
   }, [pathname]);
 
   return null;
@@ -242,6 +278,7 @@ export default function App() {
     <AuthSessionGuard />
     <SeoManager />
     <SmartsuppWidget />
+    <Suspense fallback={<RouteLoading />}>
     <Routes>
       {/* Public site */}
       <Route path="/" element={<PublicSite />} />
@@ -337,6 +374,7 @@ export default function App() {
       <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
       <Route path="/dev" element={<Navigate to="/dev/login" replace />} />
     </Routes>
+    </Suspense>
     <PublicFloatingActions />
     <CookieConsent />
     </CartProvider>

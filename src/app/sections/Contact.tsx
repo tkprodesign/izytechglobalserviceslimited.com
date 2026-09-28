@@ -55,7 +55,7 @@ export function Contact() {
             Start Your Project Today
           </h2>
           <p className="text-white/45 text-[0.95rem] leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-            For projects that require a site visit, submit your details and location. We review every request before sending the assessment charge.
+            Start with a quick project enquiry, or choose a site assessment when a field visit is already required. We’ll guide you to the right next step.
           </p>
         </div>
 

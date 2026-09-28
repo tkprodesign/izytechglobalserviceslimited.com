@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } fr
 const stats = [
   { value: 1000, suffix: "+", label: "Jobs Delivered" },
   { value: 8,    suffix: "+", label: "Years of Excellence" },
-  { value: 98,   suffix: "%", label: "Client Satisfaction" },
+  { value: 6,    suffix: "", label: "Service Areas" },
   { value: 24,   suffix: "/7", label: "Emergency Support" },
 ];
 
@@ -138,6 +138,8 @@ export function Hero() {
             alt=""
             className="w-full h-full object-cover object-center scale-110"
             loading={activeSlide === 0 ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={activeSlide === 0 ? "high" : "auto"}
           />
           <div className="absolute inset-0" style={{ background: slide.overlay }} />
           <div

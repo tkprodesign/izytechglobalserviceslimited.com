@@ -8,7 +8,7 @@ import { PhoneActions } from "../components/PhoneActions";
 const stats = [
   { value: 1000, suffix: "+", label: "Jobs Delivered" },
   { value: 8,    suffix: "+", label: "Years of Excellence" },
-  { value: 4,    suffix: "",  label: "Core Services" },
+  { value: 6,    suffix: "",  label: "Service Areas" },
   { value: 98,   suffix: "%", label: "Client Satisfaction" },
 ];
 
