@@ -70,7 +70,7 @@ function NavItem({
       >
         <Link
           to={link.to ?? "/services"}
-          className={`relative flex items-center gap-1 px-4 py-2 text-sm font-medium transition-colors ${baseText} ${activeClass}`}
+          className={`relative flex items-center gap-1 whitespace-nowrap px-3 py-2 text-sm font-medium transition-colors ${baseText} ${activeClass}`}
         >
           {link.label}
           <ChevronDown
@@ -121,7 +121,7 @@ function NavItem({
     return (
       <Link
         to={link.to}
-        className={`relative px-4 py-2 text-sm font-medium transition-colors ${baseText} ${activeClass}`}
+        className={`relative whitespace-nowrap px-3 py-2 text-sm font-medium transition-colors ${baseText} ${activeClass}`}
         onClick={() => {
           if (link.to === "/") window.scrollTo({ top: 0, behavior: "smooth" });
           onClick?.();
@@ -141,7 +141,7 @@ function NavItem({
   return (
     <a
       href={link.href}
-      className={`px-4 py-2 text-sm font-medium transition-colors ${baseText}`}
+      className={`whitespace-nowrap px-3 py-2 text-sm font-medium transition-colors ${baseText}`}
       onClick={onClick}
     >
       {link.label}
@@ -181,7 +181,7 @@ export function Navbar() {
           : "bg-transparent"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-20">
+      <div className="mx-auto flex h-20 w-full max-w-[1536px] items-center justify-between gap-4 px-5 2xl:px-6">
         {/* Logo */}
         <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex-shrink-0 flex items-center gap-2.5">
           <img src={logoIcon} alt="Izy Tech Services" className="h-9 w-auto" />
@@ -196,33 +196,36 @@ export function Navbar() {
         </Link>
 
         {/* Desktop links */}
-        <div className="hidden lg:flex items-center gap-0.5" style={{ fontFamily: "var(--font-ui)" }}>
+        <div className="hidden xl:flex min-w-0 items-center gap-0.5" style={{ fontFamily: "var(--font-ui)" }}>
           {navLinks.map((link) => (
             <NavItem key={link.label} link={link} isTransparent={isTransparent} />
           ))}
+
+        </div>
+
+        {/* Right: selection + call + WhatsApp + CTA */}
+        <div className="hidden xl:flex flex-shrink-0 items-center gap-3">
           {count > 0 && (
             <Link
               to="/store/request"
-              className={`ml-2 inline-flex items-center gap-2 border px-3 py-2 text-xs font-bold transition-all ${
+              title="Review selected products"
+              aria-label={`Review your selection, ${count} item${count === 1 ? "" : "s"}`}
+              className={`inline-flex items-center gap-1.5 whitespace-nowrap border px-2.5 py-2 text-xs font-bold transition-all ${
                 isTransparent
                   ? "border-white/25 bg-white/10 text-white hover:bg-white/15"
                   : "border-[#F0A20E]/35 bg-[#F0A20E]/8 text-[#041627] hover:bg-[#F0A20E]/14"
               }`}
             >
               <ClipboardList size={14} />
-              YOUR SELECTION
+              <span>Selection</span>
               <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F0A20E] px-1.5 text-[10px] font-black text-[#041627]">
                 {count}
               </span>
             </Link>
-          )}
-        </div>
-
-        {/* Right: call + WhatsApp + CTA */}
-        <div className="hidden lg:flex items-center gap-5">
+          )>
           <a
             href={COMPANY_PHONE_TEL}
-            className={`flex items-center gap-1.5 text-xs transition-colors ${
+            className={`hidden 2xl:flex items-center gap-1.5 whitespace-nowrap text-xs transition-colors ${
               isTransparent ? "text-white/55 hover:text-white/80" : "text-[#0d1b2e]/40 hover:text-[#C8971A]"
             }`}
             style={{ fontFamily: "var(--font-ui)" }}
@@ -246,7 +249,7 @@ export function Navbar() {
           </a>
           <a
             href="/#quote-form"
-            className="px-5 py-2.5 text-sm font-semibold transition-all hover:opacity-90 text-[#041627]"
+            className="whitespace-nowrap px-4 py-2.5 text-sm font-semibold transition-all hover:opacity-90 text-[#041627]"
             style={{
               background: "linear-gradient(135deg, #F0A20E 0%, #FFB830 100%)",
               fontFamily: "var(--font-ui)",
@@ -260,7 +263,7 @@ export function Navbar() {
         {/* Mobile toggle */}
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className={`lg:hidden p-2 transition-colors ${
+          className={`xl:hidden p-2 transition-colors ${
             isTransparent ? "text-white/75 hover:text-white" : "text-[#0d1b2e]/60 hover:text-[#0d1b2e]"
           }`}
           aria-label="Toggle menu"
@@ -272,7 +275,7 @@ export function Navbar() {
       {/* Mobile menu */}
       {mobileOpen && (
         <div
-          className="lg:hidden bg-white border-t border-[#e8edf3] px-6 pb-6 pt-3 space-y-0.5"
+          className="xl:hidden bg-white border-t border-[#e8edf3] px-6 pb-6 pt-3 space-y-0.5"
           style={{ fontFamily: "var(--font-ui)" }}
         >
           {count > 0 && (
