@@ -184,6 +184,8 @@ export function About() {
                 <img
                   src="/site-images/project-site-team.jpg"
                   alt="Izy Tech Services team conducting an on-site inspection"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                   style={{ objectPosition: "center 50%" }}
                 />
@@ -331,6 +333,8 @@ export function About() {
                   <motion.img
                     src={founder.photo_url}
                     alt={founder.name}
+                    loading="lazy"
+                    decoding="async"
                     className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
                     style={{ objectPosition: "center 18%" }}
                   />

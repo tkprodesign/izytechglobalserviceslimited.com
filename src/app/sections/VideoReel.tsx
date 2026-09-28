@@ -6,14 +6,16 @@ const reels = [
   {
     src: "/site-videos/work-reel-1.mp4",
     label: "Solar Installation",
+    poster: "/site-images/project-commercial-solar.jpg",
   },
   {
     src: "/site-videos/work-reel-2.mp4",
     label: "Energy Systems",
+    poster: "/site-images/project-power-unit.jpg",
   },
 ];
 
-function VideoCard({ src, label }: { src: string; label: string }) {
+function VideoCard({ src, label, poster }: { src: string; label: string; poster: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -39,8 +41,7 @@ function VideoCard({ src, label }: { src: string; label: string }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="relative overflow-hidden cursor-pointer group"
-      onClick={toggle}
+      className="relative overflow-hidden group"
     >
       <video
         ref={videoRef}
@@ -48,6 +49,8 @@ function VideoCard({ src, label }: { src: string; label: string }) {
         muted
         playsInline
         loop
+        preload="metadata"
+        poster={poster}
         className="w-full h-64 lg:h-80 object-cover"
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
@@ -61,16 +64,23 @@ function VideoCard({ src, label }: { src: string; label: string }) {
 
       {/* Play / pause button */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <motion.div
-          animate={{ opacity: playing ? 0 : 1, scale: playing ? 0.8 : 1 }}
-          className="w-16 h-16 rounded-full flex items-center justify-center border-2 border-white/70 bg-white/10 backdrop-blur-sm"
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label={playing ? `Pause ${label} video` : `Play ${label} video`}
+          className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F0A20E] focus-visible:ring-offset-2 focus-visible:ring-offset-[#041627]"
         >
-          {playing ? (
-            <Pause size={22} className="text-white" />
-          ) : (
-            <Play size={22} className="text-white ml-1" />
-          )}
-        </motion.div>
+          <motion.span
+            animate={{ opacity: playing ? 0.2 : 1, scale: playing ? 0.88 : 1 }}
+            className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-white/70 bg-white/10 backdrop-blur-sm"
+          >
+            {playing ? (
+              <Pause size={22} className="text-white" />
+            ) : (
+              <Play size={22} className="ml-1 text-white" />
+            )}
+          </motion.span>
+        </button>
       </div>
 
       {/* Label + mute */}
@@ -139,7 +149,7 @@ export function VideoReel() {
         {/* Videos */}
         <div className="grid md:grid-cols-2 gap-4">
           {reels.map((r) => (
-            <VideoCard key={r.src} src={r.src} label={r.label} />
+            <VideoCard key={r.src} src={r.src} label={r.label} poster={r.poster} />
           ))}
         </div>
       </div>

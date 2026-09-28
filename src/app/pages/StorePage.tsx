@@ -93,7 +93,7 @@ function ProductCard({ product }: { product: Product }) {
           </span>
         )}
         {product.images?.[0] ? (
-          <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+          <img src={product.images[0]} alt={product.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
         ) : (
           <Icon size={56} style={{ color: `${color}55` }} strokeWidth={1} />
         )}

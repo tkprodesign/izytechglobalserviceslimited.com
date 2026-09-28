@@ -274,6 +274,8 @@ export function ProjectsPage() {
                           <img
                             src={projectImage(project)}
                             alt={project.title}
+                            loading="lazy"
+                            decoding="async"
                             onError={imageFallback}
                             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                             data-testid={`img-project-${project.id}`}

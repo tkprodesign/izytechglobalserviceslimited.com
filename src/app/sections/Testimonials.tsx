@@ -65,7 +65,9 @@ export function Testimonials() {
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={prev}
+                aria-label="Previous testimonial"
                 className="w-11 h-11 border border-white/15 flex items-center justify-center text-white/50 hover:text-white hover:border-white/40 transition-all"
               >
                 <ChevronLeft size={18} />
@@ -74,7 +76,9 @@ export function Testimonials() {
                 {String(idx + 1).padStart(2, "0")} / {String(testimonials.length).padStart(2, "0")}
               </span>
               <button
+                type="button"
                 onClick={next}
+                aria-label="Next testimonial"
                 className="w-11 h-11 border border-white/15 flex items-center justify-center text-white/50 hover:text-white hover:border-white/40 transition-all"
               >
                 <ChevronRight size={18} />
