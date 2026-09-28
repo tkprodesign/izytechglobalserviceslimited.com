@@ -730,6 +730,21 @@ export function InvoicesPage() {
 
           </div>
         </div>
+        {mobileView === 'list' && invoices.length > 0 && (
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+            {[
+              { label: 'Total Invoices', value: invoices.length, color: '#2563eb' },
+              { label: 'Pending', value: invoices.filter(i => i.status === 'unpaid' || i.status === 'overdue').length, color: '#b45309' },
+              { label: 'Paid', value: invoices.filter(i => i.status === 'paid').length, color: '#16a34a' },
+              { label: 'Total Revenue', value: naira(invoices.reduce((sum, invoice) => sum + (invoice.status === 'paid' ? invoice.total : 0), 0)), color: '#6366f1' },
+            ].map(stat => (
+              <div key={stat.label} className="min-w-0 rounded-xl border bg-white p-3 sm:p-4" style={{ borderColor: '#e2e8f0' }}>
+                <p className="truncate text-[10px] font-medium uppercase tracking-wider sm:text-[11px]" style={{ color: '#94a3b8' }}>{stat.label}</p>
+                <p className="mt-1 break-words text-base font-bold sm:text-lg" style={{ color: stat.color }}>{stat.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
         {error && (
@@ -986,23 +1001,6 @@ export function InvoicesPage() {
             </>
           )}
         </div>
-
-        {/* ═══ Mobile stats strip ═══ */}
-        {mobileView === 'list' && invoices.length > 0 && (
-          <div className="md:hidden mt-4 grid grid-cols-2 gap-3">
-            {[
-              { label: 'Total Invoices', value: invoices.length, color: '#2563eb' },
-              { label: 'Pending', value: invoices.filter(i => i.status === 'unpaid' || i.status === 'overdue').length, color: '#b45309' },
-              { label: 'Paid', value: invoices.filter(i => i.status === 'paid').length, color: '#16a34a' },
-              { label: 'Total Revenue', value: naira(invoices.reduce((s, i) => s + (i.status === 'paid' ? i.total : 0), 0)), color: '#6366f1' },
-            ].map(stat => (
-              <div key={stat.label} className="rounded-xl border p-4" style={{ background: '#fff', borderColor: '#e2e8f0' }}>
-                <p className="text-[11px] font-medium uppercase tracking-wider" style={{ color: '#94a3b8' }}>{stat.label}</p>
-                <p className="text-lg font-bold mt-1" style={{ color: stat.color }}>{stat.value}</p>
-              </div>
-            ))}
-          </div>
-        )}
 
         {/* ═══ Editor ═══ */}
         <div className={`rounded-2xl border overflow-hidden bg-white ${mobileView === 'list' ? 'hidden' : ''}`} style={{ borderColor: '#e2e8f0' }}>
