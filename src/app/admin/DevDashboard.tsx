@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { DevDashboardLayout } from './DevDashboardLayout';
-import { getToken, removeToken } from '../../lib/auth';
+import { authJson, publicJson } from '../../lib/adminApi';
 import { ngDate } from '../../lib/ngtime';
-import { useNavigate } from 'react-router';
 import {
   Mail,
   FileText,
@@ -26,8 +25,6 @@ import {
   FileOutput,
   RefreshCw,
 } from 'lucide-react';
-
-const API = import.meta.env.VITE_API_URL ?? '';
 
 interface Stats {
   contacts: number;
@@ -153,34 +150,21 @@ export function DevDashboard() {
   const [lastHealthCheck, setLastHealthCheck] = useState<Date | null>(null);
   const [lastDataRefresh, setLastDataRefresh] = useState<Date | null>(null);
   const [recentErrors, setRecentErrors] = useState<DashboardError[]>([]);
-  const token = getToken();
-  const navigate = useNavigate();
 
   useEffect(() => {
     let active = true;
-    const headers = { Authorization: `Bearer ${token}` };
     setRefreshing(true);
     setApiHealth('loading');
     setDbHealth('loading');
-
-    const getJson = async (path: string, auth = true) => {
-      const response = await fetch(`${API}${path}`, auth ? { headers } : undefined);
-      const data = await response.json();
-      if (!response.ok) {
-        const error = new Error(data.error || `Request failed (${response.status})`) as Error & { status?: number };
-        error.status = response.status;
-        throw error;
-      }
-      return data;
-    };
+    setRecentErrors([]);
 
     Promise.allSettled([
-      getJson('/api/health', false),
-      getJson('/api/health/db', false),
-      getJson('/api/dev/system'),
-      getJson('/api/admin/stats'),
-      getJson('/api/admin/contacts?limit=3'),
-      getJson('/api/admin/quotes?limit=3'),
+      publicJson('/api/health'),
+      publicJson('/api/health/db'),
+      authJson<SystemInfo>('/api/dev/system', {}, '/dev/login'),
+      authJson<Stats>('/api/admin/stats', {}, '/dev/login'),
+      authJson<{ data?: Contact[] }>('/api/admin/contacts?limit=3', {}, '/dev/login'),
+      authJson<{ data?: Quote[] }>('/api/admin/quotes?limit=3', {}, '/dev/login'),
     ]).then(results => {
       if (!active) return;
       const errors: DashboardError[] = [];
@@ -196,15 +180,7 @@ export function DevDashboard() {
 
       const systemResult = results[2];
       if (systemResult.status === 'fulfilled') setSystemInfo(systemResult.value);
-      else {
-        const error = systemResult.reason as Error & { status?: number };
-        if (error.status === 401 || error.status === 403) {
-          removeToken();
-          navigate('/dev/login');
-          return;
-        }
-        errors.push({ at: new Date().toISOString(), message: 'Runtime and deployment details could not be loaded.' });
-      }
+      else errors.push({ at: new Date().toISOString(), message: 'Runtime and deployment details could not be loaded.' });
 
       const statsResult = results[3];
       const contactsResult = results[4];
@@ -228,7 +204,7 @@ export function DevDashboard() {
     });
 
     return () => { active = false; };
-  }, [token, navigate, refreshKey]);
+  }, [refreshKey]);
 
   const statusIcon = (s: 'loading' | 'ok' | 'error') =>
     s === 'loading' ? <AlertCircle size={14} style={{ color: '#ffc425' }} />

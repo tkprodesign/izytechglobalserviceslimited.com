@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
 import { DevDashboardLayout } from './DevDashboardLayout';
-import { getToken, removeToken } from '../../lib/auth';
+import { authJson, publicJson } from '../../lib/adminApi';
 import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
@@ -49,32 +48,28 @@ export function DevSystemPage() {
   const [info, setInfo] = useState<SystemInfo | null>(null);
   const [apiHealth, setApiHealth] = useState<'loading' | 'ok' | 'error'>('loading');
   const [dbHealth, setDbHealth] = useState<'loading' | 'ok' | 'error'>('loading');
-  const token = getToken();
-  const navigate = useNavigate();
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const headers = { Authorization: `Bearer ${token}` };
+    let active = true;
+    setError('');
 
-    fetch(`${API}/api/health`)
-      .then(r => r.ok ? setApiHealth('ok') : setApiHealth('error'))
-      .catch(() => setApiHealth('error'));
+    publicJson('/api/health')
+      .then(() => { if (active) setApiHealth('ok'); })
+      .catch(() => { if (active) setApiHealth('error'); });
 
-    fetch(`${API}/api/health/db`)
-      .then(r => r.ok ? setDbHealth('ok') : setDbHealth('error'))
-      .catch(() => setDbHealth('error'));
+    publicJson('/api/health/db')
+      .then(() => { if (active) setDbHealth('ok'); })
+      .catch(() => { if (active) setDbHealth('error'); });
 
-    fetch(`${API}/api/dev/system`, { headers })
-      .then(r => {
-        if (r.status === 401 || r.status === 403) {
-          removeToken();
-          navigate('/dev/login');
-          return null;
-        }
-        return r.json();
-      })
-      .then(d => { if (d && !d.error) setInfo(d); })
-      .catch(() => {});
-  }, [token]);
+    authJson<SystemInfo>('/api/dev/system', {}, '/dev/login')
+      .then(data => { if (active) setInfo(data); })
+      .catch(loadError => {
+        if (active) setError(loadError instanceof Error ? loadError.message : 'Unable to load system information.');
+      });
+
+    return () => { active = false; };
+  }, []);
 
   const statusIcon = (s: 'loading' | 'ok' | 'error') =>
     s === 'loading' ? <AlertCircle size={16} style={{ color: '#ffc425' }} />
@@ -88,6 +83,12 @@ export function DevSystemPage() {
           <h1 className="text-2xl font-bold" style={{ color: 'var(--izy-navy)' }}>System Info</h1>
           <p className="text-sm mt-1" style={{ color: '#5a6a82' }}>Developer-only view — live infrastructure health</p>
         </div>
+
+        {error && (
+          <div role="alert" className="mb-5 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* API Health */}

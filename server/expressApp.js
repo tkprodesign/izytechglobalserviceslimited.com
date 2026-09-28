@@ -25,7 +25,12 @@ const {
 } = require('./lib/r2');
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
+
+if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+  throw new Error('SESSION_SECRET must be configured in production');
+}
 const JWT_SECRET = process.env.SESSION_SECRET || 'izy-dev-secret-change-in-prod';
 
 // ── Database ──────────────────────────────────────────────────────────────────
@@ -1298,9 +1303,42 @@ app.get('/api/dev/analytics', requireDev, async (req, res) => {
 });
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 8;
+const loginAttempts = new Map();
+
+function loginAttemptKey(req, email) {
+  return `${req.ip || req.socket?.remoteAddress || 'unknown'}:${String(email || '').trim().toLowerCase()}`;
+}
+
+function pruneLoginAttempts(now = Date.now()) {
+  for (const [key, entry] of loginAttempts.entries()) {
+    if (now - entry.windowStartedAt >= LOGIN_WINDOW_MS) loginAttempts.delete(key);
+  }
+}
+
+function recordLoginFailure(key, now = Date.now()) {
+  const current = loginAttempts.get(key);
+  if (!current || now - current.windowStartedAt >= LOGIN_WINDOW_MS) {
+    loginAttempts.set(key, { count: 1, windowStartedAt: now });
+    return;
+  }
+  current.count += 1;
+}
+
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+
+  const now = Date.now();
+  pruneLoginAttempts(now);
+  const attemptKey = loginAttemptKey(req, email);
+  const attempt = loginAttempts.get(attemptKey);
+  if (attempt && attempt.count >= LOGIN_MAX_ATTEMPTS && now - attempt.windowStartedAt < LOGIN_WINDOW_MS) {
+    const retryAfterSeconds = Math.max(1, Math.ceil((LOGIN_WINDOW_MS - (now - attempt.windowStartedAt)) / 1000));
+    res.set('Retry-After', String(retryAfterSeconds));
+    return res.status(429).json({ error: 'Too many sign-in attempts. Please try again later.' });
+  }
 
   const DEVELOPER_EMAIL = process.env.DEVELOPER_EMAIL || 'developer@izytechglobalservices.com';
   const DEVELOPER_PASS  = process.env.DEVELOPER_EMAIL_PASSWORD;
@@ -1311,8 +1349,12 @@ app.post('/api/auth/login', (req, res) => {
   if (email === DEVELOPER_EMAIL && password === DEVELOPER_PASS) role = 'developer';
   if (email === ADMIN_EMAIL && password === ADMIN_PASS) role = 'admin';
 
-  if (!role) return res.status(401).json({ error: 'Invalid email or password' });
+  if (!role) {
+    recordLoginFailure(attemptKey, now);
+    return res.status(401).json({ error: 'Invalid email or password' });
+  }
 
+  loginAttempts.delete(attemptKey);
   const token = jwt.sign({ email, role }, JWT_SECRET, { expiresIn: '8h' });
   res.json({ token, role });
 });
@@ -1320,17 +1362,32 @@ app.post('/api/auth/login', (req, res) => {
 // ── Admin: Stats ──────────────────────────────────────────────────────────────
 app.get('/api/admin/stats', requireAuth, async (_req, res) => {
   try {
-    const [contacts, quotes, contactsWeek, quotesWeek] = await Promise.all([
+    const [
+      contacts, quotes, contactsWeek, quotesWeek,
+      newContacts, assessmentActions, storeEnquiries, unpaidInvoices, overdueInvoices,
+    ] = await Promise.all([
       db.query('SELECT COUNT(*)::int AS n FROM contact_submissions'),
-      db.query('SELECT COUNT(*)::int AS n FROM quote_requests'),
+      db.query("SELECT COUNT(*)::int AS n FROM quote_requests WHERE request_type = 'quote'"),
       db.query("SELECT COUNT(*)::int AS n FROM contact_submissions WHERE created_at >= NOW() - INTERVAL '7 days'"),
-      db.query("SELECT COUNT(*)::int AS n FROM quote_requests WHERE created_at >= NOW() - INTERVAL '7 days'"),
+      db.query("SELECT COUNT(*)::int AS n FROM quote_requests WHERE request_type = 'quote' AND created_at >= NOW() - INTERVAL '7 days'"),
+      db.query("SELECT COUNT(*)::int AS n FROM contact_submissions WHERE status = 'new'"),
+      db.query("SELECT COUNT(*)::int AS n FROM quote_requests WHERE request_type = 'site_assessment' AND status IN ('new', 'under_review', 'payment_proof_submitted')"),
+      db.query("SELECT COUNT(*)::int AS n FROM store_enquiries WHERE status = 'new'"),
+      db.query("SELECT COUNT(*)::int AS n FROM invoices WHERE status = 'unpaid' AND (due_date IS NULL OR due_date >= CURRENT_DATE)"),
+      db.query("SELECT COUNT(*)::int AS n FROM invoices WHERE status = 'overdue' OR (status = 'unpaid' AND due_date < CURRENT_DATE)"),
     ]);
     res.json({
       contacts: contacts.rows[0].n,
       quotes: quotes.rows[0].n,
       contactsThisWeek: contactsWeek.rows[0].n,
       quotesThisWeek: quotesWeek.rows[0].n,
+      needsAttention: {
+        newContacts: newContacts.rows[0].n,
+        assessments: assessmentActions.rows[0].n,
+        storeEnquiries: storeEnquiries.rows[0].n,
+        unpaidInvoices: unpaidInvoices.rows[0].n,
+        overdueInvoices: overdueInvoices.rows[0].n,
+      },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -2353,7 +2410,7 @@ app.use('/api/dev/email', requireDev, emailRoutes);
 app.use('/api/admin/email', requireAuth, emailRoutes);
 
 // ── Dev: System info ──────────────────────────────────────────────────────────
-app.get('/api/dev/system', requireDev, (_req, res) => {
+app.get('/api/dev/system', requireDev, async (_req, res) => {
   const mem = process.memoryUsage();
   const secrets = [
     'DATABASE_URL', 'SESSION_SECRET', 'RESEND_API_KEY',
@@ -2366,6 +2423,13 @@ app.get('/api/dev/system', requireDev, (_req, res) => {
     'ALLOWED_ORIGINS',
     // Note: VITE_API_URL is a Cloudflare Pages frontend variable — not present on the backend
   ];
+  let dbConnected = false;
+  try {
+    await db.query('SELECT 1');
+    dbConnected = true;
+  } catch (err) {
+    console.error('Developer system DB probe failed:', err.message);
+  }
   res.json({
     uptime: process.uptime(),
     nodeVersion: process.version,
@@ -2373,7 +2437,7 @@ app.get('/api/dev/system', requireDev, (_req, res) => {
     env: process.env.NODE_ENV || 'development',
     memoryUsed: mem.heapUsed,
     memoryTotal: mem.heapTotal,
-    dbConnected: true,
+    dbConnected,
     configuredSecrets: Object.fromEntries(secrets.map(k => [k, !!process.env[k]])),
     deploymentVersion: process.env.RENDER_GIT_COMMIT || process.env.GITHUB_SHA || null,
     checkedAt: new Date().toISOString(),

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { DashboardLayout } from './DashboardLayout';
-import { getToken } from '../../lib/auth';
+import { authJson } from '../../lib/adminApi';
 import { ngDate } from '../../lib/ngtime';
 import {
   Mail,
@@ -17,13 +17,18 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL ?? '';
-
 interface Stats {
   contacts: number;
   quotes: number;
   contactsThisWeek: number;
   quotesThisWeek: number;
+  needsAttention?: {
+    newContacts: number;
+    assessments: number;
+    storeEnquiries: number;
+    unpaidInvoices: number;
+    overdueInvoices: number;
+  };
 }
 
 interface Contact {
@@ -69,13 +74,6 @@ function fmt(iso: string) {
   return ngDate(iso);
 }
 
-async function fetchJson(path: string, headers: HeadersInit) {
-  const response = await fetch(`${API}${path}`, { headers });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
-  return data;
-}
-
 const quickAccessItems = [
   { to: '/admin/contacts', label: 'Contacts', description: 'Review incoming messages', icon: Mail, color: '#1d70c9' },
   { to: '/admin/email', label: 'Email Manager', description: 'Send and manage company email', icon: Mail, color: '#2563eb' },
@@ -96,16 +94,14 @@ export function AdminDashboard() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [loadErrors, setLoadErrors] = useState<string[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const token = getToken();
 
   useEffect(() => {
     let active = true;
-    const headers = { Authorization: `Bearer ${token}` };
     setRefreshing(true);
     Promise.allSettled([
-      fetchJson('/api/admin/stats', headers),
-      fetchJson('/api/admin/contacts?limit=5', headers),
-      fetchJson('/api/admin/quotes?limit=5', headers),
+      authJson<Stats>('/api/admin/stats'),
+      authJson<{ data?: Contact[] }>('/api/admin/contacts?limit=5'),
+      authJson<{ data?: Quote[] }>('/api/admin/quotes?limit=5'),
     ]).then(([statsResult, contactsResult, quotesResult]) => {
       if (!active) return;
       const errors: string[] = [];
@@ -124,7 +120,16 @@ export function AdminDashboard() {
       }
     });
     return () => { active = false; };
-  }, [token, refreshKey]);
+  }, [refreshKey]);
+
+  const attentionItems = [
+    { to: '/admin/contacts', label: 'New contacts', count: stats?.needsAttention?.newContacts ?? 0, detail: 'Awaiting first follow-up', icon: Mail, color: '#1d70c9' },
+    { to: '/admin/assessments', label: 'Assessment actions', count: stats?.needsAttention?.assessments ?? 0, detail: 'Review or payment action', icon: ClipboardCheck, color: '#16a34a' },
+    { to: '/admin/enquiries', label: 'New store enquiries', count: stats?.needsAttention?.storeEnquiries ?? 0, detail: 'Not reviewed yet', icon: ClipboardList, color: '#8b5cf6' },
+    { to: '/admin/invoices', label: 'Unpaid invoices', count: stats?.needsAttention?.unpaidInvoices ?? 0, detail: 'Open and not overdue', icon: Receipt, color: '#b45309' },
+    { to: '/admin/invoices', label: 'Overdue invoices', count: stats?.needsAttention?.overdueInvoices ?? 0, detail: 'Past due date', icon: Clock, color: '#dc2626' },
+  ];
+  const attentionTotal = attentionItems.reduce((sum, item) => sum + item.count, 0);
 
   return (
     <DashboardLayout>
@@ -163,6 +168,38 @@ export function AdminDashboard() {
               <StatCard icon={TrendingUp} label="Contacts This Week" value={stats?.contactsThisWeek ?? 0} sub="Last 7 days" color="var(--izy-green)" />
               <StatCard icon={Clock} label="Quotes This Week" value={stats?.quotesThisWeek ?? 0} sub="Last 7 days" color="var(--izy-yellow)" />
             </div>
+
+            <section className="mb-8" aria-labelledby="needs-attention-title">
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <h2 id="needs-attention-title" className="text-base font-semibold" style={{ color: 'var(--izy-navy)' }}>Needs attention</h2>
+                  <p className="mt-1 text-sm" style={{ color: '#5a6a82' }}>Live operational items that still need action.</p>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold shadow-sm" style={{ color: attentionTotal ? '#b45309' : '#16803c' }}>
+                  {attentionTotal ? `${attentionTotal} open` : 'All clear'}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                {attentionItems.map(({ to, label, count, detail, icon: Icon, color }) => (
+                  <Link
+                    key={label}
+                    to={to}
+                    className="group flex min-h-[108px] items-start gap-3 rounded-2xl border bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                    style={{ borderColor: count ? `${color}35` : '#eef1f6', '--tw-ring-color': color } as React.CSSProperties}
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ background: `${color}14`, color }}>
+                      <Icon size={17} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-2xl font-bold leading-none" style={{ color: 'var(--izy-navy)' }}>{count}</span>
+                      <span className="mt-2 block text-xs font-semibold" style={{ color: 'var(--izy-navy)' }}>{label}</span>
+                      <span className="mt-1 block text-[11px]" style={{ color: '#8fadc8' }}>{detail}</span>
+                    </span>
+                    <ArrowUpRight size={15} className="shrink-0 opacity-30 transition group-hover:opacity-80" style={{ color }} />
+                  </Link>
+                ))}
+              </div>
+            </section>
 
             {/* CEO shortcuts */}
             <section className="mb-8">
