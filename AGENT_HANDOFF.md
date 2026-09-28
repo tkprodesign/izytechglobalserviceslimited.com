@@ -93,6 +93,7 @@ Recent public-site work on `main`:
 - `73b3810` — added production Open Graph/Twitter sharing metadata, a branded social-share card, route-aware SEO titles/descriptions, canonical handling, Organization/LocalBusiness structured data, `robots.txt`, `sitemap.xml`, and a web manifest.
 - `afbbbc8` — added route-level code splitting, deferred Smartsupp loading, reduced-motion navigation handling, a company credential/trust strip, and a lower-friction project-enquiry-first conversion flow.
 - `5457117` — optimized below-the-fold image loading, video posters/preload behavior, and public media/testimonial accessibility.
+- `07c0cdf` — removed the unmaintained 98% satisfaction statistic from public UI, tightened project-detail media loading/accessibility, and refreshed the site guide.
 
 Public-site rules:
 - Keep the root Open Graph tags in `index.html`; social crawlers often do not execute the React app.
@@ -100,3 +101,7 @@ Public-site rules:
 - New public routes should receive an entry in `SeoManager.tsx` and, where appropriate, `public/sitemap.xml`.
 - Do not reintroduce the unsupported 98% satisfaction statistic unless there is a maintained source for it.
 - Initial lead capture should remain low-friction; site assessment is a distinct next step for projects that require a field visit.
+
+
+### Public-site deployment verification
+The public-site upgrade batches above were each pushed to `main`, passed Control Panel CI, and deployed successfully through Cloudflare Pages. They did not change backend code, so a Render deployment was not required for these batches.
