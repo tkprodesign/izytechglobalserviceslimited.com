@@ -456,7 +456,7 @@ export function EmailPage() {
       >
 
         {/* ═══ MAILROOM RAIL ═══ */}
-        <aside className="hidden md:flex w-[248px] flex-shrink-0 flex-col p-3 text-white" style={{ background: '#071b2d' }}>
+        <aside className="hidden md:flex min-h-0 w-[248px] flex-shrink-0 flex-col overflow-y-auto overscroll-contain p-3 text-white [&>*]:shrink-0" style={{ background: '#071b2d' }}>
           <div className="px-3 py-3 mb-2">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs" style={{ background: '#f0a20e', color: '#071b2d' }}>
