@@ -36,6 +36,7 @@ if (!process.env.DATABASE_URL) {
 
 const db = new Pool({
   connectionString: process.env.DATABASE_URL,
+  connectionTimeoutMillis: 10_000,
   ssl: { rejectUnauthorized: false },
 });
 
@@ -63,9 +64,27 @@ emailRoutes.setArchiveStore({
   },
 });
 
-db.connect()
+async function connectToDatabaseWithRetry() {
+  const maxAttempts = 5;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    let client;
+    try {
+      client = await db.connect();
+      console.log('Connected to Neon PostgreSQL');
+      return;
+    } catch (error) {
+      if (attempt === maxAttempts) throw error;
+      const delayMs = attempt * 1_000;
+      console.error(`Neon connection attempt ${attempt}/${maxAttempts} failed; retrying in ${delayMs}ms:`, error.message);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    } finally {
+      client?.release();
+    }
+  }
+}
+
+connectToDatabaseWithRetry()
   .then(() => {
-    console.log('Connected to Neon PostgreSQL');
     return initTestimonialsTable();
   })
   .then(() => initSiteSettingsTable())
