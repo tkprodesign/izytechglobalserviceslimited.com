@@ -451,7 +451,7 @@ export function EmailPage() {
   return (
     <DashboardLayout>
       <div
-        className="flex min-h-0 h-full overflow-hidden"
+        className="flex h-full min-h-0 w-full min-w-0 max-w-full overflow-hidden"
         style={{ background: '#f5f7fb' }}
       >
 
@@ -555,7 +555,7 @@ export function EmailPage() {
         </aside>
 
         {/* ═══ MESSAGE LIST ═══ */}
-        <div className={`min-h-0 flex-1 xl:flex-[0_0_370px] flex flex-col border-r ${mobileView === 'detail' ? 'hidden xl:flex' : 'flex'}`} style={{ background: '#fff', borderColor: '#e7ecf3' }}>
+        <div className={`min-h-0 min-w-0 w-full flex-1 xl:flex-[0_0_370px] flex flex-col border-r ${mobileView === 'detail' ? 'hidden xl:flex' : 'flex'}`} style={{ background: '#fff', borderColor: '#e7ecf3' }}>
           {/* Header */}
           <div className="px-5 pt-5 pb-4 border-b" style={{ borderColor: '#e7ecf3' }}>
             {/* Mobile back to mailboxes */}
@@ -604,7 +604,7 @@ export function EmailPage() {
                 const acct = [ALL_MAIL, ...accounts].find(a => a.id === e.target.value);
                 if (acct) switchAccount(acct);
               }}
-              className="xl:hidden w-full mb-3 px-3 py-2.5 text-sm rounded-xl border outline-none"
+              className="xl:hidden w-full min-w-0 max-w-full mb-3 px-3 py-2.5 text-sm rounded-xl border outline-none"
               style={{ borderColor: '#e2e8f0', color: '#334155', background: '#f8fafc' }}
             >
               {[ALL_MAIL, ...accounts].map(acct => <option key={acct.id} value={acct.id}>{acct.label}</option>)}
@@ -743,7 +743,7 @@ export function EmailPage() {
         </div>
 
         {/* ═══ MESSAGE DETAIL ═══ */}
-        <div className={`min-h-0 flex-1 flex-col overflow-hidden ${mobileView === 'list' ? 'hidden xl:flex' : 'flex'}`}>
+        <div className={`min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden ${mobileView === 'list' ? 'hidden xl:flex' : 'flex'}`}>
           {!selectedMeta ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-5 px-6">
               <div className="w-20 h-20 rounded-3xl flex items-center justify-center" style={{ background: '#eaf2ff' }}>

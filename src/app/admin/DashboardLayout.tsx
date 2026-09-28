@@ -230,7 +230,7 @@ export function DashboardLayout({ children }: Props) {
             <p className="text-[11px]" style={{ color: '#8fadc8' }}>CEO Access</p>
           </div>
         </header>
-        <div className="flex-1 min-h-0 overflow-auto">
+        <div className="min-h-0 min-w-0 flex-1 overflow-auto">
           {children}
         </div>
       </main>
