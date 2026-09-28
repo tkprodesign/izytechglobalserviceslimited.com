@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { DashboardLayout } from './DashboardLayout';
 import { getToken } from '../../lib/auth';
 import { ngDateTime } from '../../lib/ngtime';
-import { Save } from 'lucide-react';
+import { Mail, MessageCircle, Phone, Save } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
 const followUpStatuses = [
@@ -29,6 +29,23 @@ interface Contact {
 
 function fmt(iso: string) {
   return ngDateTime(iso);
+}
+
+function whatsappHref(contact: Contact) {
+  const rawPhone = contact.phone?.trim() ?? '';
+  let digits = rawPhone.replace(/\D/g, '');
+  if (rawPhone.startsWith('+')) {
+    // International numbers already include their country code.
+  } else if (digits.startsWith('0')) {
+    digits = `234${digits.slice(1)}`;
+  } else if (digits.length === 10 && !digits.startsWith('234')) {
+    digits = `234${digits}`;
+  }
+  if (digits.length < 7 || digits.length > 15) return null;
+
+  const subject = contact.subject ? ` about ${contact.subject}` : '';
+  const message = `Hello ${contact.name}, this is IZY Technologies following up on your enquiry${subject}.`;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 }
 
 export function ContactsPage() {
@@ -135,6 +152,42 @@ export function ContactsPage() {
           {/* Detail */}
           {selected && (
             <div className="w-96 flex-shrink-0 bg-white rounded-2xl shadow-sm p-6 self-start sticky top-8">
+              {(() => {
+                const whatsapp = selected.phone ? whatsappHref(selected) : null;
+                return (
+                  <div className="mb-5 flex flex-wrap gap-2">
+                    {selected.email && (
+                      <a
+                        href={`mailto:${selected.email}?subject=${encodeURIComponent(`Re: ${selected.subject || 'Your enquiry'}`)}&body=${encodeURIComponent(`Hello ${selected.name},\n\nThank you for your enquiry.\n\nIZY Technologies`)}`}
+                        className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white"
+                        style={{ background: 'var(--izy-blue)' }}
+                      >
+                        <Mail size={14} /> Email
+                      </a>
+                    )}
+                    {selected.phone && (
+                      <a
+                        href={`tel:${selected.phone}`}
+                        className="inline-flex items-center gap-2 rounded-lg border border-[#d8e0e7] px-3 py-2 text-xs font-semibold"
+                        style={{ color: 'var(--izy-navy)' }}
+                      >
+                        <Phone size={14} /> Call
+                      </a>
+                    )}
+                    {whatsapp && (
+                      <a
+                        href={whatsapp}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white"
+                        style={{ background: '#168a57' }}
+                      >
+                        <MessageCircle size={14} /> WhatsApp
+                      </a>
+                    )}
+                  </div>
+                );
+              })()}
               <div className="flex items-center gap-3 mb-5">
                 <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold" style={{ background: 'var(--izy-blue)' }}>
                   {selected.name[0]?.toUpperCase()}
@@ -196,13 +249,6 @@ export function ContactsPage() {
                 <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--izy-navy)' }}>{selected.message}</p>
               </div>
               <p className="text-xs" style={{ color: '#8fadc8' }}>{fmt(selected.created_at)}</p>
-              {selected.email && <a
-                href={`mailto:${selected.email}?subject=Re: ${encodeURIComponent(selected.subject || 'Your enquiry')}`}
-                className="mt-4 w-full flex items-center justify-center py-2.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
-                style={{ background: 'var(--izy-blue)' }}
-              >
-                Reply via email
-              </a>}
             </div>
           )}
         </div>
