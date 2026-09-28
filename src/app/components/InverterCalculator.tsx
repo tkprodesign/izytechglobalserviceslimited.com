@@ -50,6 +50,40 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
   const [backupHours, setBackupHours] = useState(4);
   const [showBackupHelp, setShowBackupHelp] = useState(false);
   const [hasCalculated, setHasCalculated] = useState(false);
+  const [contact, setContact] = useState({ name: '', email: '', phone: '' });
+  const [savedContact, setSavedContact] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [contactError, setContactError] = useState('');
+
+  async function calculate(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (saving || totalWatts <= 0) return;
+    const details = { name: contact.name.trim(), email: contact.email.trim(), phone: contact.phone.trim() };
+    if (!details.name || (!details.email && !details.phone)) {
+      setContactError('Enter your name and at least one contact detail: email or phone.');
+      return;
+    }
+    setContactError('');
+    setSaving(true);
+    try {
+      const key = JSON.stringify(details);
+      if (key !== savedContact) {
+        const response = await fetch(`${import.meta.env.VITE_API_URL ?? ''}/api/altpower/enquiries`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: key,
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Could not save your details. Please try again.');
+        setSavedContact(key);
+      }
+      setHasCalculated(true);
+    } catch (error) {
+      setContactError(error instanceof Error ? error.message : 'Could not save your details. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const customLoadWatts = Math.max(0, Number(customWatts) || 0);
   const totalWatts = useMemo(
@@ -281,6 +315,23 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
               )}
             </div>
 
+            <form onSubmit={calculate} className="mt-6">
+              <fieldset disabled={saving} className="border border-[#dfe7ee] bg-white p-5 sm:p-6">
+                <legend className="px-2 text-sm font-bold text-[#173047]">Step 3: Your contact details</legend>
+                <p className="mb-4 text-sm text-[#60758a]">Enter your name and at least an email address or phone number. Our team will use these details to follow up on your AltPower enquiry.</p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="text-sm font-medium sm:col-span-2">Name *
+                    <input required maxLength={200} autoComplete="name" value={contact.name} onChange={event => setContact({ ...contact, name: event.target.value })} className="mt-1 block w-full border border-[#cbd7e0] px-3 py-3" />
+                  </label>
+                  <label className="text-sm font-medium">Email
+                    <input type="email" maxLength={254} autoComplete="email" required={!contact.phone.trim()} value={contact.email} onChange={event => setContact({ ...contact, email: event.target.value })} className="mt-1 block w-full border border-[#cbd7e0] px-3 py-3" />
+                  </label>
+                  <label className="text-sm font-medium">Phone
+                    <input type="tel" maxLength={30} autoComplete="tel" required={!contact.email.trim()} value={contact.phone} onChange={event => setContact({ ...contact, phone: event.target.value })} className="mt-1 block w-full border border-[#cbd7e0] px-3 py-3" />
+                  </label>
+                </div>
+                {contactError && <p role="alert" className="mt-3 text-sm text-red-700">{contactError}</p>}
+              </fieldset>
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
@@ -291,15 +342,15 @@ export function InverterCalculator({ open, onOpenChange }: InverterCalculatorPro
                 <RotateCcw size={14} /> Reset
               </button>
               <button
-                type="button"
-                onClick={() => setHasCalculated(true)}
+                type="submit"
                 className="inline-flex items-center justify-center gap-2 bg-[#35A96B] px-6 py-3.5 text-sm font-bold text-white transition-colors hover:bg-[#278d58] disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ fontFamily: "var(--font-ui)" }}
-                disabled={totalWatts === 0}
+                disabled={totalWatts === 0 || saving}
               >
-                <Calculator size={15} /> Calculate my system
+                <Calculator size={15} /> {saving ? 'Saving your details…' : 'Calculate my system'}
               </button>
             </div>
+            </form>
 
             <div className="mt-8 border border-[#cce8d6] bg-[#eef8f2] p-5 sm:p-6" aria-live="polite">
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#298054]" style={{ fontFamily: "var(--font-ui)" }}>

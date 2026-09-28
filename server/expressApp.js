@@ -303,6 +303,8 @@ async function initCoreTables() {
     )
   `);
 
+  await db.query('ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS phone TEXT');
+
   await db.query(`
     CREATE TABLE IF NOT EXISTS quote_requests (
       id         SERIAL PRIMARY KEY,
@@ -1329,6 +1331,8 @@ app.get('/api/admin/quotes', requireAuth, async (req, res) => {
 });
 
 // ── Admin: Submit contact form (public) ───────────────────────────────────────
+app.post('/api/altpower/enquiries', require('./routes/altpower').createAltPowerEnquiryHandler(db));
+
 app.post('/api/contact', async (req, res) => {
   const { name, email, phone, service, message, subject } = req.body || {};
   if (!name || !email || !message) return res.status(400).json({ error: 'name, email and message required' });

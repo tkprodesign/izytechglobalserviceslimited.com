@@ -9,6 +9,7 @@ interface Contact {
   id: number;
   name: string;
   email: string;
+  phone?: string | null;
   subject: string;
   message: string;
   created_at: string;
@@ -82,7 +83,8 @@ export function ContactsPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-sm" style={{ color: 'var(--izy-navy)' }}>{selected.name}</p>
-                  <a href={`mailto:${selected.email}`} className="text-xs" style={{ color: 'var(--izy-blue)' }}>{selected.email}</a>
+                  {selected.email && <a href={`mailto:${selected.email}`} className="block text-xs" style={{ color: 'var(--izy-blue)' }}>{selected.email}</a>}
+                  {selected.phone && <a href={`tel:${selected.phone}`} className="block text-xs" style={{ color: 'var(--izy-blue)' }}>{selected.phone}</a>}
                 </div>
               </div>
               {selected.subject && (
@@ -96,13 +98,13 @@ export function ContactsPage() {
                 <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--izy-navy)' }}>{selected.message}</p>
               </div>
               <p className="text-xs" style={{ color: '#8fadc8' }}>{fmt(selected.created_at)}</p>
-              <a
+              {selected.email && <a
                 href={`mailto:${selected.email}?subject=Re: ${encodeURIComponent(selected.subject || 'Your enquiry')}`}
                 className="mt-4 w-full flex items-center justify-center py-2.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
                 style={{ background: 'var(--izy-blue)' }}
               >
                 Reply via email
-              </a>
+              </a>}
             </div>
           )}
         </div>
