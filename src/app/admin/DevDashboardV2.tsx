@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { DevDashboardLayout } from './DevDashboardLayout';
+import { DevDashboardLayoutV2 } from './DevDashboardLayoutV2';
 import { VersionSwitcher } from './VersionSwitcher';
 import { getToken, removeToken } from '../../lib/auth';
 import { ngDate } from '../../lib/ngtime';
@@ -22,10 +22,8 @@ import {
   Server,
   Database,
   Activity,
-  Terminal,
   Wrench,
   MessageSquare,
-  Zap,
   FileOutput,
   RefreshCw,
 } from 'lucide-react';
@@ -143,7 +141,11 @@ const quickAccessItems = [
   { to: '/admin/enquiries', label: 'Store Enquiries', description: 'Respond to product interest', icon: ClipboardList, color: '#7c3aed' },
 ];
 
-export function DevDashboard() {
+/**
+ * V2 clone of DevDashboard.
+ * Reproduces the current behaviour before V2 improvements are applied.
+ */
+export function DevDashboardV2() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -239,7 +241,7 @@ export function DevDashboard() {
     : <XCircle size={14} style={{ color: 'var(--destructive)' }} />;
 
   return (
-    <DevDashboardLayout>
+    <DevDashboardLayoutV2>
       <div className="p-6 lg:p-8 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
@@ -249,11 +251,14 @@ export function DevDashboard() {
                 <Eye size={16} style={{ color: '#f26522' }} />
               </div>
               <h1 className="text-2xl font-bold" style={{ color: 'var(--izy-navy)' }}>Command Centre</h1>
+              <span className="rounded-md px-2 py-0.5 text-xs font-semibold text-[#f26522]" style={{ background: 'rgba(242,101,34,0.1)' }}>
+                V2
+              </span>
             </div>
             <p className="text-sm" style={{ color: '#5a6a82' }}>System health, business metrics, and full platform access</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <VersionSwitcher current="original" originalPath="/dev/dashboard" v2Path="/dev/dashboard-v2" variant="dev" />
+            <VersionSwitcher current="v2" originalPath="/dev/dashboard" v2Path="/dev/dashboard-v2" variant="dev" />
             <div className="flex items-center gap-2">
               {statusIcon(apiHealth)}
               <span className="text-xs font-medium" style={{ color: 'var(--izy-navy)' }}>API</span>
@@ -454,6 +459,6 @@ export function DevDashboard() {
           </>
         )}
       </div>
-    </DevDashboardLayout>
+    </DevDashboardLayoutV2>
   );
 }

@@ -95,10 +95,12 @@ import { ScrollProgress } from "./components/ScrollProgress";
 // Admin panel
 import { LoginPage } from "./admin/LoginPage";
 import { AdminDashboard } from "./admin/AdminDashboard";
+import { AdminDashboardV2 } from "./admin/AdminDashboardV2";
 import { ContactsPage } from "./admin/ContactsPage";
 import { QuotesPage } from "./admin/QuotesPage";
 import { DevSystemPage } from "./admin/DevSystemPage";
 import { DevDashboard } from "./admin/DevDashboard";
+import { DevDashboardV2 } from "./admin/DevDashboardV2";
 import { ServicesContentPage } from "./admin/ServicesContentPage";
 import { EmailPage } from "./admin/EmailPage";
 import { SocialsPage } from "./admin/SocialsPage";
@@ -262,6 +264,9 @@ export default function App() {
       <Route path="/admin/dashboard" element={
         <ProtectedRoute><AdminDashboard /></ProtectedRoute>
       } />
+      <Route path="/admin/dashboard-v2" element={
+        <ProtectedRoute><AdminDashboardV2 /></ProtectedRoute>
+      } />
       <Route path="/admin/contacts" element={
         <ProtectedRoute><ContactsPage /></ProtectedRoute>
       } />
@@ -311,6 +316,9 @@ export default function App() {
       {/* Developer-only */}
       <Route path="/dev/dashboard" element={
         <ProtectedRoute requiredRole="developer"><DevDashboard /></ProtectedRoute>
+      } />
+      <Route path="/dev/dashboard-v2" element={
+        <ProtectedRoute requiredRole="developer"><DevDashboardV2 /></ProtectedRoute>
       } />
       <Route path="/dev/analytics" element={
         <ProtectedRoute requiredRole="developer"><SiteAnalyticsPage /></ProtectedRoute>

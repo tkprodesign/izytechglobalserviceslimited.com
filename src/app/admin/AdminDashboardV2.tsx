@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { DashboardLayout } from './DashboardLayout';
+import { DashboardLayoutV2 } from './DashboardLayoutV2';
 import { VersionSwitcher } from './VersionSwitcher';
 import { getToken } from '../../lib/auth';
 import { ngDate } from '../../lib/ngtime';
@@ -88,7 +88,11 @@ const quickAccessItems = [
   { to: '/admin/invoices', label: 'Invoices', description: 'Create and send invoices', icon: Receipt, color: '#b45309' },
 ];
 
-export function AdminDashboard() {
+/**
+ * V2 clone of AdminDashboard.
+ * Reproduces the current behaviour before V2 improvements are applied.
+ */
+export function AdminDashboardV2() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -128,15 +132,20 @@ export function AdminDashboard() {
   }, [token, refreshKey]);
 
   return (
-    <DashboardLayout>
+    <DashboardLayoutV2>
       <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: 'var(--izy-navy)' }}>Dashboard</h1>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl font-bold" style={{ color: 'var(--izy-navy)' }}>Dashboard</h1>
+              <span className="rounded-md px-2 py-0.5 text-xs font-semibold text-[#1d70c9]" style={{ background: 'rgba(29,112,201,0.1)' }}>
+                V2
+              </span>
+            </div>
             <p className="text-sm mt-1" style={{ color: '#5a6a82' }}>Overview of incoming contacts and quote requests</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <VersionSwitcher current="original" originalPath="/admin/dashboard" v2Path="/admin/dashboard-v2" variant="admin" />
+            <VersionSwitcher current="v2" originalPath="/admin/dashboard" v2Path="/admin/dashboard-v2" variant="admin" />
             {lastUpdated && <span className="text-xs" style={{ color: '#8fadc8' }}>Updated {lastUpdated.toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' })}</span>}
             <button type="button" onClick={() => setRefreshKey(key => key + 1)} disabled={refreshing} className="inline-flex items-center gap-2 rounded-lg border border-[#d8e0e7] bg-white px-3 py-2 text-sm font-semibold disabled:opacity-50" style={{ color: 'var(--izy-navy)' }}>
               <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} /> Refresh
@@ -259,6 +268,6 @@ export function AdminDashboard() {
           </>
         )}
       </div>
-    </DashboardLayout>
+    </DashboardLayoutV2>
   );
 }
