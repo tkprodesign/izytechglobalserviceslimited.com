@@ -1416,7 +1416,7 @@ app.get('/api/admin/quotes', requireAuth, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 100, 500);
     const { rows } = await db.query(
-      'SELECT * FROM quote_requests ORDER BY created_at DESC LIMIT $1', [limit]
+      "SELECT * FROM quote_requests WHERE request_type = 'quote' ORDER BY created_at DESC LIMIT $1", [limit]
     );
     res.json({ data: rows });
   } catch (err) {

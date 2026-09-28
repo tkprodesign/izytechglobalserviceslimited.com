@@ -1,0 +1,43 @@
+name: Control Panel CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Cloudflare frontend
+        run: npm run pages:build
+
+      - name: Check backend syntax
+        run: node --check server/expressApp.js
+
+      - name: AltPower tests
+        run: npm run test:altpower
+
+      - name: Contact follow-up tests
+        run: npm run test:contact-followup
+
+      - name: Invoice tests
+        run: npm run test:invoices

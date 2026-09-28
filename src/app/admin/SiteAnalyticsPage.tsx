@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
 import {
   Activity,
   BarChart3,
@@ -13,10 +12,8 @@ import {
   Users,
 } from 'lucide-react';
 import { DevDashboardLayout } from './DevDashboardLayout';
-import { getToken, removeToken } from '../../lib/auth';
+import { authJson } from '../../lib/adminApi';
 import { ngDateTime } from '../../lib/ngtime';
-
-const API = import.meta.env.VITE_API_URL ?? '';
 
 interface CountRow {
   label: string;
@@ -150,24 +147,13 @@ export function SiteAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const token = getToken();
-  const navigate = useNavigate();
 
   const load = useCallback(async (range: number, initial = false) => {
     if (initial) setLoading(true);
     else setRefreshing(true);
     setError('');
     try {
-      const response = await fetch(`${API}/api/dev/analytics?days=${range}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.status === 401 || response.status === 403) {
-        removeToken();
-        navigate('/dev/login');
-        return;
-      }
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Unable to load analytics');
+      const data = await authJson<AnalyticsReport>(`/api/dev/analytics?days=${range}`, {}, '/dev/login');
       setReport(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load analytics');
@@ -175,27 +161,18 @@ export function SiteAnalyticsPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [navigate, token]);
+  }, []);
 
   const loadOnline = useCallback(async () => {
     setOnlineError('');
     try {
-      const response = await fetch(`${API}/api/dev/analytics/online`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.status === 401 || response.status === 403) {
-        removeToken();
-        navigate('/dev/login');
-        return;
-      }
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Unable to load current users');
+      const data = await authJson<{ online: number; visitors?: OnlineVisitor[] }>('/api/dev/analytics/online', {}, '/dev/login');
       setOnlineCount(Number(data.online) || 0);
       setOnlineVisitors(Array.isArray(data.visitors) ? data.visitors : []);
     } catch (err) {
       setOnlineError(err instanceof Error ? err.message : 'Unable to load current users');
     }
-  }, [navigate, token]);
+  }, []);
 
   useEffect(() => {
     load(days, true);
@@ -247,8 +224,9 @@ export function SiteAnalyticsPage() {
         </div>
 
         {loading ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4" role="status" aria-live="polite">
             {[1, 2, 3, 4].map(item => <div key={item} className="h-32 animate-pulse rounded-2xl bg-white/70" />)}
+            <span className="sr-only">Loading site analytics</span>
           </div>
         ) : error ? (
           <div className="rounded-2xl border border-red-100 bg-red-50 p-5 text-sm text-red-700">{error}</div>
@@ -278,32 +256,55 @@ export function SiteAnalyticsPage() {
               ) : onlineVisitors.length === 0 ? (
                 <p className="px-5 py-10 text-center text-sm text-[#8fadc8]">No consented visitors are online right now.</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[780px] text-left text-xs">
-                    <thead className="bg-[#f8fafc] text-[10px] uppercase tracking-wide text-[#8fadc8]">
-                      <tr>
-                        <th className="px-5 py-3 font-semibold">Last signal</th>
-                        <th className="px-5 py-3 font-semibold">Route</th>
-                        <th className="px-5 py-3 font-semibold">Device</th>
-                        <th className="px-5 py-3 font-semibold">Browser / OS</th>
-                        <th className="px-5 py-3 font-semibold">Language / zone</th>
-                        <th className="px-5 py-3 font-semibold">Network</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#eef1f6]">
-                      {onlineVisitors.map((visitor, index) => (
-                        <tr key={`${visitor.last_seen}-${visitor.route}-${index}`} className="text-[#5a6a82]">
-                          <td className="whitespace-nowrap px-5 py-3 text-[#041627]">{ngDateTime(visitor.last_seen)}</td>
-                          <td className="px-5 py-3 font-mono text-[#041627]">{visitor.route}</td>
-                          <td className="px-5 py-3 capitalize">{visitor.device_type}<br /><span className="text-[10px] text-[#8fadc8]">{visitor.viewport_bucket || '—'} viewport</span></td>
-                          <td className="px-5 py-3">{visitor.browser_family}<br /><span className="text-[10px] text-[#8fadc8]">{visitor.os_family}</span></td>
-                          <td className="px-5 py-3">{visitor.language || '—'}<br /><span className="text-[10px] text-[#8fadc8]">{visitor.timezone || '—'}</span></td>
-                          <td className="px-5 py-3">{visitor.connection_type || 'network n/a'}</td>
+                <>
+                  <div className="divide-y divide-[#eef1f6] md:hidden">
+                    {onlineVisitors.map((visitor, index) => (
+                      <article key={`${visitor.last_seen}-${visitor.route}-mobile-${index}`} className="px-4 py-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate font-mono text-xs font-semibold text-[#041627]">{visitor.route}</p>
+                            <p className="mt-1 text-[11px] text-[#8fadc8]">{ngDateTime(visitor.last_seen)}</p>
+                          </div>
+                          <span className="shrink-0 rounded-full bg-[#eef4fb] px-2 py-1 text-[10px] font-semibold capitalize text-[#1d70c9]">
+                            {visitor.device_type}
+                          </span>
+                        </div>
+                        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
+                          <div><dt className="text-[10px] uppercase tracking-wide text-[#8fadc8]">Browser / OS</dt><dd className="mt-0.5 text-[#5a6a82]">{visitor.browser_family} · {visitor.os_family}</dd></div>
+                          <div><dt className="text-[10px] uppercase tracking-wide text-[#8fadc8]">Viewport</dt><dd className="mt-0.5 capitalize text-[#5a6a82]">{visitor.viewport_bucket || '—'}</dd></div>
+                          <div><dt className="text-[10px] uppercase tracking-wide text-[#8fadc8]">Language / zone</dt><dd className="mt-0.5 text-[#5a6a82]">{visitor.language || '—'} · {visitor.timezone || '—'}</dd></div>
+                          <div><dt className="text-[10px] uppercase tracking-wide text-[#8fadc8]">Network</dt><dd className="mt-0.5 text-[#5a6a82]">{visitor.connection_type || 'n/a'}</dd></div>
+                        </dl>
+                      </article>
+                    ))}
+                  </div>
+                  <div className="hidden overflow-x-auto md:block">
+                    <table className="w-full min-w-[780px] text-left text-xs">
+                      <thead className="bg-[#f8fafc] text-[10px] uppercase tracking-wide text-[#8fadc8]">
+                        <tr>
+                          <th className="px-5 py-3 font-semibold">Last signal</th>
+                          <th className="px-5 py-3 font-semibold">Route</th>
+                          <th className="px-5 py-3 font-semibold">Device</th>
+                          <th className="px-5 py-3 font-semibold">Browser / OS</th>
+                          <th className="px-5 py-3 font-semibold">Language / zone</th>
+                          <th className="px-5 py-3 font-semibold">Network</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-[#eef1f6]">
+                        {onlineVisitors.map((visitor, index) => (
+                          <tr key={`${visitor.last_seen}-${visitor.route}-${index}`} className="text-[#5a6a82]">
+                            <td className="whitespace-nowrap px-5 py-3 text-[#041627]">{ngDateTime(visitor.last_seen)}</td>
+                            <td className="px-5 py-3 font-mono text-[#041627]">{visitor.route}</td>
+                            <td className="px-5 py-3 capitalize">{visitor.device_type}<br /><span className="text-[10px] text-[#8fadc8]">{visitor.viewport_bucket || '—'} viewport</span></td>
+                            <td className="px-5 py-3">{visitor.browser_family}<br /><span className="text-[10px] text-[#8fadc8]">{visitor.os_family}</span></td>
+                            <td className="px-5 py-3">{visitor.language || '—'}<br /><span className="text-[10px] text-[#8fadc8]">{visitor.timezone || '—'}</span></td>
+                            <td className="px-5 py-3">{visitor.connection_type || 'network n/a'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </section>
 
@@ -367,34 +368,58 @@ export function SiteAnalyticsPage() {
                 <h2 className="text-sm font-semibold text-[#041627]">Recent visits</h2>
                 <p className="mt-1 text-xs text-[#8fadc8]">Coarse technical details only; session hashes are never shown.</p>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px] text-left text-xs">
-                  <thead className="bg-[#f8fafc] text-[10px] uppercase tracking-wide text-[#8fadc8]">
-                    <tr>
-                      <th className="px-5 py-3 font-semibold">Time</th>
-                      <th className="px-5 py-3 font-semibold">Route</th>
-                      <th className="px-5 py-3 font-semibold">Device</th>
-                      <th className="px-5 py-3 font-semibold">Browser / OS</th>
-                      <th className="px-5 py-3 font-semibold">Language / zone</th>
-                      <th className="px-5 py-3 font-semibold">Referrer</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#eef1f6]">
-                    {report.recent.length === 0 ? (
-                      <tr><td colSpan={6} className="px-5 py-10 text-center text-[#8fadc8]">No visits recorded yet.</td></tr>
-                    ) : report.recent.map((visit, index) => (
-                      <tr key={`${visit.visited_at}-${visit.route}-${index}`} className="text-[#5a6a82]">
-                        <td className="whitespace-nowrap px-5 py-3 text-[#041627]">{ngDateTime(visit.visited_at)}</td>
-                        <td className="px-5 py-3 font-mono text-[#041627]">{visit.route}</td>
-                        <td className="px-5 py-3 capitalize">{visit.device_type}<br /><span className="text-[10px] text-[#8fadc8]">{visit.viewport_bucket || '—'} viewport</span></td>
-                        <td className="px-5 py-3">{visit.browser_family}<br /><span className="text-[10px] text-[#8fadc8]">{visit.os_family}</span></td>
-                        <td className="px-5 py-3">{visit.language || '—'}<br /><span className="text-[10px] text-[#8fadc8]">{visit.timezone || '—'} · {visit.connection_type || 'network n/a'}</span></td>
-                        <td className="max-w-[190px] truncate px-5 py-3" title={visit.referrer_origin || 'Direct / none'}>{visit.referrer_origin || 'Direct / none'}</td>
-                      </tr>
+              {report.recent.length === 0 ? (
+                <p className="px-5 py-10 text-center text-sm text-[#8fadc8]">No visits recorded yet.</p>
+              ) : (
+                <>
+                  <div className="divide-y divide-[#eef1f6] md:hidden">
+                    {report.recent.map((visit, index) => (
+                      <article key={`${visit.visited_at}-${visit.route}-mobile-${index}`} className="px-4 py-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate font-mono text-xs font-semibold text-[#041627]">{visit.route}</p>
+                            <p className="mt-1 text-[11px] text-[#8fadc8]">{ngDateTime(visit.visited_at)}</p>
+                          </div>
+                          <span className="shrink-0 rounded-full bg-[#f5f2ff] px-2 py-1 text-[10px] font-semibold capitalize text-[#7c3aed]">
+                            {visit.device_type}
+                          </span>
+                        </div>
+                        <dl className="mt-3 grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
+                          <div><dt className="text-[10px] uppercase tracking-wide text-[#8fadc8]">Browser / OS</dt><dd className="mt-0.5 text-[#5a6a82]">{visit.browser_family} · {visit.os_family}</dd></div>
+                          <div><dt className="text-[10px] uppercase tracking-wide text-[#8fadc8]">Language / zone</dt><dd className="mt-0.5 text-[#5a6a82]">{visit.language || '—'} · {visit.timezone || '—'}</dd></div>
+                          <div className="sm:col-span-2"><dt className="text-[10px] uppercase tracking-wide text-[#8fadc8]">Referrer</dt><dd className="mt-0.5 break-all text-[#5a6a82]">{visit.referrer_origin || 'Direct / none'}</dd></div>
+                        </dl>
+                      </article>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                  <div className="hidden overflow-x-auto md:block">
+                    <table className="w-full min-w-[900px] text-left text-xs">
+                      <thead className="bg-[#f8fafc] text-[10px] uppercase tracking-wide text-[#8fadc8]">
+                        <tr>
+                          <th className="px-5 py-3 font-semibold">Time</th>
+                          <th className="px-5 py-3 font-semibold">Route</th>
+                          <th className="px-5 py-3 font-semibold">Device</th>
+                          <th className="px-5 py-3 font-semibold">Browser / OS</th>
+                          <th className="px-5 py-3 font-semibold">Language / zone</th>
+                          <th className="px-5 py-3 font-semibold">Referrer</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#eef1f6]">
+                        {report.recent.map((visit, index) => (
+                          <tr key={`${visit.visited_at}-${visit.route}-${index}`} className="text-[#5a6a82]">
+                            <td className="whitespace-nowrap px-5 py-3 text-[#041627]">{ngDateTime(visit.visited_at)}</td>
+                            <td className="px-5 py-3 font-mono text-[#041627]">{visit.route}</td>
+                            <td className="px-5 py-3 capitalize">{visit.device_type}<br /><span className="text-[10px] text-[#8fadc8]">{visit.viewport_bucket || '—'} viewport</span></td>
+                            <td className="px-5 py-3">{visit.browser_family}<br /><span className="text-[10px] text-[#8fadc8]">{visit.os_family}</span></td>
+                            <td className="px-5 py-3">{visit.language || '—'}<br /><span className="text-[10px] text-[#8fadc8]">{visit.timezone || '—'} · {visit.connection_type || 'network n/a'}</span></td>
+                            <td className="max-w-[190px] truncate px-5 py-3" title={visit.referrer_origin || 'Direct / none'}>{visit.referrer_origin || 'Direct / none'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </section>
           </>
         ) : null}
