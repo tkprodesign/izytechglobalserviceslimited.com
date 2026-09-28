@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { saveToken, parseToken } from '../../lib/auth';
+import logoIcon from '../../imports/izy-technologies_icon_v1.png';
 
 const API = import.meta.env.VITE_API_URL ?? '';
 
@@ -40,7 +41,7 @@ export function LoginPage() {
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 mb-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--izy-blue)' }}>
-              <span className="text-white font-bold text-lg">IZY</span>
+              <img src={logoIcon} alt="Izy Tech" className="h-full w-full rounded-xl object-cover" />
             </div>
             <span className="text-white font-semibold text-xl">Control Panel</span>
           </div>
