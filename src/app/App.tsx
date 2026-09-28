@@ -163,6 +163,31 @@ function PublicFloatingActions() {
 }
 
 type SmartsuppQueue = ((...args: unknown[]) => void) & { _: unknown[][] };
+const smartsuppDisplayStyles = new WeakMap<HTMLElement, { value: string; priority: string }>();
+const smartsuppElements = '#chat-application-iframe, #smartsupp-widget-container, #widgetPopupFrame, #widgetButtonFrame';
+
+function setSmartsuppHidden(hidden: boolean) {
+  document.querySelectorAll<HTMLElement>(smartsuppElements).forEach(element => {
+    if (hidden) {
+      if (!smartsuppDisplayStyles.has(element)) {
+        smartsuppDisplayStyles.set(element, {
+          value: element.style.getPropertyValue('display'),
+          priority: element.style.getPropertyPriority('display'),
+        });
+      }
+      element.style.setProperty('display', 'none', 'important');
+      return;
+    }
+
+    const previous = smartsuppDisplayStyles.get(element);
+    if (previous?.value) {
+      element.style.setProperty('display', previous.value, previous.priority);
+    } else {
+      element.style.removeProperty('display');
+    }
+    smartsuppDisplayStyles.delete(element);
+  });
+}
 
 function SmartsuppWidget() {
   const { pathname } = useLocation();
@@ -171,11 +196,13 @@ function SmartsuppWidget() {
     const isPanel = pathname.startsWith('/admin') || pathname.startsWith('/dev');
 
     if (isPanel) {
-      document.documentElement.dataset.panelRoute = 'true';
-      return;
+      setSmartsuppHidden(true);
+      const observer = new MutationObserver(() => setSmartsuppHidden(true));
+      observer.observe(document.body, { childList: true, subtree: true });
+      return () => observer.disconnect();
     }
 
-    delete document.documentElement.dataset.panelRoute;
+    setSmartsuppHidden(false);
 
     const chatWindow = window as Window & {
       _smartsupp?: Record<string, unknown>;
