@@ -124,3 +124,14 @@ Visible terminology:
 The public review route is `/store/request`. The older `/store/enquire` URL redirects to it for compatibility. The backend endpoint remains `/api/store/enquire` as an internal API contract.
 
 Important: failed store request submissions must never display success or clear the user's selection.
+
+
+### Selection discoverability
+The store keeps the non-checkout terminology but makes the product-selection workflow obvious to ordinary visitors:
+- product CTA: `ADD TO SELECTION`
+- selected state: `IN YOUR SELECTION`
+- a `YOUR SELECTION` counter is visible in the Store filter bar
+- once products are selected, a global Navbar shortcut appears on desktop and mobile
+- the Store keeps a prominent bottom `YOUR SELECTION · REVIEW NOW` action
+
+Do not remove all of these entry points at once; the store has no conventional shopping-cart checkout, so the selection review must remain easy to find.

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router";
-import { Menu, X, Phone, MessageCircle, ChevronDown } from "lucide-react";
+import { Menu, X, Phone, MessageCircle, ChevronDown, ClipboardList } from "lucide-react";
 import logoIcon from "../../imports/izy-technologies_icon_v1.png";
+import { useCart } from "../contexts/CartContext";
 import {
   COMPANY_PHONE_DISPLAY,
   COMPANY_PHONE_TEL,
@@ -153,6 +154,7 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
   const location = useLocation();
+  const { count } = useCart();
 
   // Only show transparent on home page before scroll
   const isHome = location.pathname === "/";
@@ -198,6 +200,22 @@ export function Navbar() {
           {navLinks.map((link) => (
             <NavItem key={link.label} link={link} isTransparent={isTransparent} />
           ))}
+          {count > 0 && (
+            <Link
+              to="/store/request"
+              className={`ml-2 inline-flex items-center gap-2 border px-3 py-2 text-xs font-bold transition-all ${
+                isTransparent
+                  ? "border-white/25 bg-white/10 text-white hover:bg-white/15"
+                  : "border-[#F0A20E]/35 bg-[#F0A20E]/8 text-[#041627] hover:bg-[#F0A20E]/14"
+              }`}
+            >
+              <ClipboardList size={14} />
+              YOUR SELECTION
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F0A20E] px-1.5 text-[10px] font-black text-[#041627]">
+                {count}
+              </span>
+            </Link>
+          )}
         </div>
 
         {/* Right: call + WhatsApp + CTA */}
@@ -257,6 +275,21 @@ export function Navbar() {
           className="lg:hidden bg-white border-t border-[#e8edf3] px-6 pb-6 pt-3 space-y-0.5"
           style={{ fontFamily: "var(--font-ui)" }}
         >
+          {count > 0 && (
+            <Link
+              to="/store/request"
+              onClick={() => setMobileOpen(false)}
+              className="mb-3 flex items-center justify-between border border-[#F0A20E]/35 bg-[#F0A20E]/10 px-4 py-3 text-sm font-bold text-[#041627]"
+            >
+              <span className="flex items-center gap-2">
+                <ClipboardList size={16} className="text-[#d17f00]" />
+                Your Selection
+              </span>
+              <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#F0A20E] px-2 text-xs font-black text-[#041627]">
+                {count}
+              </span>
+            </Link>
+          )}
           {navLinks.map((link) =>
             link.children ? (
               <div key={link.label}>

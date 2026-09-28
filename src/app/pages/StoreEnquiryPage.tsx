@@ -162,7 +162,7 @@ export function StoreEnquiryPage() {
               Review Your Selection
             </h1>
             <p className="text-white/45 text-sm" style={{ fontFamily: "var(--font-body)" }}>
-              {count} item{count !== 1 ? "s" : ""} selected · Our team will respond within 24 hours with pricing and availability.
+              {count} item{count !== 1 ? "s" : ""} selected · Review quantities, then request current pricing and availability.
             </p>
           </motion.div>
         </div>

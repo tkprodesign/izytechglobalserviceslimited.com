@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { PlusCircle, ArrowRight, Tag, Zap, Sun, Shield, Home, Cpu, Filter, Star, CheckCircle } from "lucide-react";
+import { PlusCircle, ArrowRight, Tag, Zap, Sun, Shield, Home, Cpu, Filter, Star, CheckCircle, ClipboardList } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { PageLayout } from "../components/PageLayout";
 import { useCart } from "../contexts/CartContext";
@@ -146,9 +146,9 @@ function ProductCard({ product }: { product: Product }) {
             }}
           >
             {inBasket ? (
-              <><CheckCircle size={13} /> SELECTED</>
+              <><CheckCircle size={13} /> IN YOUR SELECTION</>
             ) : (
-              <><PlusCircle size={13} /> SELECT PRODUCT</>
+              <><PlusCircle size={13} /> ADD TO SELECTION</>
             )}
           </button>
         ) : (
@@ -242,9 +242,30 @@ export function StorePage() {
               </button>
             );
           })}
-          <span className="ml-auto text-xs text-gray-400" style={{ fontFamily: "var(--font-ui)" }}>
+          <span className="text-xs text-gray-400 sm:ml-auto" style={{ fontFamily: "var(--font-ui)" }}>
             {visible.length} product{visible.length !== 1 ? "s" : ""}
           </span>
+          <button
+            type="button"
+            disabled={count === 0}
+            onClick={() => navigate("/store/request")}
+            className="ml-auto flex items-center gap-2 border px-3.5 py-2 text-xs font-bold tracking-wide transition-all disabled:cursor-default disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-300 sm:ml-2"
+            style={{
+              borderColor: count ? "rgba(240,162,14,0.45)" : undefined,
+              background: count ? "rgba(240,162,14,0.10)" : undefined,
+              color: count ? "#041627" : undefined,
+              fontFamily: "var(--font-ui)",
+            }}
+            aria-label={count ? `Review your selection, ${count} item${count === 1 ? "" : "s"}` : "No products selected yet"}
+          >
+            <ClipboardList size={14} />
+            YOUR SELECTION
+            <span className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-black ${
+              count ? "bg-[#F0A20E] text-[#041627]" : "bg-gray-200 text-gray-400"
+            }`}>
+              {count}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -291,12 +312,11 @@ export function StorePage() {
                 whiteSpace: "nowrap",
               }}
             >
-              <span
-                className="w-6 h-6 rounded-full bg-[#041627] text-[#F0A20E] flex items-center justify-center text-xs font-black"
-              >
-                {count}
+              <ClipboardList size={17} />
+              <span className="text-left leading-tight">
+                <span className="block text-[10px] font-semibold tracking-[0.12em] text-[#041627]/60">YOUR SELECTION</span>
+                <span className="block">{count} ITEM{count === 1 ? "" : "S"} · REVIEW NOW</span>
               </span>
-              REVIEW SELECTION
               <ArrowRight size={15} />
             </button>
           </motion.div>

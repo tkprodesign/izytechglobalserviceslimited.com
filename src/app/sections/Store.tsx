@@ -68,7 +68,7 @@ export function Store() {
                 letterSpacing: "-0.025em",
               }}
             >
-              Shop Energy &<br className="hidden lg:block" /> Tech Products
+              Browse Energy &<br className="hidden lg:block" /> Tech Products
             </h2>
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -190,9 +190,9 @@ export function Store() {
                     }}
                   >
                     {inBasket ? (
-                      <><CheckCircle size={12} /> SELECTED</>
+                      <><CheckCircle size={12} /> IN YOUR SELECTION</>
                     ) : (
-                      <><PlusCircle size={12} /> SELECT PRODUCT</>
+                      <><PlusCircle size={12} /> ADD TO SELECTION</>
                     )}
                   </button>
                 </div>
