@@ -51,6 +51,7 @@ Current panel improvements include:
 - `1e774b3` - Merge V2 dashboards into the primary Admin and Developer panels; remove V2 routes/components.
 - `2cee62d` - Harden panel authentication, add reusable authenticated API helper, truthful DB health, and Admin operational metrics.
 - `274a0a2` - Improve mobile Site Analytics, separate quotes from site assessments, and add Control Panel CI.
+- `a2eac6f` - Repair the Render deployment workflow parser, verify the exact commit on Render, and require a healthy `/api/health` response before success.
 - Earlier continuity commits remain in Git history, including invoice/statistics, panel chrome, email mobile fixes, database retry, Smartsupp isolation, and AltPower/contact follow-up work.
 
 ## 5. Regression and Deployment Checks
@@ -66,6 +67,11 @@ Current panel improvements include:
 `.github/workflows/notify-render.yml` handles backend-changing pushes. It finds an existing Render deploy for the exact commit or triggers that exact commit through the Render API, waits for a terminal deployment status, and then verifies `/api/health` returns `status=ok`.
 
 Cloudflare Pages is connected to `main` and reports its build/deploy status back to GitHub.
+
+### Last verified deployment state
+- Control Panel CI: passed on `a2eac6f`.
+- Cloudflare Pages: deployed `a2eac6f` successfully.
+- Render: `a2eac6f` reached `live`; the workflow then confirmed `/api/health` returned `status=ok`.
 
 ## 6. Continuity Rules
 
