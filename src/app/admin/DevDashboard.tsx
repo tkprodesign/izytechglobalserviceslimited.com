@@ -26,6 +26,7 @@ import {
   MessageSquare,
   Zap,
   FileOutput,
+  RefreshCw,
 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
@@ -66,6 +67,13 @@ interface SystemInfo {
   env: string;
   dbConnected: boolean;
   configuredSecrets: Record<string, boolean>;
+  deploymentVersion?: string | null;
+  checkedAt?: string;
+}
+
+interface DashboardError {
+  at: string;
+  message: string;
 }
 
 function StatCard({ icon: Icon, label, value, sub, color }: {
@@ -87,18 +95,21 @@ function StatCard({ icon: Icon, label, value, sub, color }: {
   );
 }
 
-function StatusBadge({ ok, label }: { ok: boolean; label: string }) {
+function StatusBadge({ status, label }: { status: 'loading' | 'ok' | 'error'; label: string }) {
+  const ok = status === 'ok';
   return (
     <div className="flex items-center gap-2 py-2">
-      {ok
-        ? <CheckCircle size={14} style={{ color: 'var(--izy-green)' }} />
-        : <XCircle size={14} style={{ color: 'var(--destructive)' }} />}
+      {status === 'loading'
+        ? <AlertCircle size={14} style={{ color: '#ffc425' }} />
+        : ok
+          ? <CheckCircle size={14} style={{ color: 'var(--izy-green)' }} />
+          : <XCircle size={14} style={{ color: 'var(--destructive)' }} />}
       <span className="text-xs" style={{ color: 'var(--izy-navy)' }}>{label}</span>
       <span className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{
-        background: ok ? 'rgba(57,181,74,0.12)' : 'rgba(212,24,61,0.12)',
-        color: ok ? 'var(--izy-green)' : 'var(--destructive)',
+        background: status === 'loading' ? 'rgba(255,196,37,0.12)' : ok ? 'rgba(57,181,74,0.12)' : 'rgba(212,24,61,0.12)',
+        color: status === 'loading' ? '#946200' : ok ? 'var(--izy-green)' : 'var(--destructive)',
       }}>
-        {ok ? 'OK' : 'DOWN'}
+        {status === 'loading' ? 'CHECKING' : ok ? 'OK' : 'DOWN'}
       </span>
     </div>
   );
@@ -139,44 +150,87 @@ export function DevDashboard() {
   const [apiHealth, setApiHealth] = useState<'loading' | 'ok' | 'error'>('loading');
   const [dbHealth, setDbHealth] = useState<'loading' | 'ok' | 'error'>('loading');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [lastHealthCheck, setLastHealthCheck] = useState<Date | null>(null);
+  const [lastDataRefresh, setLastDataRefresh] = useState<Date | null>(null);
+  const [recentErrors, setRecentErrors] = useState<DashboardError[]>([]);
   const token = getToken();
   const navigate = useNavigate();
 
   useEffect(() => {
+    let active = true;
     const headers = { Authorization: `Bearer ${token}` };
+    setRefreshing(true);
+    setApiHealth('loading');
+    setDbHealth('loading');
 
-    // System health checks
-    fetch(`${API}/api/health`)
-      .then(r => r.ok ? setApiHealth('ok') : setApiHealth('error'))
-      .catch(() => setApiHealth('error'));
+    const getJson = async (path: string, auth = true) => {
+      const response = await fetch(`${API}${path}`, auth ? { headers } : undefined);
+      const data = await response.json();
+      if (!response.ok) {
+        const error = new Error(data.error || `Request failed (${response.status})`) as Error & { status?: number };
+        error.status = response.status;
+        throw error;
+      }
+      return data;
+    };
 
-    fetch(`${API}/api/health/db`)
-      .then(r => r.ok ? setDbHealth('ok') : setDbHealth('error'))
-      .catch(() => setDbHealth('error'));
+    Promise.allSettled([
+      getJson('/api/health', false),
+      getJson('/api/health/db', false),
+      getJson('/api/dev/system'),
+      getJson('/api/admin/stats'),
+      getJson('/api/admin/contacts?limit=3'),
+      getJson('/api/admin/quotes?limit=3'),
+    ]).then(results => {
+      if (!active) return;
+      const errors: DashboardError[] = [];
+      const recordFailure = (index: number, message: string) => {
+        const result = results[index];
+        if (result.status === 'rejected') errors.push({ at: new Date().toISOString(), message });
+      };
 
-    fetch(`${API}/api/dev/system`, { headers })
-      .then(r => {
-        if (r.status === 401 || r.status === 403) {
+      setApiHealth(results[0].status === 'fulfilled' ? 'ok' : 'error');
+      setDbHealth(results[1].status === 'fulfilled' ? 'ok' : 'error');
+      recordFailure(0, 'API health check failed.');
+      recordFailure(1, 'Database health check failed.');
+
+      const systemResult = results[2];
+      if (systemResult.status === 'fulfilled') setSystemInfo(systemResult.value);
+      else {
+        const error = systemResult.reason as Error & { status?: number };
+        if (error.status === 401 || error.status === 403) {
           removeToken();
           navigate('/dev/login');
-          return null;
+          return;
         }
-        return r.json();
-      })
-      .then(d => { if (d && !d.error) setSystemInfo(d); })
-      .catch(() => {});
+        errors.push({ at: new Date().toISOString(), message: 'Runtime and deployment details could not be loaded.' });
+      }
 
-    // Business stats
-    Promise.all([
-      fetch(`${API}/api/admin/stats`, { headers }).then(r => r.json()),
-      fetch(`${API}/api/admin/contacts?limit=3`, { headers }).then(r => r.json()),
-      fetch(`${API}/api/admin/quotes?limit=3`, { headers }).then(r => r.json()),
-    ]).then(([s, c, q]) => {
-      setStats(s);
-      setContacts(c.data ?? []);
-      setQuotes(q.data ?? []);
-    }).finally(() => setLoading(false));
-  }, [token, navigate]);
+      const statsResult = results[3];
+      const contactsResult = results[4];
+      const quotesResult = results[5];
+      if (statsResult.status === 'fulfilled') setStats(statsResult.value);
+      else errors.push({ at: new Date().toISOString(), message: 'Business totals could not be loaded.' });
+      if (contactsResult.status === 'fulfilled') setContacts(contactsResult.value.data ?? []);
+      else errors.push({ at: new Date().toISOString(), message: 'Recent contacts could not be loaded.' });
+      if (quotesResult.status === 'fulfilled') setQuotes(quotesResult.value.data ?? []);
+      else errors.push({ at: new Date().toISOString(), message: 'Recent quotes could not be loaded.' });
+
+      const now = new Date();
+      setLastHealthCheck(now);
+      if (results.slice(2).some(result => result.status === 'fulfilled')) setLastDataRefresh(now);
+      if (errors.length) setRecentErrors(current => [...errors, ...current].slice(0, 5));
+    }).finally(() => {
+      if (active) {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    });
+
+    return () => { active = false; };
+  }, [token, navigate, refreshKey]);
 
   const statusIcon = (s: 'loading' | 'ok' | 'error') =>
     s === 'loading' ? <AlertCircle size={14} style={{ color: '#ffc425' }} />
@@ -197,14 +251,32 @@ export function DevDashboard() {
             </div>
             <p className="text-sm" style={{ color: '#5a6a82' }}>System health, business metrics, and full platform access</p>
           </div>
-          <div className="flex items-center gap-2">
-            {statusIcon(apiHealth)}
-            <span className="text-xs font-medium" style={{ color: 'var(--izy-navy)' }}>API</span>
-            <span className="mx-1 text-gray-300">·</span>
-            {statusIcon(dbHealth)}
-            <span className="text-xs font-medium" style={{ color: 'var(--izy-navy)' }}>DB</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              {statusIcon(apiHealth)}
+              <span className="text-xs font-medium" style={{ color: 'var(--izy-navy)' }}>API</span>
+              <span className="mx-1 text-gray-300">·</span>
+              {statusIcon(dbHealth)}
+              <span className="text-xs font-medium" style={{ color: 'var(--izy-navy)' }}>DB</span>
+            </div>
+            {lastDataRefresh && <span className="text-xs" style={{ color: '#8fadc8' }}>Data updated {lastDataRefresh.toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' })}</span>}
+            <button type="button" onClick={() => setRefreshKey(key => key + 1)} disabled={refreshing} className="inline-flex items-center gap-2 rounded-lg border border-[#d8e0e7] bg-white px-3 py-2 text-sm font-semibold disabled:opacity-50" style={{ color: 'var(--izy-navy)' }}>
+              <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} /> Refresh
+            </button>
           </div>
         </div>
+
+        {recentErrors.length > 0 && (
+          <section className="mb-5 border border-[#f3c7c4] bg-[#fff6f5] px-4 py-3" aria-label="Recent dashboard errors">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold text-[#8f2721]">Recent errors</h2>
+              <button type="button" onClick={() => setRefreshKey(key => key + 1)} disabled={refreshing} className="text-xs font-semibold text-[#8f2721] underline disabled:opacity-50">Retry checks</button>
+            </div>
+            <ul className="space-y-1">
+              {recentErrors.map((error, index) => <li key={`${error.at}-${index}`} className="flex justify-between gap-3 text-xs text-[#8f2721]"><span>{error.message}</span><time className="shrink-0">{new Date(error.at).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' })}</time></li>)}
+            </ul>
+          </section>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center h-40">
@@ -221,9 +293,12 @@ export function DevDashboard() {
                   <h2 className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--izy-navy)' }}>Service Health</h2>
                 </div>
                 <div className="divide-y" style={{ borderColor: '#eef1f6' }}>
-                  <StatusBadge ok={apiHealth === 'ok'} label="API Server" />
-                  <StatusBadge ok={dbHealth === 'ok'} label="Neon PostgreSQL" />
+                  <StatusBadge status={apiHealth} label="API Server" />
+                  <StatusBadge status={dbHealth} label="Neon PostgreSQL" />
                 </div>
+                <p className="mt-3 border-t pt-3 text-[11px]" style={{ borderColor: '#eef1f6', color: '#8fadc8' }}>
+                  {lastHealthCheck ? `Last checked ${lastHealthCheck.toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' })}` : 'Health check pending'}
+                </p>
               </div>
 
               {/* Runtime */}
@@ -240,6 +315,7 @@ export function DevDashboard() {
                       ['Env', systemInfo.env],
                       ['Uptime', fmtUptime(systemInfo.uptime)],
                       ['Memory', fmtMem(systemInfo.memoryUsed)],
+                      ['Deploy', systemInfo.deploymentVersion?.slice(0, 12) ?? 'Unavailable'],
                     ].map(([k, v]) => (
                       <div key={k} className="flex justify-between py-1.5 border-b last:border-0 text-xs" style={{ borderColor: '#eef1f6' }}>
                         <dt style={{ color: '#5a6a82' }}>{k}</dt>

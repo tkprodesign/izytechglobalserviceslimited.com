@@ -14,6 +14,7 @@ import {
   FolderOpen,
   Receipt,
   ArrowUpRight,
+  RefreshCw,
 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
@@ -68,6 +69,13 @@ function fmt(iso: string) {
   return ngDate(iso);
 }
 
+async function fetchJson(path: string, headers: HeadersInit) {
+  const response = await fetch(`${API}${path}`, { headers });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+  return data;
+}
+
 const quickAccessItems = [
   { to: '/admin/contacts', label: 'Contacts', description: 'Review incoming messages', icon: Mail, color: '#1d70c9' },
   { to: '/admin/email', label: 'Email Manager', description: 'Send and manage company email', icon: Mail, color: '#2563eb' },
@@ -84,28 +92,62 @@ export function AdminDashboard() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [loadErrors, setLoadErrors] = useState<string[]>([]);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const token = getToken();
 
   useEffect(() => {
+    let active = true;
     const headers = { Authorization: `Bearer ${token}` };
-    Promise.all([
-      fetch(`${API}/api/admin/stats`, { headers }).then(r => r.json()),
-      fetch(`${API}/api/admin/contacts?limit=5`, { headers }).then(r => r.json()),
-      fetch(`${API}/api/admin/quotes?limit=5`, { headers }).then(r => r.json()),
-    ]).then(([s, c, q]) => {
-      setStats(s);
-      setContacts(c.data ?? []);
-      setQuotes(q.data ?? []);
-    }).finally(() => setLoading(false));
-  }, [token]);
+    setRefreshing(true);
+    Promise.allSettled([
+      fetchJson('/api/admin/stats', headers),
+      fetchJson('/api/admin/contacts?limit=5', headers),
+      fetchJson('/api/admin/quotes?limit=5', headers),
+    ]).then(([statsResult, contactsResult, quotesResult]) => {
+      if (!active) return;
+      const errors: string[] = [];
+      if (statsResult.status === 'fulfilled') setStats(statsResult.value);
+      else errors.push('Dashboard totals could not be loaded.');
+      if (contactsResult.status === 'fulfilled') setContacts(contactsResult.value.data ?? []);
+      else errors.push('Recent contacts could not be loaded.');
+      if (quotesResult.status === 'fulfilled') setQuotes(quotesResult.value.data ?? []);
+      else errors.push('Recent quotes could not be loaded.');
+      setLoadErrors(errors);
+      if (errors.length < 3) setLastUpdated(new Date());
+    }).finally(() => {
+      if (active) {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    });
+    return () => { active = false; };
+  }, [token, refreshKey]);
 
   return (
     <DashboardLayout>
       <div className="p-8 max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--izy-navy)' }}>Dashboard</h1>
-          <p className="text-sm mt-1" style={{ color: '#5a6a82' }}>Overview of incoming contacts and quote requests</p>
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--izy-navy)' }}>Dashboard</h1>
+            <p className="text-sm mt-1" style={{ color: '#5a6a82' }}>Overview of incoming contacts and quote requests</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {lastUpdated && <span className="text-xs" style={{ color: '#8fadc8' }}>Updated {lastUpdated.toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' })}</span>}
+            <button type="button" onClick={() => setRefreshKey(key => key + 1)} disabled={refreshing} className="inline-flex items-center gap-2 rounded-lg border border-[#d8e0e7] bg-white px-3 py-2 text-sm font-semibold disabled:opacity-50" style={{ color: 'var(--izy-navy)' }}>
+              <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} /> Refresh
+            </button>
+          </div>
         </div>
+
+        {loadErrors.length > 0 && (
+          <div role="alert" className="mb-5 flex flex-wrap items-center justify-between gap-3 border border-[#f3c7c4] bg-[#fff6f5] px-4 py-3 text-sm text-[#8f2721]">
+            <span>{loadErrors.join(' ')}</span>
+            <button type="button" onClick={() => setRefreshKey(key => key + 1)} disabled={refreshing} className="font-semibold underline disabled:opacity-50">Retry</button>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center h-40">

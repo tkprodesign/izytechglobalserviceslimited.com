@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { DashboardLayout } from './DashboardLayout';
 import { getToken } from '../../lib/auth';
 import { ngDateTime } from '../../lib/ngtime';
-import { Mail, MessageCircle, Phone, Save } from 'lucide-react';
+import { Download, Mail, MessageCircle, Phone, Save, Search } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? '';
 const followUpStatuses = [
@@ -31,6 +31,12 @@ function fmt(iso: string) {
   return ngDateTime(iso);
 }
 
+function csvCell(value: unknown) {
+  let text = String(value ?? '');
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
 function whatsappHref(contact: Contact) {
   const rawPhone = contact.phone?.trim() ?? '';
   let digits = rawPhone.replace(/\D/g, '');
@@ -57,7 +63,31 @@ export function ContactsPage() {
   const [savingFollowUp, setSavingFollowUp] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [saveError, setSaveError] = useState(false);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | FollowUpStatus>('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const token = getToken();
+
+  const filteredContacts = contacts.filter(contact => {
+    const query = search.trim().toLowerCase();
+    const matchesSearch = !query || [contact.name, contact.email, contact.phone, contact.subject, contact.message]
+      .some(value => value?.toLowerCase().includes(query));
+    const matchesStatus = statusFilter === 'all' || (contact.status ?? 'new') === statusFilter;
+    const createdDate = contact.created_at.slice(0, 10);
+    return matchesSearch && matchesStatus && (!dateFrom || createdDate >= dateFrom) && (!dateTo || createdDate <= dateTo);
+  });
+
+  function exportContacts() {
+    const columns: (keyof Contact)[] = ['name', 'email', 'phone', 'subject', 'status', 'created_at', 'updated_at'];
+    const rows = [columns.join(','), ...filteredContacts.map(contact => columns.map(column => csvCell(column === 'status' ? contact.status ?? 'new' : contact[column])).join(','))];
+    const url = URL.createObjectURL(new Blob([`\uFEFF${rows.join('\r\n')}`], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `izy-contacts-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
 
   function selectContact(contact: Contact) {
     setSelected(contact);
@@ -109,7 +139,35 @@ export function ContactsPage() {
       <div className="p-8 max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-2xl font-bold" style={{ color: 'var(--izy-navy)' }}>Contacts</h1>
-          <p className="text-sm mt-1" style={{ color: '#5a6a82' }}>{contacts.length} total submissions</p>
+          <p className="text-sm mt-1" style={{ color: '#5a6a82' }}>{filteredContacts.length} shown · {contacts.length} loaded</p>
+        </div>
+
+        <div className="mb-5 flex flex-wrap items-end gap-3">
+          <label className="min-w-[220px] flex-1 text-xs font-medium" style={{ color: '#5a6a82' }}>
+            Search contacts
+            <span className="mt-1 flex items-center gap-2 rounded-lg border border-[#d8e0e7] bg-white px-3">
+              <Search size={15} />
+              <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Name, email, phone, or enquiry" className="min-w-0 flex-1 py-2.5 text-sm outline-none" />
+            </span>
+          </label>
+          <label className="text-xs font-medium" style={{ color: '#5a6a82' }}>
+            Status
+            <select value={statusFilter} onChange={event => setStatusFilter(event.target.value as 'all' | FollowUpStatus)} className="mt-1 block w-full rounded-lg border border-[#d8e0e7] bg-white px-3 py-2.5 text-sm">
+              <option value="all">All statuses</option>
+              {followUpStatuses.map(status => <option key={status.value} value={status.value}>{status.label}</option>)}
+            </select>
+          </label>
+          <label className="text-xs font-medium" style={{ color: '#5a6a82' }}>
+            From
+            <input type="date" value={dateFrom} max={dateTo || undefined} onChange={event => setDateFrom(event.target.value)} className="mt-1 block rounded-lg border border-[#d8e0e7] bg-white px-3 py-2.5 text-sm" />
+          </label>
+          <label className="text-xs font-medium" style={{ color: '#5a6a82' }}>
+            To
+            <input type="date" value={dateTo} min={dateFrom || undefined} onChange={event => setDateTo(event.target.value)} className="mt-1 block rounded-lg border border-[#d8e0e7] bg-white px-3 py-2.5 text-sm" />
+          </label>
+          <button type="button" onClick={exportContacts} disabled={!filteredContacts.length} className="inline-flex items-center gap-2 rounded-lg border border-[#d8e0e7] bg-white px-3 py-2.5 text-sm font-semibold disabled:opacity-50" style={{ color: 'var(--izy-navy)' }}>
+            <Download size={15} /> Export {filteredContacts.length ? `(${filteredContacts.length})` : ''}
+          </button>
         </div>
 
         <div className="flex gap-6">
@@ -121,9 +179,11 @@ export function ContactsPage() {
               </div>
             ) : contacts.length === 0 ? (
               <p className="p-8 text-sm text-center" style={{ color: '#8fadc8' }}>No contact submissions yet</p>
+            ) : filteredContacts.length === 0 ? (
+              <p className="p-8 text-sm text-center" style={{ color: '#8fadc8' }}>No contacts match these filters</p>
             ) : (
               <div className="divide-y" style={{ borderColor: '#eef1f6' }}>
-                {contacts.map(c => (
+                {filteredContacts.map(c => (
                   <button
                     key={c.id}
                     onClick={() => selectContact(c)}

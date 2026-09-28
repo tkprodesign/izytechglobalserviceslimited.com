@@ -2343,6 +2343,8 @@ app.get('/api/dev/system', requireDev, (_req, res) => {
     memoryTotal: mem.heapTotal,
     dbConnected: true,
     configuredSecrets: Object.fromEntries(secrets.map(k => [k, !!process.env[k]])),
+    deploymentVersion: process.env.RENDER_GIT_COMMIT || process.env.GITHUB_SHA || null,
+    checkedAt: new Date().toISOString(),
   });
 });
 
