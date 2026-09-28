@@ -29,6 +29,7 @@ interface Contact {
   id: number;
   name: string;
   email: string;
+  phone?: string | null;
   subject: string;
   message: string;
   created_at: string;
@@ -175,7 +176,7 @@ export function AdminDashboard() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline gap-2">
                         <p className="font-medium text-sm" style={{ color: 'var(--izy-navy)' }}>{c.name}</p>
-                        <p className="text-xs" style={{ color: '#8fadc8' }}>{c.email}</p>
+                        <p className="text-xs truncate" style={{ color: '#8fadc8' }}>{[c.email, c.phone].filter(Boolean).join(' · ') || 'No contact detail'}</p>
                       </div>
                       <p className="text-xs mt-0.5 truncate" style={{ color: '#5a6a82' }}>{c.subject || c.message}</p>
                     </div>
