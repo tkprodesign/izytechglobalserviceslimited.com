@@ -7,6 +7,9 @@ import {
   Monitor,
   RefreshCw,
   ShieldCheck,
+  ShoppingBag,
+  ClipboardCheck,
+  MessageSquare,
   Smartphone,
   Tablet,
   Users,
@@ -23,7 +26,6 @@ interface CountRow {
 interface DailyRow {
   day: string;
   visits: number;
-  session_groups: number;
 }
 
 interface RecentVisit {
@@ -42,7 +44,20 @@ interface RecentVisit {
 
 interface AnalyticsReport {
   range: { days: number; since: string };
-  summary: { visits: number; session_groups: number };
+  summary: {
+    pageviews: number;
+    routes_reached: number;
+    latest_pageview: string | null;
+    consented_visits: number;
+    session_groups: number;
+  };
+  conversions: {
+    contacts: number;
+    quotes: number;
+    assessments: number;
+    store_enquiries: number;
+    total: number;
+  };
   daily: DailyRow[];
   routes: CountRow[];
   devices: CountRow[];
@@ -52,7 +67,8 @@ interface AnalyticsReport {
   recent: RecentVisit[];
   privacy: {
     consentVersion: string;
-    stored: string[];
+    basicStored: string[];
+    enhancedStored: string[];
     notStored: string[];
   };
 }
@@ -196,7 +212,7 @@ export function SiteAnalyticsPage() {
               <h1 className="text-2xl font-bold text-[#041627]">Site Analytics</h1>
             </div>
             <p className="max-w-2xl text-sm text-[#5a6a82]">
-              Privacy-safe, consent-based visit trends for the public site. Session groups rotate daily and are not persistent visitor identities.
+              Privacy-safe traffic reporting: cookieless page views cover public traffic, while richer technical details remain consent-based.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -232,13 +248,27 @@ export function SiteAnalyticsPage() {
           <div className="rounded-2xl border border-red-100 bg-red-50 p-5 text-sm text-red-700">{error}</div>
         ) : report ? (
           <>
-            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              <MetricCard icon={Users} label="Currently online" value={onlineCount ?? '—'} detail="Consent-based, last 2 minutes" color="#16803c" />
-              <MetricCard icon={Activity} label="Recorded visits" value={report.summary.visits} detail={`Last ${report.range.days} days`} color="#f26522" />
-              <MetricCard icon={Users} label="Session groups" value={report.summary.session_groups} detail="Daily-rotated, not persistent" color="#1d70c9" />
-              <MetricCard icon={Globe2} label="Routes reached" value={report.routes.length} detail="Top routes shown below" color="#16a34a" />
-              <MetricCard icon={Clock3} label="Latest visit" value={report.recent[0] ? ngDateTime(report.recent[0].visited_at) : '—'} detail="Nigeria time (WAT)" color="#8b5cf6" />
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+              <MetricCard icon={Activity} label="All page views" value={report.summary.pageviews} detail={`Cookieless · last ${report.range.days} days`} color="#f26522" />
+              <MetricCard icon={Globe2} label="Routes reached" value={report.summary.routes_reached} detail="All public page views" color="#16a34a" />
+              <MetricCard icon={Users} label="Consented visits" value={report.summary.consented_visits} detail="Enhanced analytics only" color="#1d70c9" />
+              <MetricCard icon={Users} label="Session groups" value={report.summary.session_groups} detail="Consented · daily-rotated" color="#8b5cf6" />
+              <MetricCard icon={ClipboardCheck} label="Conversion actions" value={report.conversions.total} detail={`Last ${report.range.days} days`} color="#c88700" />
+              <MetricCard icon={Clock3} label="Latest page view" value={report.summary.latest_pageview ? ngDateTime(report.summary.latest_pageview) : '—'} detail="Nigeria time (WAT)" color="#5a6a82" />
             </div>
+
+            <section className="mb-6">
+              <div className="mb-3">
+                <h2 className="text-sm font-semibold text-[#041627]">Conversion actions</h2>
+                <p className="mt-1 text-xs text-[#8fadc8]">Server-recorded customer actions; these counts come from the business records created by the visitor's request.</p>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <MetricCard icon={MessageSquare} label="Contact forms" value={report.conversions.contacts} detail="Submitted enquiries" color="#1d70c9" />
+                <MetricCard icon={ClipboardCheck} label="Quote requests" value={report.conversions.quotes} detail="Pricing / project quotes" color="#f26522" />
+                <MetricCard icon={ShieldCheck} label="Site assessments" value={report.conversions.assessments} detail="Assessment requests" color="#16803c" />
+                <MetricCard icon={ShoppingBag} label="Store pricing requests" value={report.conversions.store_enquiries} detail="Selection submissions" color="#8b5cf6" />
+              </div>
+            </section>
 
             <section className="mb-6 overflow-hidden rounded-2xl bg-white shadow-sm">
               <div className="flex flex-col gap-1 border-b border-[#eef1f6] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -312,10 +342,10 @@ export function SiteAnalyticsPage() {
               <section className="rounded-2xl bg-white p-5 shadow-sm">
                 <div className="mb-5 flex items-center gap-2">
                   <BarChart3 size={16} className="text-[#f26522]" />
-                  <h2 className="text-sm font-semibold text-[#041627]">Visits by day</h2>
+                  <h2 className="text-sm font-semibold text-[#041627]">All page views by day</h2>
                 </div>
                 {report.daily.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-[#8fadc8]">No consented visits in this period.</p>
+                  <p className="py-8 text-center text-sm text-[#8fadc8]">No public page views in this period.</p>
                 ) : (
                   <div className="flex h-48 items-end gap-1.5 overflow-x-auto border-b border-[#eef1f6] pb-6">
                     {report.daily.map(row => {
@@ -331,29 +361,33 @@ export function SiteAnalyticsPage() {
                   </div>
                 )}
               </section>
-              <Distribution title="Top routes" rows={report.routes} icon={Globe2} />
+              <Distribution title="Top routes · all page views" rows={report.routes} icon={Globe2} />
             </div>
 
             <div className="mb-6 grid grid-cols-1 gap-5 md:grid-cols-3">
-              <Distribution title="Device type" rows={report.devices} icon={Smartphone} />
-              <Distribution title="Browser family" rows={report.browsers} icon={Monitor} />
-              <Distribution title="Operating system" rows={report.operatingSystems} icon={Tablet} />
+              <Distribution title="Device type · consented" rows={report.devices} icon={Smartphone} />
+              <Distribution title="Browser family · consented" rows={report.browsers} icon={Monitor} />
+              <Distribution title="Operating system · consented" rows={report.operatingSystems} icon={Tablet} />
             </div>
 
             <div className="mb-6 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-              <Distribution title="Referrer origins" rows={report.referrers} icon={Globe2} />
+              <Distribution title="Referrer origins · consented" rows={report.referrers} icon={Globe2} />
               <section className="rounded-2xl border border-[#d9e8df] bg-[#f5fbf7] p-5">
                 <div className="mb-3 flex items-center gap-2">
                   <ShieldCheck size={17} className="text-[#16803c]" />
                   <h2 className="text-sm font-semibold text-[#123b23]">Collection boundaries</h2>
                 </div>
                 <p className="mb-4 text-xs leading-relaxed text-[#42624d]">
-                  Visits are recorded only after the visitor chooses “Allow analytics”. This dashboard is operational reporting, not an identity or advertising profile.
+                  Basic public page views are counted without analytics cookies, session IDs, or fingerprinting. Device, browser, referrer, online-presence, and session-group details appear only after “Allow analytics”.
                 </p>
-                <div className="grid gap-2 text-xs sm:grid-cols-2">
+                <div className="grid gap-3 text-xs sm:grid-cols-3">
                   <div>
-                    <p className="mb-1 font-semibold text-[#16803c]">Stored</p>
-                    {report.privacy.stored.map(item => <p key={item} className="text-[#42624d]">• {item}</p>)}
+                    <p className="mb-1 font-semibold text-[#16803c]">Basic measurement</p>
+                    {report.privacy.basicStored.map(item => <p key={item} className="text-[#42624d]">• {item}</p>)}
+                  </div>
+                  <div>
+                    <p className="mb-1 font-semibold text-[#16803c]">Enhanced with consent</p>
+                    {report.privacy.enhancedStored.map(item => <p key={item} className="text-[#42624d]">• {item}</p>)}
                   </div>
                   <div>
                     <p className="mb-1 font-semibold text-[#16803c]">Not stored</p>
@@ -365,8 +399,8 @@ export function SiteAnalyticsPage() {
 
             <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
               <div className="border-b border-[#eef1f6] px-5 py-4">
-                <h2 className="text-sm font-semibold text-[#041627]">Recent visits</h2>
-                <p className="mt-1 text-xs text-[#8fadc8]">Coarse technical details only; session hashes are never shown.</p>
+                <h2 className="text-sm font-semibold text-[#041627]">Recent consented visits</h2>
+                <p className="mt-1 text-xs text-[#8fadc8]">Enhanced technical details only; session hashes are never shown.</p>
               </div>
               {report.recent.length === 0 ? (
                 <p className="px-5 py-10 text-center text-sm text-[#8fadc8]">No visits recorded yet.</p>

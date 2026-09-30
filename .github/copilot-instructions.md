@@ -31,7 +31,7 @@ Keep the existing shared features and data model. Do not create duplicate Admin/
 - `src/lib/adminApi.ts` is the reusable authenticated request helper for new/touched panel API calls.
 - Admin dashboard operational counts come from `/api/admin/stats`.
 - `/api/dev/system` must report real database connectivity and must expose only boolean secret-presence information, never values.
-- Site Analytics is consent-based; do not weaken its privacy boundaries or expose persistent visitor identities.
+- Site Analytics has two privacy tiers: cookieless basic page-view counts (normalized public route + timestamp only) and consent-based enhanced analytics. Never add persistent visitor IDs, raw IP storage, raw user-agent storage, or fingerprinting.
 - Regular quote lists must exclude `request_type='site_assessment'`; assessments have their own workflow.
 - Production must not start without `SESSION_SECRET`.
 - Preserve login throttling and role checks.

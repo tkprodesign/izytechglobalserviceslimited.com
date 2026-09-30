@@ -52,7 +52,21 @@ CREATE UNIQUE INDEX IF NOT EXISTS quote_requests_public_token_idx
   ON quote_requests (public_token)
   WHERE public_token IS NOT NULL;
 
--- Anonymous, consent-based presence for the developer dashboard.
+-- Cookieless basic page-view measurement. No session identifier, IP address,
+-- raw user-agent string, or browser fingerprint is stored here.
+CREATE TABLE IF NOT EXISTS site_pageviews (
+  id         BIGSERIAL PRIMARY KEY,
+  viewed_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  route      TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS site_pageviews_viewed_at_idx
+  ON site_pageviews (viewed_at DESC);
+
+CREATE INDEX IF NOT EXISTS site_pageviews_route_idx
+  ON site_pageviews (route, viewed_at DESC);
+
+-- Anonymous, consent-based enhanced presence for the developer dashboard.
 CREATE TABLE IF NOT EXISTS site_presence (
   session_hash      TEXT PRIMARY KEY,
   last_seen         TIMESTAMPTZ NOT NULL DEFAULT NOW(),

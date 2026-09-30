@@ -358,6 +358,22 @@ async function initCoreTables() {
 
 async function initSiteAnalyticsTable() {
   await db.query(`
+    CREATE TABLE IF NOT EXISTS site_pageviews (
+      id               BIGSERIAL PRIMARY KEY,
+      viewed_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      route            TEXT NOT NULL
+    )
+  `);
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS site_pageviews_viewed_at_idx
+    ON site_pageviews (viewed_at DESC)
+  `);
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS site_pageviews_route_idx
+    ON site_pageviews (route, viewed_at DESC)
+  `);
+
+  await db.query(`
     CREATE TABLE IF NOT EXISTS site_visits (
       id               BIGSERIAL PRIMARY KEY,
       visited_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -509,9 +525,12 @@ function normalizeAnalyticsRoute(value) {
   if (route.length > 1) route = route.replace(/\/+$/, '');
   if (!ANALYTICS_ROUTE_PATTERN.test(route)) return null;
 
-  // Assessment links contain a private access token. Keep the page category,
-  // never the token itself.
-  if (/^\/assessment\/[^/]+$/.test(route)) return '/assessment/:token';
+  // Never collect analytics for private control panels or tokenized assessment pages.
+  if (/^\/(admin|dev)(\/|$)/.test(route)) return null;
+  if (/^\/assessment\/[^/]+$/.test(route)) return null;
+
+  // Group public project detail pages without retaining individual slugs.
+  if (/^\/projects\/[^/]+$/.test(route)) return '/projects/:slug';
   return route;
 }
 
@@ -1006,8 +1025,25 @@ app.get('/api/health/db', async (_req, res) => {
 });
 
 // ── Privacy-safe site analytics ───────────────────────────────────────────────
-// Collection is opt-in on the public site. The database stores coarse technical
-// metadata only; raw IP addresses and raw user-agent strings are never persisted.
+// Basic public page views are cookieless and store only route + timestamp.
+// Enhanced technical analytics remains opt-in. Raw IP addresses and raw
+// user-agent strings are never persisted by either analytics tier.
+app.post('/api/analytics/pageview', async (req, res) => {
+  const cleanRoute = normalizeAnalyticsRoute(req.body?.route);
+  if (!cleanRoute) return res.status(204).end();
+
+  try {
+    await db.query(
+      'INSERT INTO site_pageviews (route) VALUES ($1)',
+      [cleanRoute],
+    );
+    return res.status(202).json({ recorded: true });
+  } catch (err) {
+    console.error('Basic page-view write failed:', err.message);
+    return res.status(503).json({ error: 'Measurement is temporarily unavailable' });
+  }
+});
+
 app.post('/api/analytics/visit', async (req, res) => {
   const {
     route,
@@ -1187,10 +1223,12 @@ app.get('/api/dev/analytics/online', requireDev, async (_req, res) => {
 app.get('/api/dev/analytics', requireDev, async (req, res) => {
   const days = analyticsDays(req.query.days);
   try {
-    const filter = `visited_at >= NOW() - ($1::int * INTERVAL '1 day')`;
+    const pageviewFilter = `viewed_at >= NOW() - ($1::int * INTERVAL '1 day')`;
+    const consentedFilter = `visited_at >= NOW() - ($1::int * INTERVAL '1 day')`;
     const params = [days];
     const [
-      summary,
+      pageviewSummary,
+      consentedSummary,
       daily,
       routes,
       devices,
@@ -1198,28 +1236,36 @@ app.get('/api/dev/analytics', requireDev, async (req, res) => {
       operatingSystems,
       referrers,
       recent,
+      conversions,
     ] = await Promise.all([
       db.query(
-        `SELECT COUNT(*)::int AS visits,
-                COUNT(DISTINCT session_hash)::int AS session_groups
-         FROM site_visits
-         WHERE ${filter}`,
+        `SELECT COUNT(*)::int AS pageviews,
+                COUNT(DISTINCT route)::int AS routes_reached,
+                MAX(viewed_at) AS latest_pageview
+         FROM site_pageviews
+         WHERE ${pageviewFilter}`,
         params,
       ),
       db.query(
-        `SELECT TO_CHAR(visited_at AT TIME ZONE 'Africa/Lagos', 'YYYY-MM-DD') AS day,
-                COUNT(*)::int AS visits,
+        `SELECT COUNT(*)::int AS consented_visits,
                 COUNT(DISTINCT session_hash)::int AS session_groups
          FROM site_visits
-         WHERE ${filter}
+         WHERE ${consentedFilter}`,
+        params,
+      ),
+      db.query(
+        `SELECT TO_CHAR(viewed_at AT TIME ZONE 'Africa/Lagos', 'YYYY-MM-DD') AS day,
+                COUNT(*)::int AS visits
+         FROM site_pageviews
+         WHERE ${pageviewFilter}
          GROUP BY 1
          ORDER BY 1`,
         params,
       ),
       db.query(
         `SELECT route, COUNT(*)::int AS visits
-         FROM site_visits
-         WHERE ${filter}
+         FROM site_pageviews
+         WHERE ${pageviewFilter}
          GROUP BY route
          ORDER BY visits DESC, route ASC
          LIMIT 12`,
@@ -1228,7 +1274,7 @@ app.get('/api/dev/analytics', requireDev, async (req, res) => {
       db.query(
         `SELECT device_type AS label, COUNT(*)::int AS visits
          FROM site_visits
-         WHERE ${filter}
+         WHERE ${consentedFilter}
          GROUP BY device_type
          ORDER BY visits DESC, label ASC`,
         params,
@@ -1236,7 +1282,7 @@ app.get('/api/dev/analytics', requireDev, async (req, res) => {
       db.query(
         `SELECT browser_family AS label, COUNT(*)::int AS visits
          FROM site_visits
-         WHERE ${filter}
+         WHERE ${consentedFilter}
          GROUP BY browser_family
          ORDER BY visits DESC, label ASC`,
         params,
@@ -1244,7 +1290,7 @@ app.get('/api/dev/analytics', requireDev, async (req, res) => {
       db.query(
         `SELECT os_family AS label, COUNT(*)::int AS visits
          FROM site_visits
-         WHERE ${filter}
+         WHERE ${consentedFilter}
          GROUP BY os_family
          ORDER BY visits DESC, label ASC`,
         params,
@@ -1253,7 +1299,7 @@ app.get('/api/dev/analytics', requireDev, async (req, res) => {
         `SELECT COALESCE(referrer_origin, 'Direct / none') AS label,
                 COUNT(*)::int AS visits
          FROM site_visits
-         WHERE ${filter}
+         WHERE ${consentedFilter}
          GROUP BY 1
          ORDER BY visits DESC, label ASC
          LIMIT 12`,
@@ -1264,19 +1310,53 @@ app.get('/api/dev/analytics', requireDev, async (req, res) => {
                 os_family, language, timezone, screen_bucket, viewport_bucket,
                 connection_type
          FROM site_visits
-         WHERE ${filter}
+         WHERE ${consentedFilter}
          ORDER BY visited_at DESC
          LIMIT 100`,
         params,
       ),
+      db.query(
+        `SELECT
+           (SELECT COUNT(*)::int FROM contact_submissions
+             WHERE created_at >= NOW() - ($1::int * INTERVAL '1 day')) AS contacts,
+           (SELECT COUNT(*)::int FROM quote_requests
+             WHERE request_type = 'quote'
+               AND created_at >= NOW() - ($1::int * INTERVAL '1 day')) AS quotes,
+           (SELECT COUNT(*)::int FROM quote_requests
+             WHERE request_type = 'site_assessment'
+               AND created_at >= NOW() - ($1::int * INTERVAL '1 day')) AS assessments,
+           (SELECT COUNT(*)::int FROM store_enquiries
+             WHERE created_at >= NOW() - ($1::int * INTERVAL '1 day')) AS store_enquiries`,
+        params,
+      ),
     ]);
+
+    const basic = pageviewSummary.rows[0] || {};
+    const enhanced = consentedSummary.rows[0] || {};
+    const conversionRow = conversions.rows[0] || {};
+    const conversionSummary = {
+      contacts: Number(conversionRow.contacts) || 0,
+      quotes: Number(conversionRow.quotes) || 0,
+      assessments: Number(conversionRow.assessments) || 0,
+      store_enquiries: Number(conversionRow.store_enquiries) || 0,
+    };
 
     res.json({
       range: {
         days,
         since: new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString(),
       },
-      summary: summary.rows[0],
+      summary: {
+        pageviews: Number(basic.pageviews) || 0,
+        routes_reached: Number(basic.routes_reached) || 0,
+        latest_pageview: basic.latest_pageview || null,
+        consented_visits: Number(enhanced.consented_visits) || 0,
+        session_groups: Number(enhanced.session_groups) || 0,
+      },
+      conversions: {
+        ...conversionSummary,
+        total: Object.values(conversionSummary).reduce((sum, value) => sum + value, 0),
+      },
       daily: daily.rows,
       routes: routes.rows,
       devices: devices.rows,
@@ -1286,14 +1366,16 @@ app.get('/api/dev/analytics', requireDev, async (req, res) => {
       recent: recent.rows,
       privacy: {
         consentVersion: ANALYTICS_CONSENT_VERSION,
-        stored: [
+        basicStored: ['normalized public route', 'timestamp'],
+        enhancedStored: [
           'coarse route',
           'timestamp',
           'device, browser and operating-system family',
           'language and coarse display/network buckets',
           'referrer origin only',
+          'daily-rotated session hash',
         ],
-        notStored: ['raw IP address', 'raw user-agent', 'form contents', 'persistent identifier'],
+        notStored: ['raw IP address', 'raw user-agent', 'form contents', 'assessment access tokens', 'browser fingerprint'],
       },
     });
   } catch (err) {

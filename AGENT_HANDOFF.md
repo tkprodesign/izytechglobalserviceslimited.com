@@ -45,6 +45,8 @@ Current panel improvements include:
 - login brute-force throttling
 - mobile card views for the wide Site Analytics visitor tables
 - regular Quote Requests separated from Site Assessment records
+- two-tier Site Analytics: always-on cookieless public page-view counts (route + timestamp only), plus consent-gated enhanced device/referrer/session/presence analytics
+- analytics dashboard conversion counts sourced from existing contact, quote, site-assessment, and store-enquiry records
 
 ## 4. Important Recent Commits
 
@@ -78,7 +80,7 @@ Cloudflare Pages is connected to `main` and reports its build/deploy status back
 Before editing:
 1. Pull or read the latest `origin/main`.
 2. Do not recreate V2 dashboards.
-3. Preserve the shared database, authentication, invoices, email manager, projects, store, assessments, analytics privacy boundaries, and public-site behaviour.
+3. Preserve the shared database, authentication, invoices, email manager, projects, store, assessments, analytics privacy boundaries, and public-site behaviour. Basic analytics must remain cookieless and identifier-free; enhanced analytics must remain consent-gated.
 4. Make changes in logical batches.
 5. Run relevant tests/builds.
 6. Push completed work to `main`.

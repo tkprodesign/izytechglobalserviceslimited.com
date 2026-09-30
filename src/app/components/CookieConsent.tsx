@@ -21,6 +21,10 @@ function isPrivateRoute(pathname: string) {
   return pathname.startsWith('/admin') || pathname.startsWith('/dev');
 }
 
+function isAnalyticsExcludedRoute(pathname: string) {
+  return isPrivateRoute(pathname) || /^\/assessment\/[^/]+$/.test(pathname);
+}
+
 function analyticsRoute(pathname: string) {
   if (/^\/assessment\/[^/]+$/.test(pathname)) return '/assessment/:token';
   if (/^\/projects\/[^/]+$/.test(pathname)) return '/projects/:slug';
@@ -85,6 +89,19 @@ function getInitialPreferences() {
   const legacy = readLegacyAnalyticsConsent();
   if (!legacy) return null;
   return { analytics: legacy === 'granted' };
+}
+
+function sendBasicPageview(pathname: string) {
+  if (navigator.doNotTrack === '1') return;
+
+  fetch(`${API}/api/analytics/pageview`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ route: analyticsRoute(pathname) }),
+    keepalive: true,
+  }).catch(() => {
+    // Basic measurement must never affect the visitor's page.
+  });
 }
 
 function sendVisit(pathname: string) {
@@ -194,7 +211,13 @@ export function CookieConsent() {
   }, [preferences]);
 
   useEffect(() => {
-    if (preferences?.analytics && !isPrivateRoute(pathname)) {
+    if (!isAnalyticsExcludedRoute(pathname)) {
+      sendBasicPageview(pathname);
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    if (preferences?.analytics && !isAnalyticsExcludedRoute(pathname)) {
       sendVisit(pathname);
       sendPresence(pathname);
       const presenceTimer = window.setInterval(() => sendPresence(pathname), 30_000);
@@ -233,7 +256,7 @@ export function CookieConsent() {
             </button>
           </div>
           <p className="mt-3 text-sm leading-relaxed text-white/65">
-            Necessary storage and support chat are always active. Analytics is optional and can be changed at any time.
+            Basic anonymous page-view measurement is always active without analytics cookies or visitor IDs. Enhanced analytics is optional and can be changed at any time.
           </p>
           <div className="mt-5 space-y-3">
             <PreferenceToggle
@@ -245,7 +268,7 @@ export function CookieConsent() {
             <PreferenceToggle
               checked={draft.analytics}
               title="Analytics"
-              description="Allows coarse, consent-based visit measurement. We do not store raw IP addresses, raw user-agent strings, form contents, or persistent visitor IDs."
+              description="Allows enhanced visit measurement such as device/browser family, referrer origin, language, coarse display/network details, and short-term session grouping."
               onChange={value => setDraft(current => ({ ...current, analytics: value }))}
             />
             <PreferenceToggle
@@ -286,7 +309,7 @@ export function CookieConsent() {
         <div className="min-w-0">
           <p className="text-sm font-semibold">We use cookies and similar storage</p>
           <p className="mt-1 text-xs leading-relaxed text-white/65">
-            Necessary storage and support chat are always active. With your permission, analytics helps us understand visits.
+            Basic anonymous page-view counts are always active without analytics cookies or visitor IDs. With your permission, enhanced analytics helps us understand visits in more detail.
             {' '}<Link to="/cookies" className="font-semibold text-[#F0A20E] hover:text-[#ffb830]">See our cookie policy.</Link>
           </p>
         </div>

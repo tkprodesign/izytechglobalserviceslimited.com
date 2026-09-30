@@ -5,6 +5,13 @@ import { openCookieSettings } from '../../lib/cookieConsent';
 
 const cookieRows = [
   {
+    name: 'Cookieless page-view measurement',
+    provider: 'Izy Technologies',
+    purpose: 'Counts public page views and route categories using only a timestamp and normalized route. No analytics cookie, session ID, IP address, or browser fingerprint is stored.',
+    category: 'Basic measurement',
+    duration: 'No browser storage',
+  },
+  {
     name: 'izy_cookie_consent',
     provider: 'Izy Technologies',
     purpose: 'Stores your cookie choices so we do not ask again on every page.',
@@ -51,7 +58,7 @@ export function CookiePolicyPage() {
           <div className="grid gap-5 md:grid-cols-3">
             {[
               { icon: ShieldCheck, title: 'Necessary', text: 'Always active because the site cannot remember essential settings without it.' },
-              { icon: SlidersHorizontal, title: 'Optional choices', text: 'Analytics stays off until you allow it. Support chat is always available.' },
+              { icon: SlidersHorizontal, title: 'Optional choices', text: 'Basic anonymous page-view counts are always active. Enhanced analytics stays off until you allow it.' },
               { icon: Cookie, title: 'Change anytime', text: 'Use the settings button below to review or update your choice.' },
             ].map(({ icon: Icon, title, text }) => (
               <div key={title} className="border border-gray-100 bg-[#f8fafc] p-6">
@@ -69,7 +76,7 @@ export function CookiePolicyPage() {
             </div>
             <h2 className="text-3xl font-bold tracking-tight text-[#041627]">Cookies and similar storage</h2>
             <p className="mt-4 max-w-3xl text-sm leading-relaxed text-[#041627]/60">
-              We keep the list below limited to storage and services used by this site. Smartsupp is always available for support and may set provider-managed chat cookies.
+              We keep the list below limited to measurement, storage, and services used by this site. Basic page-view measurement does not create browser storage. Smartsupp is always available for support and may set provider-managed chat cookies.
             </p>
           </div>
 
@@ -100,16 +107,16 @@ export function CookiePolicyPage() {
           </div>
 
           <section className="mt-12 border-l-2 border-[#F0A20E] bg-[#fffaf0] p-5">
-            <h2 className="text-base font-bold text-[#041627]">Analytics is not a tracking cookie</h2>
+            <h2 className="text-base font-bold text-[#041627]">How measurement works</h2>
             <p className="mt-2 text-sm leading-relaxed text-[#041627]/65">
-              When you allow analytics, the site uses a first-party consent cookie plus session storage to remember your choice and group short-term repeat visits. The server receives only coarse visit details. We do not store raw IP addresses, raw user-agent strings, form contents, assessment access tokens, or a persistent visitor identifier.
+              Basic measurement records only the normalized public route and timestamp, without an analytics cookie, session ID, raw IP address, raw user-agent string, or browser fingerprint. If you allow enhanced analytics, the site may also send coarse device/browser family, referrer origin, language, display/network buckets, and a short-term session identifier that is hashed and rotated for reporting. Form contents and assessment access tokens are not included in analytics.
             </p>
           </section>
 
           <section className="mt-12 flex flex-col items-start justify-between gap-5 border border-[#d9e8df] bg-[#f5fbf7] p-6 sm:flex-row sm:items-center">
             <div>
               <h2 className="text-base font-bold text-[#123b23]">Review your choices</h2>
-              <p className="mt-1 text-sm text-[#42624d]">You can allow or withdraw optional analytics consent at any time. Support chat remains available.</p>
+              <p className="mt-1 text-sm text-[#42624d]">You can allow or withdraw enhanced analytics consent at any time. Basic anonymous page-view counting and support chat remain available.</p>
             </div>
             <button
               type="button"
@@ -121,7 +128,7 @@ export function CookiePolicyPage() {
           </section>
 
           <p className="mt-10 text-xs leading-relaxed text-[#041627]/40">
-            Last updated: 21 September 2026. If a third-party provider changes its cookie names or retention period, its own documentation may contain the most current technical details.
+            Last updated: 30 September 2026. If a third-party provider changes its cookie names or retention period, its own documentation may contain the most current technical details.
           </p>
           <Link to="/" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#C88700] hover:text-[#041627]">
             Return to the website <ExternalLink size={14} />
