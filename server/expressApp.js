@@ -15,6 +15,14 @@ const {
 } = require('./lib/emailTemplate');
 const { sendResendEmail } = require('./lib/resend');
 const {
+  secureEqualStrings,
+  hashPassword,
+  verifyPasswordHash,
+  createConfirmationCode,
+  confirmationCodeHash,
+  verifyConfirmationCode,
+} = require('./lib/authSecurity');
+const {
   PUBLIC_BUCKET,
   PRIVATE_BUCKET,
   publicUrl,
@@ -95,6 +103,7 @@ connectToDatabaseWithRetry()
   .then(() => initSiteSettingsTable())
   .then(() => initEmailArchiveTable())
   .then(() => initCoreTables())
+  .then(() => initAuthSecurityTables())
   .then(() => initQuoteRequestFields())
   .then(() => initStoreTable())
   .then(() => initMilestonesTable())
@@ -356,6 +365,35 @@ async function initCoreTables() {
   `);
 }
 
+async function initAuthSecurityTables() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS auth_credentials (
+      role          TEXT PRIMARY KEY CHECK (role IN ('admin', 'developer')),
+      email         TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS password_change_codes (
+      id            BIGSERIAL PRIMARY KEY,
+      role          TEXT NOT NULL CHECK (role IN ('admin', 'developer')),
+      account_email TEXT NOT NULL,
+      code_hash     TEXT NOT NULL,
+      attempts      SMALLINT NOT NULL DEFAULT 0,
+      expires_at    TIMESTAMPTZ NOT NULL,
+      used_at       TIMESTAMPTZ,
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await db.query(`
+    CREATE INDEX IF NOT EXISTS password_change_codes_lookup_idx
+    ON password_change_codes (role, account_email, created_at DESC)
+  `);
+}
+
 async function initSiteAnalyticsTable() {
   await db.query(`
     CREATE TABLE IF NOT EXISTS site_pageviews (
@@ -495,21 +533,41 @@ app.use(cors({
 app.use(express.json());
 
 // ── Auth middleware ───────────────────────────────────────────────────────────
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
+
+  let user;
   try {
-    req.user = jwt.verify(header.slice(7), JWT_SECRET);
-    next();
+    user = jwt.verify(header.slice(7), JWT_SECRET);
   } catch {
-    res.status(401).json({ error: 'Invalid or expired token' });
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+
+  try {
+    const { rows } = await db.query(
+      'SELECT updated_at FROM auth_credentials WHERE role = $1 LIMIT 1',
+      [user.role],
+    );
+    if (rows.length > 0) {
+      const currentVersion = new Date(rows[0].updated_at).getTime();
+      if (Number(user.credentialVersion) !== currentVersion) {
+        return res.status(401).json({ error: 'Your password changed. Please sign in again.' });
+      }
+    }
+
+    req.user = user;
+    return next();
+  } catch (err) {
+    console.error('Authentication credential check failed:', err.message);
+    return res.status(503).json({ error: 'Authentication service is temporarily unavailable' });
   }
 }
 
 function requireDev(req, res, next) {
-  requireAuth(req, res, () => {
+  return requireAuth(req, res, () => {
     if (req.user.role !== 'developer') return res.status(403).json({ error: 'Developer access required' });
-    next();
+    return next();
   });
 }
 
@@ -1387,7 +1445,49 @@ app.get('/api/dev/analytics', requireDev, async (req, res) => {
 // ── Auth ──────────────────────────────────────────────────────────────────────
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 8;
+const PASSWORD_CHANGE_RECOVERY_EMAIL = 'izytechgsl@proton.me';
+const PASSWORD_CHANGE_CODE_TTL_MINUTES = 10;
+const PASSWORD_CHANGE_CODE_RESEND_SECONDS = 60;
+const PASSWORD_CHANGE_MAX_ATTEMPTS = 5;
 const loginAttempts = new Map();
+
+function configuredControlPanelAccounts() {
+  return {
+    admin: {
+      email: String(process.env.ADMIN_EMAIL || '').trim().toLowerCase(),
+      envPassword: String(process.env.ADMIN_EMAIL_PASSWORD || ''),
+    },
+    developer: {
+      email: String(process.env.DEVELOPER_EMAIL || 'developer@izytechglobalservices.com').trim().toLowerCase(),
+      envPassword: String(process.env.DEVELOPER_EMAIL_PASSWORD || ''),
+    },
+  };
+}
+
+async function authenticateControlPanelAccount(email, password) {
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const accounts = configuredControlPanelAccounts();
+  const role = Object.keys(accounts).find(key => accounts[key].email && accounts[key].email === normalizedEmail);
+  if (!role) return null;
+
+  const account = accounts[role];
+  const { rows } = await db.query(
+    'SELECT password_hash, updated_at FROM auth_credentials WHERE role = $1 LIMIT 1',
+    [role],
+  );
+
+  if (rows.length > 0) {
+    if (!verifyPasswordHash(password, rows[0].password_hash)) return null;
+    return {
+      role,
+      email: account.email,
+      credentialVersion: new Date(rows[0].updated_at).getTime(),
+    };
+  }
+
+  if (!account.envPassword || !secureEqualStrings(password, account.envPassword)) return null;
+  return { role, email: account.email, credentialVersion: 0 };
+}
 
 function loginAttemptKey(req, email) {
   return `${req.ip || req.socket?.remoteAddress || 'unknown'}:${String(email || '').trim().toLowerCase()}`;
@@ -1408,7 +1508,7 @@ function recordLoginFailure(key, now = Date.now()) {
   current.count += 1;
 }
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
@@ -1422,23 +1522,204 @@ app.post('/api/auth/login', (req, res) => {
     return res.status(429).json({ error: 'Too many sign-in attempts. Please try again later.' });
   }
 
-  const DEVELOPER_EMAIL = process.env.DEVELOPER_EMAIL || 'developer@izytechglobalservices.com';
-  const DEVELOPER_PASS  = process.env.DEVELOPER_EMAIL_PASSWORD;
-  const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
-  const ADMIN_PASS  = process.env.ADMIN_EMAIL_PASSWORD;
+  try {
+    const authenticated = await authenticateControlPanelAccount(email, password);
+    if (!authenticated) {
+      recordLoginFailure(attemptKey, now);
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
 
-  let role = null;
-  if (email === DEVELOPER_EMAIL && password === DEVELOPER_PASS) role = 'developer';
-  if (email === ADMIN_EMAIL && password === ADMIN_PASS) role = 'admin';
+    loginAttempts.delete(attemptKey);
+    const token = jwt.sign({
+      email: authenticated.email,
+      role: authenticated.role,
+      credentialVersion: authenticated.credentialVersion,
+    }, JWT_SECRET, { expiresIn: '8h' });
 
-  if (!role) {
-    recordLoginFailure(attemptKey, now);
-    return res.status(401).json({ error: 'Invalid email or password' });
+    return res.json({ token, role: authenticated.role });
+  } catch (err) {
+    console.error('Control-panel login failed:', err.message);
+    return res.status(503).json({ error: 'Sign-in is temporarily unavailable' });
+  }
+});
+
+app.post('/api/auth/password/change-code', requireAuth, async (req, res) => {
+  const role = req.user.role;
+  const email = String(req.user.email || '').trim().toLowerCase();
+
+  try {
+    const recent = await db.query(
+      `SELECT created_at
+       FROM password_change_codes
+       WHERE role = $1 AND account_email = $2
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [role, email],
+    );
+
+    if (recent.rows.length > 0) {
+      const ageSeconds = (Date.now() - new Date(recent.rows[0].created_at).getTime()) / 1000;
+      if (ageSeconds < PASSWORD_CHANGE_CODE_RESEND_SECONDS) {
+        const retryAfter = Math.max(1, Math.ceil(PASSWORD_CHANGE_CODE_RESEND_SECONDS - ageSeconds));
+        res.set('Retry-After', String(retryAfter));
+        return res.status(429).json({ error: `Please wait ${retryAfter} seconds before requesting another code.` });
+      }
+    }
+
+    const code = createConfirmationCode();
+    const codeHash = confirmationCodeHash({ role, email, code, secret: JWT_SECRET });
+    const { rows } = await db.query(
+      `INSERT INTO password_change_codes (role, account_email, code_hash, expires_at)
+       VALUES ($1, $2, $3, NOW() + ($4::int * INTERVAL '1 minute'))
+       RETURNING id`,
+      [role, email, codeHash, PASSWORD_CHANGE_CODE_TTL_MINUTES],
+    );
+    const codeId = rows[0]?.id;
+
+    const from = process.env.NOREPLY_EMAIL;
+    if (!from) {
+      if (codeId) await db.query('DELETE FROM password_change_codes WHERE id = $1', [codeId]);
+      return res.status(500).json({ error: 'Security email sender is not configured.' });
+    }
+
+    try {
+      await sendResendEmail({
+        from: `IZY Technologies Security <${from}>`,
+        to: PASSWORD_CHANGE_RECOVERY_EMAIL,
+        subject: `IZY Technologies ${role} password confirmation code`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#041627">
+            <h2 style="margin-bottom:8px">Password change confirmation</h2>
+            <p>A password change was requested for the <strong>${role}</strong> control-panel account.</p>
+            <p style="font-size:32px;letter-spacing:8px;font-weight:700;margin:24px 0">${code}</p>
+            <p>This code expires in ${PASSWORD_CHANGE_CODE_TTL_MINUTES} minutes. If you did not request this change, do not share the code and no password will be changed.</p>
+          </div>
+        `,
+        text: `IZY Technologies ${role} password change confirmation code: ${code}. This code expires in ${PASSWORD_CHANGE_CODE_TTL_MINUTES} minutes.`,
+      });
+    } catch (err) {
+      if (codeId) await db.query('DELETE FROM password_change_codes WHERE id = $1', [codeId]);
+      console.error('Password confirmation email failed:', err.message);
+      return res.status(502).json({ error: 'Unable to send the confirmation code. Please try again.' });
+    }
+
+    await db.query(
+      `DELETE FROM password_change_codes
+       WHERE created_at < NOW() - INTERVAL '1 day'`,
+    );
+
+    return res.json({ success: true, destination: PASSWORD_CHANGE_RECOVERY_EMAIL });
+  } catch (err) {
+    console.error('Password change code request failed:', err.message);
+    return res.status(500).json({ error: 'Unable to start the password change.' });
+  }
+});
+
+app.post('/api/auth/password/change', requireAuth, async (req, res) => {
+  const { currentPassword, newPassword, confirmationCode } = req.body || {};
+  const role = req.user.role;
+  const email = String(req.user.email || '').trim().toLowerCase();
+
+  if (!currentPassword || !newPassword || !confirmationCode) {
+    return res.status(400).json({ error: 'Current password, new password, and confirmation code are required.' });
+  }
+  if (String(newPassword).length < 12) {
+    return res.status(400).json({ error: 'The new password must contain at least 12 characters.' });
+  }
+  if (!/^[0-9]{6}$/.test(String(confirmationCode).trim())) {
+    return res.status(400).json({ error: 'Enter a valid 6-digit confirmation code.' });
+  }
+  if (secureEqualStrings(currentPassword, newPassword)) {
+    return res.status(400).json({ error: 'Choose a new password that is different from the current password.' });
   }
 
-  loginAttempts.delete(attemptKey);
-  const token = jwt.sign({ email, role }, JWT_SECRET, { expiresIn: '8h' });
-  res.json({ token, role });
+  try {
+    const authenticated = await authenticateControlPanelAccount(email, currentPassword);
+    if (!authenticated || authenticated.role !== role) {
+      return res.status(401).json({ error: 'Current password is incorrect.' });
+    }
+
+    const codeResult = await db.query(
+      `SELECT id, code_hash, attempts, expires_at
+       FROM password_change_codes
+       WHERE role = $1
+         AND account_email = $2
+         AND used_at IS NULL
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [role, email],
+    );
+
+    if (codeResult.rows.length === 0) {
+      return res.status(400).json({ error: 'Request a new confirmation code first.' });
+    }
+
+    const record = codeResult.rows[0];
+    if (new Date(record.expires_at).getTime() <= Date.now()) {
+      return res.status(400).json({ error: 'The confirmation code has expired. Request a new one.' });
+    }
+    if (Number(record.attempts) >= PASSWORD_CHANGE_MAX_ATTEMPTS) {
+      return res.status(429).json({ error: 'Too many incorrect code attempts. Request a new code.' });
+    }
+
+    const validCode = verifyConfirmationCode({
+      role,
+      email,
+      code: String(confirmationCode).trim(),
+      secret: JWT_SECRET,
+      expectedHash: record.code_hash,
+    });
+    if (!validCode) {
+      await db.query(
+        'UPDATE password_change_codes SET attempts = attempts + 1 WHERE id = $1',
+        [record.id],
+      );
+      return res.status(400).json({ error: 'The confirmation code is incorrect.' });
+    }
+
+    const passwordHash = hashPassword(newPassword);
+    const client = await db.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        `INSERT INTO auth_credentials (role, email, password_hash, updated_at)
+         VALUES ($1, $2, $3, NOW())
+         ON CONFLICT (role) DO UPDATE
+         SET email = EXCLUDED.email,
+             password_hash = EXCLUDED.password_hash,
+             updated_at = NOW()`,
+        [role, email, passwordHash],
+      );
+      await client.query(
+        `UPDATE password_change_codes
+         SET used_at = NOW()
+         WHERE role = $1 AND account_email = $2 AND used_at IS NULL`,
+        [role, email],
+      );
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+
+    const from = process.env.NOREPLY_EMAIL;
+    if (from) {
+      sendResendEmail({
+        from: `IZY Technologies Security <${from}>`,
+        to: PASSWORD_CHANGE_RECOVERY_EMAIL,
+        subject: `IZY Technologies ${role} password changed`,
+        html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#041627"><h2>Password changed</h2><p>The password for the <strong>${role}</strong> control-panel account was changed successfully.</p><p>All previously issued sessions for this account are now invalid.</p></div>`,
+        text: `The IZY Technologies ${role} control-panel password was changed successfully. Previously issued sessions are now invalid.`,
+      }).catch(err => console.error('Password change notification failed:', err.message));
+    }
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Password change failed:', err.message);
+    return res.status(500).json({ error: 'Unable to change the password.' });
+  }
 });
 
 // ── Admin: Stats ──────────────────────────────────────────────────────────────

@@ -124,6 +124,7 @@ const CompanyContactPage = lazy(() => import("./admin/CompanyContactPage").then(
 const InvoicesPage = lazy(() => import("./admin/InvoicesPage").then(m => ({ default: m.InvoicesPage })));
 const SiteAnalyticsPage = lazy(() => import("./admin/SiteAnalyticsPage").then(m => ({ default: m.SiteAnalyticsPage })));
 const CustomPdfPage = lazy(() => import("./admin/CustomPdfPage").then(m => ({ default: m.CustomPdfPage })));
+const SecuritySettingsPage = lazy(() => import("./admin/SecuritySettingsPage").then(m => ({ default: m.SecuritySettingsPage })));
 
 const AboutPage = lazy(() => import("./pages/AboutPage").then(m => ({ default: m.AboutPage })));
 const ServicesPage = lazy(() => import("./pages/ServicesPage").then(m => ({ default: m.ServicesPage })));
@@ -339,6 +340,9 @@ export default function App() {
       <Route path="/admin/email" element={
         <ProtectedRoute><EmailPage /></ProtectedRoute>
       } />
+      <Route path="/admin/security" element={
+        <ProtectedRoute><SecuritySettingsPage /></ProtectedRoute>
+      } />
 
       {/* Company content — both roles */}
       <Route path="/admin/milestones" element={
@@ -369,6 +373,9 @@ export default function App() {
       } />
       <Route path="/dev/documents" element={
         <ProtectedRoute requiredRole="developer"><CustomPdfPage /></ProtectedRoute>
+      } />
+      <Route path="/dev/security" element={
+        <ProtectedRoute requiredRole="developer"><SecuritySettingsPage /></ProtectedRoute>
       } />
 
       {/* Fallback */}

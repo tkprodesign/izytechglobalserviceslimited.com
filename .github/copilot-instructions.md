@@ -34,7 +34,8 @@ Keep the existing shared features and data model. Do not create duplicate Admin/
 - Site Analytics has two privacy tiers: cookieless basic page-view counts (normalized public route + timestamp only) and consent-based enhanced analytics. Never add persistent visitor IDs, raw IP storage, raw user-agent storage, or fingerprinting.
 - Regular quote lists must exclude `request_type='site_assessment'`; assessments have their own workflow.
 - Production must not start without `SESSION_SECRET`.
-- Preserve login throttling and role checks.
+- Admin and developer passwords may be overridden through the in-app Password & Security flow. Overrides are scrypt-hashed in `auth_credentials`; confirmation codes are HMAC-hashed, expire after 10 minutes, and are sent only to `izytechgsl@proton.me`.
+- Preserve login throttling, role checks, password-change resend limits, code attempt limits, and credential-version session invalidation.
 
 ## 4. Build, Test, Deploy
 

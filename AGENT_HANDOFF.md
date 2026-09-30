@@ -43,6 +43,8 @@ Current panel improvements include:
 - truthful database connectivity probing in `/api/dev/system`
 - production `SESSION_SECRET` fail-closed validation
 - login brute-force throttling
+- self-service Admin/Developer password changes under Password & Security, requiring the current password plus a 6-digit confirmation code sent to izytechgsl@proton.me
+- changed control-panel passwords are scrypt-hashed in PostgreSQL and invalidate previously issued sessions for that role
 - mobile card views for the wide Site Analytics visitor tables
 - regular Quote Requests separated from Site Assessment records
 - two-tier Site Analytics: always-on cookieless public page-view counts (route + timestamp only), plus consent-gated enhanced device/referrer/session/presence analytics

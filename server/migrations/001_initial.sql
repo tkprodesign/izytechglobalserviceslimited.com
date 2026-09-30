@@ -52,6 +52,28 @@ CREATE UNIQUE INDEX IF NOT EXISTS quote_requests_public_token_idx
   ON quote_requests (public_token)
   WHERE public_token IS NOT NULL;
 
+-- Control-panel password overrides and one-time password-change codes.
+CREATE TABLE IF NOT EXISTS auth_credentials (
+  role          TEXT PRIMARY KEY CHECK (role IN ('admin', 'developer')),
+  email         TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS password_change_codes (
+  id            BIGSERIAL PRIMARY KEY,
+  role          TEXT NOT NULL CHECK (role IN ('admin', 'developer')),
+  account_email TEXT NOT NULL,
+  code_hash     TEXT NOT NULL,
+  attempts      SMALLINT NOT NULL DEFAULT 0,
+  expires_at    TIMESTAMPTZ NOT NULL,
+  used_at       TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS password_change_codes_lookup_idx
+  ON password_change_codes (role, account_email, created_at DESC);
+
 -- Cookieless basic page-view measurement. No session identifier, IP address,
 -- raw user-agent string, or browser fingerprint is stored here.
 CREATE TABLE IF NOT EXISTS site_pageviews (

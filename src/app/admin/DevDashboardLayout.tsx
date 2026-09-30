@@ -26,6 +26,7 @@ import {
   Building2,
   History,
   UserRound,
+  KeyRound,
 } from 'lucide-react';
 
 interface Props {
@@ -77,6 +78,7 @@ export function DevDashboardLayout({ children }: Props) {
     { to: '/dev/services', label: 'Services Content', icon: Wrench },
     { to: '/dev/email', label: 'Email Manager', icon: Mail },
     { to: '/dev/documents', label: 'Letterhead PDFs', icon: FileOutput },
+    { to: '/dev/security', label: 'Password & Security', icon: KeyRound },
   ];
 
   const managementItems: NavigationItem[] = [

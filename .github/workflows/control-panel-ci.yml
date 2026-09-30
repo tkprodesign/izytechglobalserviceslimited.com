@@ -41,3 +41,6 @@ jobs:
 
       - name: Invoice tests
         run: npm run test:invoices
+
+      - name: Auth security tests
+        run: node --test server/tests/authSecurity.test.js
