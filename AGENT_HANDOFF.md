@@ -3,6 +3,8 @@
 ## Overview
 This document records the current architecture, deployment targets, control-panel state, and continuity rules for any developer or coding agent working on the repository.
 
+> **Mandatory agent protocol:** Read `AGENTS.md` before making changes. Every code/config/content/behavior change must update `CHANGELOG.md` in the same commit. Update this handoff whenever the repository's current operating state changes.
+
 ## 1. System Architecture
 
 | Component | Technology | Hosting / Platform | Production URL |
@@ -52,6 +54,9 @@ Current panel improvements include:
 
 ## 4. Important Recent Commits
 
+- `1685401` - Add secure Admin/Developer password changes with domain-owner email confirmation.
+- `1b84e5d` - Add privacy-safe cookieless basic traffic measurement with consent-gated enhanced analytics.
+- `4bf2c3b` - Fix navbar selection shortcut syntax after store-selection discoverability work.
 - `1e774b3` - Merge V2 dashboards into the primary Admin and Developer panels; remove V2 routes/components.
 - `2cee62d` - Harden panel authentication, add reusable authenticated API helper, truthful DB health, and Admin operational metrics.
 - `274a0a2` - Improve mobile Site Analytics, separate quotes from site assessments, and add Control Panel CI.
@@ -80,15 +85,17 @@ Cloudflare Pages is connected to `main` and reports its build/deploy status back
 ## 6. Continuity Rules
 
 Before editing:
-1. Pull or read the latest `origin/main`.
-2. Do not recreate V2 dashboards.
-3. Preserve the shared database, authentication, invoices, email manager, projects, store, assessments, analytics privacy boundaries, and public-site behaviour. Basic analytics must remain cookieless and identifier-free; enhanced analytics must remain consent-gated.
-4. Make changes in logical batches.
-5. Run relevant tests/builds.
-6. Push completed work to `main`.
-7. Do not continue past a failed Cloudflare or Render deployment; diagnose and repair it first.
-8. Verify `https://izytech-api.onrender.com/api/health` after backend changes.
-9. Never expose, log, or commit secret values.
+1. Read `AGENTS.md`, this handoff, and the newest entries in `CHANGELOG.md`.
+2. Pull or read the latest `origin/main`.
+3. Do not recreate V2 dashboards.
+4. Preserve the shared database, authentication, invoices, email manager, projects, store, assessments, analytics privacy boundaries, and public-site behaviour. Basic analytics must remain cookieless and identifier-free; enhanced analytics must remain consent-gated.
+5. Make changes in logical batches.
+6. Update `CHANGELOG.md` in the same commit as every code/config/content/behavior change. Update this handoff when current operating state changes.
+7. Run relevant tests/builds.
+8. Push completed work to `main`.
+9. Do not continue past a failed Cloudflare or Render deployment; diagnose and repair it first.
+10. Verify `https://izytech-api.onrender.com/api/health` after backend changes.
+11. Never expose, log, or commit secret values.
 
 
 ## 7. Public Site Upgrade

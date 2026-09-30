@@ -8,6 +8,9 @@ Official digital platform — a Next.js app (admin & developer panels) plus an E
 
 > ## ⚠️ AGENT RULE — READ BEFORE ANY WORK ⚠️
 >
+> **First read `AGENTS.md`, `AGENT_HANDOFF.md`, and the newest entries in `CHANGELOG.md`.**
+> Every code/config/database/security/content/UI/API/behavior change must update `CHANGELOG.md` in the same commit. Update `AGENT_HANDOFF.md` whenever current project state or durable conventions change. Do this automatically; the user should not need to remind you.
+>
 > **The admin panel and dev panel share business/content management features.**
 > Technical tools are developer-only. The Email Manager is available to authenticated admins at `/admin/email` and to developers at `/dev/email`.
 >

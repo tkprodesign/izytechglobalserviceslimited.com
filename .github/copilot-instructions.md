@@ -1,5 +1,11 @@
 # GitHub Copilot & Codex Instructions for IzyTech Global Services
 
+## Mandatory repository memory
+
+Before editing, read `AGENTS.md`, `AGENT_HANDOFF.md`, and the newest entries in `CHANGELOG.md`.
+
+Every code, configuration, database, security, content, UI, API, or behavior change **must update `CHANGELOG.md` in the same commit**. Do this automatically without waiting for the user to ask. Update `AGENT_HANDOFF.md` whenever the current operating state or durable conventions change.
+
 This repository contains the production web application for **IzyTech Global Services Limited** (`https://izytechglobalservices.com`).
 
 ## 1. Architecture & Deployment Stack

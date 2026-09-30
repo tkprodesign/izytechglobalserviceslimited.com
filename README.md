@@ -54,6 +54,12 @@ Docker: `docker build -t izy . && docker run -p 3000:3000 izy`
 | `RESEND_API_KEY` | Email delivery (invoices, contact, notifications) |
 | `VITE_API_URL` | Render API base URL baked into the Cloudflare Pages Vite build |
 
+## Agent / developer continuity
+
+- [Agent Rules](AGENTS.md) — mandatory instructions every coding agent must read before editing.
+- [Current Handoff](AGENT_HANDOFF.md) — authoritative current architecture, deployment, and continuity state.
+- [Changelog](CHANGELOG.md) — mandatory same-commit record of every code/config/behavior change.
+
 ## Docs
 
 - [Site Guide](docs/SITE_GUIDE.md) — every section, editable content tables

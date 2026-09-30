@@ -1,7 +1,69 @@
 # Changelog
 
-All notable changes to the IZY Technologies platform are recorded here.  
-Format: newest first. Dates are UTC.
+This is the mandatory change record for the IZY Technologies platform. Every code, configuration, deployment, database, security, content, UI, or behavior change must be documented here in the same commit. Newest entries go first.
+
+Agents must read `AGENTS.md` and the newest entries here before starting work. Never record secret values.
+
+---
+
+## 2026-09-30 — Enforced agent change-history protocol
+
+**Agent / tool:** ChatGPT
+
+### What changed
+- Added root `AGENTS.md` as the authoritative operating instruction file for coding agents and developers.
+- Made `CHANGELOG.md` updates mandatory in the same commit as every code/config/behavior change.
+- Added the same rule to Copilot/Codex and Replit repository instructions and linked it from the handoff/README.
+- Added a CI guard that fails a commit containing non-documentation changes when `CHANGELOG.md` is not also changed.
+- Defined when `AGENT_HANDOFF.md` must be updated so future agents can distinguish historical changes from current operating state.
+
+### Verification
+- Control Panel CI, Cloudflare Pages, and Render deployment checks are required for this commit according to the normal deployment workflow.
+
+### Notes
+- Documentation-only changes that do not affect project behavior are exempt from the changelog guard.
+- Secrets must never be written into Markdown records.
+
+---
+
+## 2026-09-30 — Added secure Admin and Developer password changes
+
+**Agent / tool:** ChatGPT
+
+### What changed
+- Added `Password & Security` pages for both Admin and Developer roles.
+- Password changes require the current password plus a six-digit confirmation code sent to `izytechgsl@proton.me`.
+- Added ten-minute code expiry, resend throttling, incorrect-code attempt limits, scrypt password hashing, and session invalidation after password changes.
+- Added database-backed credential overrides while preserving environment credentials until the first in-app password change.
+
+### Verification
+- Control Panel CI passed.
+- Cloudflare Pages deployed successfully.
+- Render backend deployment and API health verification passed.
+
+### Notes
+- Commit: `1685401`.
+
+---
+
+## 2026-09-30 — Added privacy-safe cookieless basic traffic measurement
+
+**Agent / tool:** ChatGPT
+
+### What changed
+- Added always-on basic public page-view measurement storing only normalized route and timestamp.
+- Kept enhanced device, browser, referrer, session, and online-presence analytics behind explicit analytics consent.
+- Excluded private Admin/Developer routes and tokenized assessment pages.
+- Updated the Developer Site Analytics dashboard with all page views, consented analytics, and server-recorded conversion counts.
+- Updated cookie UI/policy to describe the two analytics tiers accurately.
+
+### Verification
+- Control Panel CI passed.
+- Cloudflare Pages deployed successfully.
+- Render backend deployment and API health verification passed.
+
+### Notes
+- Commit: `1b84e5d`.
 
 ---
 

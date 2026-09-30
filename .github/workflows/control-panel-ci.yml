@@ -27,6 +27,35 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Require changelog for repository changes
+        shell: bash
+        run: |
+          changed="$(git show --pretty='' --name-only HEAD)"
+          behavior_changes="$(printf '%s\n' "$changed" | grep -Ev '^(CHANGELOG\.md|AGENTS\.md|AGENT_HANDOFF\.md|README\.md|replit\.md|\.github/copilot-instructions\.md|docs/.*\.md|\.agents/.*\.md)
+
+      - name: Check backend syntax
+        run: node --check server/expressApp.js
+
+      - name: AltPower tests
+        run: npm run test:altpower
+
+      - name: Contact follow-up tests
+        run: npm run test:contact-followup
+
+      - name: Invoice tests
+        run: npm run test:invoices
+
+      - name: Auth security tests
+        run: node --test server/tests/authSecurity.test.js
+ || true)"
+          if [ -n "$behavior_changes" ] && ! printf '%s\n' "$changed" | grep -qx 'CHANGELOG.md'; then
+            echo "ERROR: This commit changes repository behavior/files but does not update CHANGELOG.md."
+            echo "Read AGENTS.md and add a changelog entry in the same commit."
+            echo "Changed behavior files:"
+            printf '%s\n' "$behavior_changes"
+            exit 1
+          fi
+
       - name: Build Cloudflare frontend
         run: npm run pages:build
 
