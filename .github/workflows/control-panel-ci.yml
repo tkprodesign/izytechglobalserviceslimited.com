@@ -30,30 +30,33 @@ jobs:
       - name: Require changelog for repository changes
         shell: bash
         run: |
-          changed="$(git show --pretty='' --name-only HEAD)"
-          behavior_changes="$(printf '%s\n' "$changed" | grep -Ev '^(CHANGELOG\.md|AGENTS\.md|AGENT_HANDOFF\.md|README\.md|replit\.md|\.github/copilot-instructions\.md|docs/.*\.md|\.agents/.*\.md)
+          changed_files="$(git diff-tree --no-commit-id --name-only -r HEAD)"
+          behavior_change="false"
 
-      - name: Check backend syntax
-        run: node --check server/expressApp.js
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            case "$file" in
+              *.md) ;;
+              *) behavior_change="true" ;;
+            esac
+          done <<< "$changed_files"
 
-      - name: AltPower tests
-        run: npm run test:altpower
+          if [ "$behavior_change" = "true" ]; then
+            changelog_changed="false"
+            while IFS= read -r file; do
+              if [ "$file" = "CHANGELOG.md" ]; then
+                changelog_changed="true"
+                break
+              fi
+            done <<< "$changed_files"
 
-      - name: Contact follow-up tests
-        run: npm run test:contact-followup
-
-      - name: Invoice tests
-        run: npm run test:invoices
-
-      - name: Auth security tests
-        run: node --test server/tests/authSecurity.test.js
- || true)"
-          if [ -n "$behavior_changes" ] && ! printf '%s\n' "$changed" | grep -qx 'CHANGELOG.md'; then
-            echo "ERROR: This commit changes repository behavior/files but does not update CHANGELOG.md."
-            echo "Read AGENTS.md and add a changelog entry in the same commit."
-            echo "Changed behavior files:"
-            printf '%s\n' "$behavior_changes"
-            exit 1
+            if [ "$changelog_changed" != "true" ]; then
+              echo "ERROR: This commit changes non-Markdown repository files but does not update CHANGELOG.md."
+              echo "Read AGENTS.md and add a changelog entry in the same commit."
+              echo "Changed files:"
+              printf '%s\n' "$changed_files"
+              exit 1
+            fi
           fi
 
       - name: Build Cloudflare frontend

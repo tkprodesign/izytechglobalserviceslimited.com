@@ -6,6 +6,24 @@ Agents must read `AGENTS.md` and the newest entries here before starting work. N
 
 ---
 
+## 2026-09-30 — Fixed changelog-enforcement CI syntax
+
+**Agent / tool:** ChatGPT
+
+### What changed
+- Repaired the Control Panel CI workflow after the first changelog-guard insertion produced malformed YAML.
+- Rewrote the workflow cleanly and kept the changelog guard before the normal frontend build, backend syntax check, and automated tests.
+- The guard now treats Markdown-only commits as documentation-only and requires `CHANGELOG.md` whenever a commit changes any non-Markdown repository file.
+
+### Verification
+- This repair is verified by the Control Panel CI run for this commit.
+- Cloudflare Pages deployment is also checked normally.
+
+### Notes
+- The previous commit `0a60758` successfully added the agent documentation files but its CI workflow file required this syntax repair.
+
+---
+
 ## 2026-09-30 — Enforced agent change-history protocol
 
 **Agent / tool:** ChatGPT
