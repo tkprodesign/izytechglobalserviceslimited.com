@@ -121,8 +121,8 @@ function defaultValue(): FormState {
     line_items: [{ description: '', quantity: 1, unit_price: 0, amount: 0 }],
     logistics: '0',
     service_charge: '0',
-    tax_rate: '7.50',
-    tax_label: 'VAT (7.5%)',
+    tax_rate: '0',
+    tax_label: '',
     discount: '0',
     notes: '',
     due_date: '',
@@ -510,8 +510,8 @@ export function InvoicesPage() {
       sections: [],
       logistics: parseFloat(form.logistics) || 0,
       service_charge: parseFloat(form.service_charge) || 0,
-      tax_rate: parseFloat(form.tax_rate) || 7.5,
-      tax_label: form.tax_label.trim() || 'VAT (7.5%)',
+      tax_rate: Number.isFinite(Number(form.tax_rate)) ? Number(form.tax_rate) : 0,
+      tax_label: form.tax_label.trim(),
       discount: parseFloat(form.discount) || 0,
       notes: form.notes.trim(),
       due_date: form.due_date || null,
@@ -703,7 +703,7 @@ export function InvoicesPage() {
   const formServiceCharge = docsTab === SECTIONS_TAB
     ? form.sections.reduce((sum, section) => sum + (parseFloat(section.service_charge) || 0), 0)
     : parseFloat(form.service_charge) || 0;
-  const formTaxRate = parseFloat(form.tax_rate) || 7.5;
+  const formTaxRate = Number.isFinite(Number(form.tax_rate)) ? Number(form.tax_rate) : 0;
   const formTaxAmount = Math.round((formSubtotal + formLogistics + formServiceCharge) * formTaxRate) / 100;
   const formDiscount = parseFloat(form.discount) || 0;
   const formTotal = formSubtotal + formLogistics + formServiceCharge + formTaxAmount - formDiscount;
@@ -1118,40 +1118,6 @@ export function InvoicesPage() {
               </div>
             </div>
 
-            {/* Taxes */}
-            <div className="bg-[#fefce8] rounded-xl border p-4" style={{ borderColor: '#fde68a' }}>
-              <div className="flex items-center gap-2 mb-3">
-                <FileText size={14} style={{ color: '#ca8a04' }} />
-                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#92400e' }}>Tax (Nigerian VAT)</span>
-              </div>
-              <p className="text-xs mb-3" style={{ color: '#78350f' }}>
-                Standard VAT rate in Nigeria is 7.5% on the supply of goods and services. Government revenue minus withholding.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#92400e' }}>Tax Rate (%)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={form.tax_rate}
-                    onChange={e => setField('tax_rate', e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-lg border outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-50"
-                    style={{ borderColor: '#fde68a', background: '#fff', color: '#92400e' }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#92400e' }}>Tax Label</label>
-                  <input
-                    value={form.tax_label}
-                    onChange={e => setField('tax_label', e.target.value)}
-                    placeholder="VAT (7.5%)"
-                    className="w-full px-3 py-2 text-sm rounded-lg border outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-50"
-                    style={{ borderColor: '#fde68a', background: '#fff', color: '#92400e' }}
-                  />
-                </div>
-              </div>
-            </div>
-
             {/* Sections vs flat items editor */}
             {docsTab === SECTIONS_TAB ? (
               <SectionsEditor
@@ -1274,7 +1240,7 @@ export function InvoicesPage() {
                 <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#475569' }}>Additional Charges</span>
               </div>
               <p className="text-xs mb-3" style={{ color: '#64748b' }}>
-                These charges are added to the item subtotal before VAT is calculated.
+                These charges are added to the item subtotal when calculating the invoice total.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
@@ -1394,10 +1360,12 @@ export function InvoicesPage() {
                   <span className="text-sm" style={{ color: '#64748b' }}>Service Charge</span>
                   <span className="text-sm font-semibold" style={{ color: '#0f172a' }}>{naira(formServiceCharge)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm" style={{ color: '#64748b' }}>{form.tax_label}</span>
-                  <span className="text-sm font-semibold" style={{ color: '#0f172a' }}>{naira(formTaxAmount)}</span>
-                </div>
+                {formTaxAmount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-sm" style={{ color: '#64748b' }}>{form.tax_label || `VAT (${formTaxRate}%)`}</span>
+                    <span className="text-sm font-semibold" style={{ color: '#0f172a' }}>{naira(formTaxAmount)}</span>
+                  </div>
+                )}
                 {Number(form.discount) > 0 && (
                   <div className="flex justify-between">
                     <span className="text-sm text-red-600">Discount</span>

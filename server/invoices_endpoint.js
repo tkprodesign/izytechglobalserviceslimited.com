@@ -26,8 +26,8 @@ async function initInvoicesTable(db) {
       subtotal        NUMERIC(12,2) NOT NULL DEFAULT 0,
       logistics       NUMERIC(12,2) NOT NULL DEFAULT 0,
       service_charge  NUMERIC(12,2) NOT NULL DEFAULT 0,
-      tax_rate        NUMERIC(5,2) NOT NULL DEFAULT 7.50,
-      tax_label       TEXT NOT NULL DEFAULT 'VAT (7.5%)',
+      tax_rate        NUMERIC(5,2) NOT NULL DEFAULT 0,
+      tax_label       TEXT NOT NULL DEFAULT '',
       tax_amount      NUMERIC(12,2) NOT NULL DEFAULT 0,
       discount        NUMERIC(12,2) NOT NULL DEFAULT 0,
       total           NUMERIC(12,2) NOT NULL DEFAULT 0,
@@ -48,6 +48,8 @@ async function initInvoicesTable(db) {
       ADD COLUMN IF NOT EXISTS title TEXT NOT NULL DEFAULT 'Invoice',
       ADD COLUMN IF NOT EXISTS logistics NUMERIC(12,2) NOT NULL DEFAULT 0,
       ADD COLUMN IF NOT EXISTS service_charge NUMERIC(12,2) NOT NULL DEFAULT 0,
+      ALTER COLUMN tax_rate SET DEFAULT 0,
+      ALTER COLUMN tax_label SET DEFAULT '',
       ADD COLUMN IF NOT EXISTS bank_account_name TEXT NOT NULL DEFAULT 'Izy Technologies Global Services Limited',
       ADD COLUMN IF NOT EXISTS bank_account_number TEXT NOT NULL DEFAULT '0512121038',
       ADD COLUMN IF NOT EXISTS bank_name TEXT NOT NULL DEFAULT 'Alternative Bank',
@@ -105,9 +107,14 @@ function generateInvoiceNumber() {
   return 'IZY-' + year + month + '-' + rand;
 }
 
-function parseRate(tax_rate) {
+function parseRate(tax_rate, fallback = 0) {
+  const fallbackRate = Number(fallback);
+  const safeFallback = Number.isFinite(fallbackRate) && fallbackRate >= 0 && fallbackRate <= 100
+    ? fallbackRate
+    : 0;
+  if (tax_rate === undefined || tax_rate === null || tax_rate === '') return safeFallback;
   const n = Number(tax_rate);
-  return Number.isFinite(n) && n >= 0 && n <= 100 ? n : 7.5;
+  return Number.isFinite(n) && n >= 0 && n <= 100 ? n : safeFallback;
 }
 
 function parseMoney(value) {
@@ -150,9 +157,9 @@ function sectionRows(section) {
  * `rows` shape as well as the earlier `line_items`/`items` shapes so existing
  * drafts remain editable. Flat invoices continue to use invoice-level charges.
  */
-function calculateInvoiceAmounts({ line_items, sections, logistics, service_charge, tax_rate, tax_label, discount }) {
-  const rate = parseRate(tax_rate);
-  const taxLabel = String(tax_label || 'VAT (7.5%)').trim() || 'VAT (7.5%)';
+function calculateInvoiceAmounts({ line_items, sections, logistics, service_charge, tax_rate, tax_label, discount }, defaultTaxRate = 0) {
+  const rate = parseRate(tax_rate, defaultTaxRate);
+  const taxLabel = String(tax_label || (rate > 0 ? `VAT (${rate}%)` : '')).trim();
   const rawSections = Array.isArray(sections) ? sections : [];
 
   if (rawSections.length) {
@@ -224,7 +231,7 @@ function calculateInvoiceAmounts({ line_items, sections, logistics, service_char
   };
 }
 
-function normalizeInvoiceInput(body, { draft = false } = {}) {
+function normalizeInvoiceInput(body, { draft = false, defaultTaxRate = 0, defaultTaxLabel = '' } = {}) {
   const {
     title, customer_name, customer_email, customer_phone, customer_address,
     line_items, sections, logistics, service_charge, tax_rate, tax_label, discount,
@@ -240,7 +247,7 @@ function normalizeInvoiceInput(body, { draft = false } = {}) {
   }
   const amounts = calculateInvoiceAmounts({
     line_items, sections, logistics, service_charge, tax_rate, tax_label, discount,
-  });
+  }, defaultTaxRate);
   if (amounts.error) throw new Error(amounts.error);
   if (!draft && !amounts.lineItems.length) throw new Error('At least one line item is required');
 
@@ -256,7 +263,7 @@ function normalizeInvoiceInput(body, { draft = false } = {}) {
     logisticsAmount: amounts.logisticsAmount,
     serviceCharge: amounts.serviceCharge,
     rate: amounts.rate,
-    taxLabel: String(tax_label || 'VAT (7.5%)').trim() || 'VAT (7.5%)',
+    taxLabel: String(tax_label || defaultTaxLabel || (amounts.rate > 0 ? `VAT (${amounts.rate}%)` : '')).trim(),
     taxAmt: amounts.taxAmount,
     discount: amounts.disc,
     total: amounts.total,
@@ -267,6 +274,11 @@ function normalizeInvoiceInput(body, { draft = false } = {}) {
     bankAccountNumber: String(bank_account_number || '').trim() || DEFAULT_BANK_ACCOUNT_NUMBER,
     bankName: String(bank_name || '').trim() || DEFAULT_BANK_NAME,
   };
+}
+
+async function loadExistingInvoiceTaxDefaults(db, id) {
+  const { rows } = await db.query('SELECT * FROM invoices WHERE id = $1', [id]);
+  return rows[0] || null;
 }
 
 function invoiceEmailResult(emailResult) {
@@ -427,9 +439,20 @@ router.post('/api/admin/invoices', requireAuth, async (req, res) => {
 });
 
 router.put('/api/admin/invoices/:id', requireAuth, async (req, res) => {
+  let defaults = {};
+  if (req.body?.tax_rate == null || req.body?.tax_label == null) {
+    try {
+      const existing = await loadExistingInvoiceTaxDefaults(db, req.params.id);
+      if (!existing) return res.status(404).json({ error: 'Invoice not found' });
+      defaults = { defaultTaxRate: existing.tax_rate, defaultTaxLabel: existing.tax_label };
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   let input;
   try {
-    input = normalizeInvoiceInput(req.body);
+    input = normalizeInvoiceInput(req.body, defaults);
   } catch (err) {
     return res.status(400).json({ error: err.message });
   }
@@ -526,9 +549,20 @@ router.post('/api/admin/invoices/draft', requireAuth, async (req, res) => {
 });
 
 router.post('/api/admin/invoices/:id/save-draft', requireAuth, async (req, res) => {
+  let defaults = {};
+  if (req.body?.tax_rate == null || req.body?.tax_label == null) {
+    try {
+      const existing = await loadExistingInvoiceTaxDefaults(db, req.params.id);
+      if (!existing) return res.status(404).json({ error: 'Invoice not found' });
+      defaults = { defaultTaxRate: existing.tax_rate, defaultTaxLabel: existing.tax_label };
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   let input;
   try {
-    input = normalizeInvoiceInput(req.body, { draft: true });
+    input = normalizeInvoiceInput(req.body, { draft: true, ...defaults });
   } catch (err) {
     return res.status(400).json({ error: err.message });
   }

@@ -75,6 +75,40 @@ async function save(body, id) {
   return { status: response.status, ...await response.json() };
 }
 
+test('new invoices default to no VAT while older invoices retain their saved rate', async () => {
+  const newInvoice = invoice({ customer_email: 'new@example.com' });
+  delete newInvoice.tax_rate;
+  const created = await save(newInvoice);
+  assert.equal(created.status, 201);
+  assert.equal(created.data.tax_rate, 0);
+  assert.equal(created.data.tax_amount, 0);
+  assert.equal(created.data.total, 2000);
+  assert.doesNotMatch(deliveries.at(-1).html, /VAT/);
+
+  const olderInvoice = await save(invoice({ customer_email: 'older@example.com' }));
+  const editedPayload = invoice({ customer_email: 'older@example.com' });
+  delete editedPayload.tax_rate;
+  delete editedPayload.tax_label;
+  const edited = await save(editedPayload, olderInvoice.data.id);
+  assert.equal(edited.status, 200);
+  assert.equal(edited.data.tax_rate, 7.5);
+  assert.equal(edited.data.tax_amount, 150);
+  assert.equal(edited.data.total, 2150);
+  assert.match(deliveries.at(-1).html, /VAT/);
+});
+
+test('new invoice drafts default to no VAT', async () => {
+  const response = await fetch(base + '/draft', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ line_items: [{ description: 'Solar installation', quantity: 2, unit_price: 1000 }] }),
+  });
+  const result = await response.json();
+  assert.equal(response.status, 201);
+  assert.equal(result.data.tax_rate, 0);
+  assert.equal(result.data.tax_amount, 0);
+  assert.equal(result.data.total, 2000);
+});
+
 for (const title of ['Invoice', 'Proforma Invoice for Solar Installation', 'Receipt']) {
   for (const [label, contacts] of Object.entries({
     omitted: {}, empty: { customer_email: '', customer_phone: '' },

@@ -6,6 +6,25 @@ Agents must read `AGENTS.md` and the newest entries here before starting work. N
 
 ---
 
+## 2026-10-05 — Remove VAT from new invoices only
+
+**Agent / tool:** GitHub Copilot
+
+### What changed
+- New invoices and drafts default to zero tax, and the invoice editor no longer displays VAT controls.
+- Existing invoice tax values are preserved on edit; no historical invoice rows are rewritten.
+- PDF and email renderers omit the tax row only when the saved tax amount is zero.
+- Added regression coverage for VAT-free new invoices and preservation of existing taxed invoices.
+
+### Verification
+- Editor diagnostics and `git diff --check` passed.
+- Local invoice tests and builds could not run because Node.js/npm are unavailable in the active Windows terminal. GitHub CI and deployment workflows will verify the pushed commit.
+
+### Notes
+- Database initialization changes defaults only; it does not update existing invoice data.
+
+---
+
 ## 2026-09-30 — Fixed changelog-enforcement CI syntax
 
 **Agent / tool:** ChatGPT

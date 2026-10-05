@@ -52,6 +52,11 @@ Current panel improvements include:
 - two-tier Site Analytics: always-on cookieless public page-view counts (route + timestamp only), plus consent-gated enhanced device/referrer/session/presence analytics
 - analytics dashboard conversion counts sourced from existing contact, quote, site-assessment, and store-enquiry records
 
+### Invoice tax behavior
+- New invoices and drafts default to zero tax; the invoice editor no longer exposes VAT controls.
+- Existing invoices retain their stored tax rate, label, amount, and total when reopened or edited. Do not bulk-update historical invoice rows.
+- Invoice PDFs and emails include a tax row only when the saved tax amount is greater than zero.
+
 ## 4. Important Recent Commits
 
 - `1685401` - Add secure Admin/Developer password changes with domain-owner email confirmation.

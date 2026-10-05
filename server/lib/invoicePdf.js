@@ -443,9 +443,9 @@ function generateInvoicePdf(inv, options = {}) {
         : items.reduce((sum, item) => sum + (Number(item.amount) || (Number(item.quantity) || 0) * (Number(item.unit_price) || 0)), 0);
       const logistics = Number(section.logistics) || 0;
       const serviceCharge = Number(section.service_charge) || 0;
-      const taxRate = Number.isFinite(Number(section.tax_rate))
+      const taxRate = section.tax_rate !== undefined && section.tax_rate !== null && Number.isFinite(Number(section.tax_rate))
         ? Number(section.tax_rate)
-        : Number(inv.tax_rate) || 7.5;
+        : (Number.isFinite(Number(inv.tax_rate)) ? Number(inv.tax_rate) : 0);
       const taxable = subtotal + logistics + serviceCharge;
       const taxAmount = Number.isFinite(Number(section.tax_amount))
         ? Number(section.tax_amount)
@@ -459,7 +459,7 @@ function generateInvoicePdf(inv, options = {}) {
         serviceCharge,
         taxAmount,
         taxRate,
-        taxLabel: section.tax_label || `VAT (${taxRate}%)`,
+        taxLabel: section.tax_label || inv.tax_label || (taxRate > 0 ? `VAT (${taxRate}%)` : ''),
         total,
       };
     };
@@ -471,8 +471,8 @@ function generateInvoicePdf(inv, options = {}) {
           ['Subtotal', money(amounts.subtotal)],
           ['Logistics', money(amounts.logistics)],
           ['Service Charge', money(amounts.serviceCharge)],
-          [amounts.taxLabel, money(amounts.taxAmount)],
         ];
+        if (Number(amounts.taxAmount) > 0) rows.push([amounts.taxLabel || 'VAT', money(amounts.taxAmount)]);
         const headerH = 24;
         const rowH = 17;
         const totalH = 28;
@@ -568,7 +568,7 @@ function generateInvoicePdf(inv, options = {}) {
         ['Subtotal', money(inv.subtotal), 10],
         ['Logistics', money(inv.logistics), 10],
         ['Service Charge', money(inv.service_charge), 10],
-        [inv.tax_label || 'VAT', money(inv.tax_amount), 10],
+        ...(Number(inv.tax_amount) > 0 ? [[inv.tax_label || 'VAT', money(inv.tax_amount), 10]] : []),
         ...(Number(inv.discount) > 0 ? [['Discount', '-' + money(inv.discount), 10]] : []),
       ];
       const totalBlockHeight = 18
