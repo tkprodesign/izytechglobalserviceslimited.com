@@ -6,6 +6,22 @@ Agents must read `AGENTS.md` and the newest entries here before starting work. N
 
 ---
 
+## 2026-10-05 — Removed VAT from one historical invoice
+
+**Agent / tool:** GitHub Copilot
+
+### What changed
+- Updated only the specifically requested historical invoice: cleared its tax rate, label, and tax amount, and reduced its total by the previously recorded tax.
+- No other invoice records or payment statuses were changed.
+
+### Verification
+- Queried the record after commit to confirm zero tax and the adjusted total.
+
+### Notes
+- The change affected one existing invoice record; no schema or application code changed.
+
+---
+
 ## 2026-10-05 — Remove VAT from new invoices only
 
 **Agent / tool:** GitHub Copilot
