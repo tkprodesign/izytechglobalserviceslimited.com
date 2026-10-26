@@ -145,6 +145,22 @@ export interface ProjectsResponse {
   categories: string[];
 }
 
+// This record historically linked directly to Dropbox. Keep public pages on the
+// approved site-hosted enhanced asset while the backing project record migrates.
+const OLD_CCTV_DROPBOX_FILE_ID = 'ofwf3fp9wa0lvt0ysac9l';
+const ENHANCED_CCTV_IMAGE = '/site-images/project-cctv-enhanced-2026-10-26.jpg';
+
+function useEnhancedCctvPhoto(project: Project): Project {
+  if (project.slug !== 'cctv-project') return project;
+  const resolve = (url: string) =>
+    url.includes(OLD_CCTV_DROPBOX_FILE_ID) ? ENHANCED_CCTV_IMAGE : url;
+  return {
+    ...project,
+    main_image_url: resolve(project.main_image_url || ''),
+    images: Array.isArray(project.images) ? project.images.map(resolve) : [],
+  };
+}
+
 export const api = {
   contact: (data: ContactPayload) =>
     post<{ success: boolean }>('/api/contact', data),
@@ -159,10 +175,12 @@ export const api = {
     get<{ data: Testimonial[] }>('/api/testimonials'),
 
   projects: (category?: string) =>
-    get<ProjectsResponse>(`/api/projects${category ? `?category=${encodeURIComponent(category)}` : ''}`),
+    get<ProjectsResponse>(`/api/projects${category ? `?category=${encodeURIComponent(category)}` : ''}`)
+      .then(result => ({ ...result, data: result.data.map(useEnhancedCctvPhoto) })),
 
   project: (slug: string) =>
-    get<{ data: Project }>(`/api/projects/${encodeURIComponent(slug)}`),
+    get<{ data: Project }>(`/api/projects/${encodeURIComponent(slug)}`)
+      .then(result => ({ ...result, data: useEnhancedCctvPhoto(result.data) })),
 
   socials: () =>
     get<SocialLinks>('/api/settings/socials'),

@@ -2476,6 +2476,30 @@ async function initProjectsTable() {
       // If the slug doesn't exist yet, skip silently
     }
   }
+
+  // Replace only the original CCTV project's old Dropbox photo URLs.
+  // All unrelated images and additional project gallery photos are preserved.
+  // This is idempotent and runs once when production deploys the updated API.
+  const { rowCount: cctvPhotosUpdated } = await db.query(`
+    UPDATE projects SET
+      main_image_url = CASE
+        WHEN main_image_url LIKE '%' || $2 || '%' THEN $1
+        ELSE main_image_url
+      END,
+      images = ARRAY(
+        SELECT CASE WHEN image_url LIKE '%' || $2 || '%' THEN $1 ELSE image_url END
+        FROM unnest(images) AS image_url
+      ),
+      updated_at = NOW()
+    WHERE slug = 'cctv-project' AND (
+      main_image_url LIKE '%' || $2 || '%'
+      OR EXISTS (
+        SELECT 1 FROM unnest(images) AS image_url
+        WHERE image_url LIKE '%' || $2 || '%'
+      )
+    )
+  `, ['/site-images/project-cctv-enhanced-2026-10-26.jpg', 'ofwf3fp9wa0lvt0ysac9l']);
+  if (cctvPhotosUpdated) console.log('Updated CCTV project image to enhanced site-hosted photo');
 }
 
 function slugify(value) {
