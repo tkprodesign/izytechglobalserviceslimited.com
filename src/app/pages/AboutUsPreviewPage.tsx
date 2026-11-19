@@ -519,7 +519,7 @@ export function AboutUsPreviewPage() {
                     loading="lazy"
                     decoding="async"
                     className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.025]"
-                    style={i === 0 ? { objectPosition: "center 24.5%" } : undefined}
+                    style={i === 0 ? { objectPosition: "center 36%" } : undefined}
                   />
                   {i === 0 && (
                     <div className="pointer-events-none absolute inset-0 z-10" aria-label="CEO portrait crop proportions: 3 percent top, 97 percent below">
