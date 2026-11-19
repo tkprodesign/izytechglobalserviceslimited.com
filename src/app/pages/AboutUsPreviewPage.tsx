@@ -519,15 +519,15 @@ export function AboutUsPreviewPage() {
                     loading="lazy"
                     decoding="async"
                     className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.025]"
-                    style={i === 0 ? { objectPosition: "center 36%" } : undefined}
+                    style={i === 0 ? { objectPosition: "center 38.2%" } : undefined}
                   />
                   {i === 0 && (
-                    <div className="pointer-events-none absolute inset-0 z-10" aria-label="CEO portrait crop proportions: 3 percent top, 97 percent below">
-                      <div className="absolute inset-x-0 top-0 flex items-center justify-center border-2 border-dashed border-[#F0A20E] bg-[#041627]/25 text-white" style={{ height: "3%" }}>
-                        <span className="rounded bg-[#041627]/85 px-2 py-0.5 text-xs font-bold tracking-wide">3%</span>
+                    <div className="pointer-events-none absolute inset-0 z-10" aria-label="CEO portrait crop proportions: 2 percent top, 98 percent below">
+                      <div className="absolute inset-x-0 top-0 flex items-center justify-center border-2 border-dashed border-[#F0A20E] bg-[#041627]/25 text-white" style={{ height: "2%" }}>
+                        <span className="rounded bg-[#041627]/85 px-2 py-0.5 text-xs font-bold tracking-wide">2%</span>
                       </div>
-                      <div className="absolute inset-x-0 bottom-0 flex items-center justify-center border-2 border-dashed border-[#40B9E8] bg-[#041627]/10 text-white" style={{ top: "3%" }}>
-                        <span className="rounded bg-[#041627]/85 px-2 py-0.5 text-xs font-bold tracking-wide">97%</span>
+                      <div className="absolute inset-x-0 bottom-0 flex items-center justify-center border-2 border-dashed border-[#40B9E8] bg-[#041627]/10 text-white" style={{ top: "2%" }}>
+                        <span className="rounded bg-[#041627]/85 px-2 py-0.5 text-xs font-bold tracking-wide">98%</span>
                       </div>
                     </div>
                   )}
