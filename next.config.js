@@ -20,6 +20,22 @@ const nextConfig = {
   // so __dirname resolves to the real files on disk.
   serverExternalPackages: ['express', 'pg', 'pdfkit'],
 
+  // Developer previews must always revalidate at the browser and CDN.
+  // This lets ordinary mobile refreshes pick up newly deployed preview code
+  // without asking reviewers to clear Safari/Chrome caches.
+  async headers() {
+    const freshPreviewHeaders = [
+      { key: 'Cache-Control', value: 'private, no-store, max-age=0, must-revalidate' },
+      { key: 'CDN-Cache-Control', value: 'no-store' },
+      { key: 'Cloudflare-CDN-Cache-Control', value: 'no-store' },
+    ];
+
+    return [
+      { source: '/dev', headers: freshPreviewHeaders },
+      { source: '/dev/:path*', headers: freshPreviewHeaders },
+    ];
+  },
+
   webpack: (config, { isServer }) => {
     config.resolve.alias['@'] = path.resolve(__dirname, './src');
     config.resolve.alias['@server'] = path.resolve(__dirname, './server');
