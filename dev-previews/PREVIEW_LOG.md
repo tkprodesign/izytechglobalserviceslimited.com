@@ -20,3 +20,9 @@ Further changes must be recorded in the database event history and reflected in 
 - Profiles: Israel Ideozu (Founder / Chief Executive Officer), Itekena Iyowuna (IT Manager), Da-iyiboba Dokubo (Chief Operating Officer), and Barisi Inayor (HR Manager).
 - Portrait frames currently use initials placeholders because the approved portrait files were not found in the repository at the expected paths. Replace with approved images before final approval.
 - This change is preview-only; production About Us remains unchanged.
+
+
+## 2026-11-19 — Leadership preview completion
+- Moved Meet Our Leadership to the final content section immediately before the footer.
+- Replaced initials placeholders with the four approved portraits already stored in `public/images/leadership/`.
+- Kept the 2×2 responsive layout and 4:5 portrait framing. Production About Us remains unchanged.
