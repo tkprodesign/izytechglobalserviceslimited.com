@@ -161,3 +161,9 @@ Do not remove all of these entry points at once; the store has no conventional s
 - Logging policy and repository snapshots live in `dev-previews/`. Database records are authoritative; tracked Markdown/JSONL files are not automatically rewritten at runtime.
 - Do not add admin access to these routes. Any new preview management action must be server-side developer protected and must record its event in the same operation where practical.
 - This feature is currently on branch `feature/dev-page-previews`; it is not live until reviewed, merged, and successfully deployed.
+
+
+## 2026-11-19 — Leadership preview
+- Added a responsive leadership section to `src/app/pages/AboutUsPreviewPage.tsx` only.
+- Four profiles and roles are included. Portraits remain placeholders until approved image assets are available.
+- Preview-only; production About Us is untouched.
