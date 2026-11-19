@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { ExternalLink, Eye, FileText } from 'lucide-react';
+import { authJson } from '../../lib/adminApi';
 import { Link } from 'react-router';
 import { DevDashboardLayout } from '../admin/DevDashboardLayout';
 
@@ -19,7 +21,26 @@ const previewGroups = [
   },
 ];
 
+interface PreviewEvent {
+  id: number;
+  event_type: string;
+  page_title: string;
+  page_url: string;
+  actor: string;
+  created_at: string;
+}
+
 export function PagePreviewsPage() {
+  const [events, setEvents] = useState<PreviewEvent[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    authJson<{ data: PreviewEvent[] }>('/api/dev/previews/events?limit=12', {}, '/dev/login')
+      .then(result => { if (active) setEvents(result.data || []); })
+      .catch(() => { if (active) setEvents([]); });
+    return () => { active = false; };
+  }, []);
+
   return (
     <DevDashboardLayout>
       <div className="mx-auto max-w-7xl p-6 lg:p-8">
@@ -71,6 +92,31 @@ export function PagePreviewsPage() {
             </div>
           </section>
         ))}
+        <section className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4">
+            <h2 className="text-base font-semibold text-[#1a1a2e]">Recent activity</h2>
+            <p className="mt-1 text-sm text-slate-500">Recorded preview events, with timestamps supplied by the server.</p>
+          </div>
+          {events.length ? (
+            <div className="divide-y divide-slate-100">
+              {events.map(event => (
+                <div key={event.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                  <div>
+                    <p className="text-sm font-medium capitalize text-slate-700">{event.event_type.replace(/_/g, ' ')}</p>
+                    <p className="mt-0.5 text-xs text-slate-400">{event.page_title || event.page_url} · {event.actor}</p>
+                  </div>
+                  <time className="text-xs text-slate-400">{new Date(event.created_at).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Africa/Lagos' })}</time>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400">No activity has been recorded yet.</p>
+          )}
+          <div className="mt-4 flex flex-wrap gap-4 border-t border-slate-100 pt-4 text-xs font-semibold">
+            <a className="text-orange-600 hover:underline" href="/api/dev/previews/export.md" target="_blank" rel="noopener noreferrer">Markdown log export</a>
+            <a className="text-orange-600 hover:underline" href="/api/dev/previews/export.jsonl" target="_blank" rel="noopener noreferrer">JSONL log export</a>
+          </div>
+        </section>
         <div className="rounded-xl border border-dashed border-slate-300 bg-white/70 p-5 text-sm leading-6 text-slate-500">
           New preview pages will appear here under their relevant categories. Page history and activity logging will be connected to the preview-management API before this workspace is treated as production-ready.
         </div>
