@@ -167,3 +167,7 @@ Do not remove all of these entry points at once; the store has no conventional s
 - Added a responsive leadership section to `src/app/pages/AboutUsPreviewPage.tsx` only.
 - Four profiles and roles are included. Portraits remain placeholders until approved image assets are available.
 - Preview-only; production About Us is untouched.
+
+
+## 2026-11-19 — About Us preview leadership
+The leadership section now uses the four approved portrait assets from `public/images/leadership/` and sits immediately before the footer. Preserve the 2×2 layout and 4:5 portrait frames. Production `AboutPage.tsx` remains untouched.
