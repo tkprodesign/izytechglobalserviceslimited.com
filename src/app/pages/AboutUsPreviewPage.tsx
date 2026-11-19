@@ -495,7 +495,7 @@ export function AboutUsPreviewPage() {
 
       {/* ── Leadership ───────────────────────────────────── */}
       <section className="py-20 sm:py-24" style={{ background: "#f5f6f8" }} aria-labelledby="leadership-heading">
-        <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl px-5 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="mb-10 sm:mb-14">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-6 h-px" style={{ background: "#F0A20E" }} />
@@ -504,7 +504,7 @@ export function AboutUsPreviewPage() {
             <h2 id="leadership-heading" className="text-[#041627]" style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.8rem,3.5vw,2.8rem)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.1 }}>Meet Our Leadership</h2>
             <p className="mt-4 max-w-2xl text-[#041627]/55 text-sm sm:text-base leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>The people guiding our vision, strengthening our operations and shaping the future of IZY Technologies.</p>
           </motion.div>
-          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 xl:grid-cols-4 gap-5 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
             {[
               { name: "Israel Ideozu", role: "Chief Executive Officer", image: "/images/leadership/Israel%20Ideozu%20%E2%80%94%20CEO..png", note: "Founder" },
               { name: "Itekena Iyowuna", role: "IT Manager", image: "/images/leadership/Itekena%20Iyowuna%20%E2%80%94%20IT%20Manager.png", note: "" },
