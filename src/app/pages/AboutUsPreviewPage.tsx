@@ -518,7 +518,8 @@ export function AboutUsPreviewPage() {
                     alt={leader.name}
                     loading="lazy"
                     decoding="async"
-                    className={`absolute inset-0 h-full w-full object-cover ${i === 0 ? "object-top" : "object-center"} transition-transform duration-500 group-hover:scale-[1.025]`}
+                    className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.025]"
+                    style={i === 0 ? { objectPosition: "center 5%" } : undefined}
                   />
                   <div className="absolute inset-x-0 bottom-0 h-1 bg-[#F0A20E] scale-x-0 origin-left transition-transform duration-300 group-hover:scale-x-100" />
                 </div>
