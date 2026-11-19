@@ -242,3 +242,10 @@ Up/down buttons added directly to the admin projects list so sort order can be c
 
 ### Fixed — Hero content too close to fixed navbar
 Added top padding (`pt-44` mobile, `lg:pt-24` desktop) to the hero content block so it clears the 80px fixed navbar on all screen sizes.
+
+
+## 2026-11-19
+
+### About Us preview — Leadership section
+- Added a responsive four-card leadership section after Achievements and before Looking Ahead in the developer-only About Us preview.
+- Uses portrait placeholders pending approved portrait assets. Production About Us page remains unchanged.

@@ -397,6 +397,43 @@ export function AboutUsPreviewPage() {
         </div>
       </div>
 
+      {/* ── Leadership ───────────────────────────────────── */}
+      <section className="py-20 sm:py-24" style={{ background: "#f5f6f8" }} aria-labelledby="leadership-heading">
+        <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+          <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="mb-10 sm:mb-14">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-6 h-px" style={{ background: "#F0A20E" }} />
+              <span className="text-xs font-semibold tracking-widest uppercase" style={{ fontFamily: "var(--font-ui)", color: "#F0A20E" }}>Leadership</span>
+            </div>
+            <h2 id="leadership-heading" className="text-[#041627]" style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.8rem,3.5vw,2.8rem)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.1 }}>Meet Our Leadership</h2>
+            <p className="mt-4 max-w-2xl text-[#041627]/55 text-sm sm:text-base leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>The people guiding our vision, strengthening our operations and shaping the future of IZY Technologies.</p>
+          </motion.div>
+          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 xl:grid-cols-4 gap-5 sm:gap-6">
+            {[
+              { name: "Israel Ideozu", role: "Chief Executive Officer", initials: "II", note: "Founder" },
+              { name: "Itekena Iyowuna", role: "IT Manager", initials: "IY", note: "" },
+              { name: "Da-iyiboba Dokubo", role: "Chief Operating Officer", initials: "DD", note: "" },
+              { name: "Barisi Inayor", role: "HR Manager", initials: "BI", note: "" },
+            ].map((leader, i) => (
+              <motion.article key={leader.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.45, delay: i * 0.06 }} className="group overflow-hidden border border-[#041627]/[0.06] bg-white transition-colors duration-300 hover:border-[#F0A20E]/50">
+                <div className="relative aspect-[4/5] overflow-hidden bg-[#e8edf1]">
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#dce5eb] via-[#e9edf0] to-[#f5f6f8] text-[#041627]/25" aria-hidden="true">
+                    <span className="select-none text-5xl sm:text-6xl font-bold tracking-tight" style={{ fontFamily: "var(--font-display)" }}>{leader.initials}</span>
+                  </div>
+                  <div className="absolute inset-x-0 bottom-0 h-1 bg-[#F0A20E] scale-x-0 origin-left transition-transform duration-300 group-hover:scale-x-100" />
+                </div>
+                <div className="p-5 sm:p-6">
+                  {leader.note && <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#F0A20E]" style={{ fontFamily: "var(--font-ui)" }}>{leader.note}</p>}
+                  <h3 className="text-lg font-bold leading-snug text-[#041627]" style={{ fontFamily: "var(--font-display)" }}>{leader.name}</h3>
+                  <p className="mt-2 text-xs sm:text-sm font-semibold leading-relaxed text-[#041627]/50" style={{ fontFamily: "var(--font-ui)" }}>{leader.role}</p>
+                </div>
+              </motion.article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+
       {/* ── Looking Ahead ─────────────────────────────────── */}
       <div className="py-24" style={{ background: "#041627" }}>
         <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-2 lg:gap-16 items-center">
