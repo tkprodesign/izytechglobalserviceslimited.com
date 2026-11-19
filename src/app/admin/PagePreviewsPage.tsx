@@ -1,6 +1,25 @@
 import { useEffect, useState } from 'react';
 import { ExternalLink, Eye, FileText } from 'lucide-react';
 import { authJson } from '../../lib/adminApi';
+import { getToken } from '../../lib/auth';
+
+const API = import.meta.env.VITE_API_URL ?? '';
+
+async function downloadLog(format: 'md' | 'jsonl') {
+  const token = getToken();
+  if (!token) return;
+  const response = await fetch(`${API}/api/dev/previews/export.${format}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error('Could not download the preview log.');
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = format === 'md' ? 'PREVIEW_LOG.md' : 'preview-events.jsonl';
+  link.click();
+  URL.revokeObjectURL(objectUrl);
+}
 import { Link } from 'react-router';
 import { DevDashboardLayout } from '../admin/DevDashboardLayout';
 
@@ -113,8 +132,8 @@ export function PagePreviewsPage() {
             <p className="text-sm text-slate-400">No activity has been recorded yet.</p>
           )}
           <div className="mt-4 flex flex-wrap gap-4 border-t border-slate-100 pt-4 text-xs font-semibold">
-            <a className="text-orange-600 hover:underline" href="/api/dev/previews/export.md" target="_blank" rel="noopener noreferrer">Markdown log export</a>
-            <a className="text-orange-600 hover:underline" href="/api/dev/previews/export.jsonl" target="_blank" rel="noopener noreferrer">JSONL log export</a>
+            <button type="button" onClick={() => void downloadLog('md')} className="text-orange-600 hover:underline">Download Markdown log</button>
+            <button type="button" onClick={() => void downloadLog('jsonl')} className="text-orange-600 hover:underline">Download JSONL log</button>
           </div>
         </section>
         <div className="rounded-xl border border-dashed border-slate-300 bg-white/70 p-5 text-sm leading-6 text-slate-500">
