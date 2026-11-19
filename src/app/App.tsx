@@ -22,19 +22,43 @@ function NavigationScroll() {
     prevPathname.current = pathname;
 
     if (hash) {
-      // Give React one frame to finish rendering the destination page
-      const id = hash.slice(1);
-      const attempt = (retries: number) => {
+      const id = decodeURIComponent(hash.slice(1));
+      let observer: MutationObserver | undefined;
+      let timeoutId: number | undefined;
+      let cancelled = false;
+
+      const scrollToTarget = () => {
         const el = document.getElementById(id);
-        if (el) {
-          const top = el.getBoundingClientRect().top + window.scrollY - NAVBAR_H;
-          const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-          window.scrollTo({ top, behavior: reduceMotion ? "auto" : "smooth" });
-        } else if (retries > 0) {
-          setTimeout(() => attempt(retries - 1), 60);
-        }
+        if (!el) return false;
+
+        observer?.disconnect();
+        if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+
+        // Wait for the lazy-loaded page and its first layout pass to settle.
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            if (cancelled || !el.isConnected) return;
+            const top = el.getBoundingClientRect().top + window.scrollY - NAVBAR_H;
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            window.scrollTo({ top, behavior: reduceMotion ? "auto" : "smooth" });
+          });
+        });
+        return true;
       };
-      setTimeout(() => attempt(5), 60);
+
+      if (!scrollToTarget()) {
+        observer = new MutationObserver(() => {
+          if (scrollToTarget()) observer?.disconnect();
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+        timeoutId = window.setTimeout(() => observer?.disconnect(), 10000);
+      }
+
+      return () => {
+        cancelled = true;
+        observer?.disconnect();
+        if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+      };
     } else if (pathnameChanged) {
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
