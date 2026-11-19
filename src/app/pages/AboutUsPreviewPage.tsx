@@ -494,7 +494,7 @@ export function AboutUsPreviewPage() {
       </div>
 
       {/* ── Leadership ───────────────────────────────────── */}
-      <section className="py-20 sm:py-24" style={{ background: "#f5f6f8" }} aria-labelledby="leadership-heading">
+      <section id="leadership" className="py-20 sm:py-24" style={{ background: "#f5f6f8" }} aria-labelledby="leadership-heading">
         <div className="mx-auto max-w-5xl px-5 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="mb-10 sm:mb-14">
             <div className="flex items-center gap-3 mb-4">
