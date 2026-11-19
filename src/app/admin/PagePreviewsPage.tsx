@@ -53,8 +53,9 @@ export function PagePreviewsPage() {
   const [events, setEvents] = useState<PreviewEvent[]>([]);
 
   useEffect(() => {
+    if (!getToken()) return;
     let active = true;
-    authJson<{ data: PreviewEvent[] }>('/api/dev/previews/events?limit=12', {}, '/dev/login')
+    authJson<{ data: PreviewEvent[] }>('/api/dev/previews/events?limit=12')
       .then(result => { if (active) setEvents(result.data || []); })
       .catch(() => { if (active) setEvents([]); });
     return () => { active = false; };
