@@ -519,10 +519,10 @@ export function AboutUsPreviewPage() {
                     loading="lazy"
                     decoding="async"
                     className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.025]"
-                    style={i === 0 ? { objectPosition: "center 5%" } : undefined}
+                    style={i === 0 ? { objectPosition: "center 20%" } : undefined}
                   />
                   {i === 0 && (
-                    <div className="pointer-events-none absolute inset-0 z-10" aria-label="CEO portrait crop proportions: 9 percent top, 91 percent below">
+                    <div className="pointer-events-none absolute inset-0 z-10" aria-label="CEO portrait crop proportions: 5 percent top, 95 percent below">
                       <div className="absolute inset-x-0 top-0 flex items-center justify-center border-2 border-dashed border-[#F0A20E] bg-[#041627]/25 text-white" style={{ height: "5%" }}>
                         <span className="rounded bg-[#041627]/85 px-2 py-0.5 text-xs font-bold tracking-wide">5%</span>
                       </div>
