@@ -87,6 +87,7 @@ import { Marquee } from "./sections/Marquee";
 import { Services } from "./sections/Services";
 import { Statement } from "./sections/Statement";
 import { About } from "./sections/About";
+import { Leadership } from "./sections/Leadership";
 import { Projects } from "./sections/Projects";
 import { VideoReel } from "./sections/VideoReel";
 import { Testimonials } from "./sections/Testimonials";
@@ -164,6 +165,7 @@ function PublicSite() {
         <Services />
         <Statement />
         <About />
+        <Leadership />
         <Projects />
         <Store />
         <VideoReel />
