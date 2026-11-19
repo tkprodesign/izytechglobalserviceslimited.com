@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ExternalLink, Eye, FileText } from 'lucide-react';
 import { authJson } from '../../lib/adminApi';
-import { getToken } from '../../lib/auth';
+import { getUser } from '../../lib/auth';
 
 const API = import.meta.env.VITE_API_URL ?? '';
 
@@ -51,9 +51,10 @@ interface PreviewEvent {
 
 export function PagePreviewsPage() {
   const [events, setEvents] = useState<PreviewEvent[]>([]);
+  const isDeveloper = getUser()?.role === 'developer';
 
   useEffect(() => {
-    if (!getToken()) return;
+    if (getUser()?.role !== 'developer') return;
     let active = true;
     authJson<{ data: PreviewEvent[] }>('/api/dev/previews/events?limit=12')
       .then(result => { if (active) setEvents(result.data || []); })
@@ -117,7 +118,9 @@ export function PagePreviewsPage() {
             <h2 className="text-base font-semibold text-[#1a1a2e]">Recent activity</h2>
             <p className="mt-1 text-sm text-slate-500">Recorded preview events, with timestamps supplied by the server.</p>
           </div>
-          {events.length ? (
+          {!isDeveloper ? (
+            <p className="text-sm text-slate-400">Developer activity is visible to signed-in developers.</p>
+          ) : events.length ? (
             <div className="divide-y divide-slate-100">
               {events.map(event => (
                 <div key={event.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
