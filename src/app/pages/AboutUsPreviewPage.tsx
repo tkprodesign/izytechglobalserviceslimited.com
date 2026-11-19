@@ -507,9 +507,9 @@ export function AboutUsPreviewPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
             {[
               { name: "Israel Ideozu", role: "Chief Executive Officer", image: "/images/leadership/Israel%20Ideozu%20%E2%80%94%20CEO..png", note: "Founder" },
-              { name: "Itekena Iyowuna", role: "IT Manager", image: "/images/leadership/Itekena%20Iyowuna%20%E2%80%94%20IT%20Manager.png", note: "" },
               { name: "Da-iyiboba Dokubo", role: "Chief Operating Officer", image: "/images/leadership/Da-iyiboba%20Dokubo%20%E2%80%94%20COO.png", note: "" },
               { name: "Barisi Inayor", role: "HR Manager", image: "/images/leadership/Barisi%20Inayor%20%E2%80%94%20HR%20Manager.png", note: "" },
+              { name: "Itekena Iyowuna", role: "IT Manager", image: "/images/leadership/Itekena%20Iyowuna%20%E2%80%94%20IT%20Manager.png", note: "" },
             ].map((leader, i) => (
               <motion.article key={leader.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.45, delay: i * 0.06 }} className="group overflow-hidden border border-[#041627]/[0.06] bg-white transition-colors duration-300 hover:border-[#F0A20E]/50">
                 <div className="relative aspect-[4/5] overflow-hidden bg-[#e8edf1]">
