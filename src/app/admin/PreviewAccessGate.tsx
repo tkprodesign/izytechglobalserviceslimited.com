@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { getToken } from '../../lib/auth';
+import { getUser } from '../../lib/auth';
 import { authJson } from '../../lib/adminApi';
 
 interface Props {
@@ -16,7 +16,7 @@ interface Props {
  */
 export function PreviewAccessGate({ pageId, title, url, children }: Props) {
   useEffect(() => {
-    if (!getToken()) return;
+    if (getUser()?.role !== 'developer') return;
 
     void authJson('/api/dev/previews/events', {
       method: 'POST',
