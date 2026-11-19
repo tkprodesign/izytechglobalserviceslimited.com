@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026-11-19 — Added developer-only Page Previews workspace
+
+**Agent / tool:** ChatGPT
+
+### What changed
+- Added `/dev/previews` to the Developer navigation and a categorized preview catalogue with descriptive cards and new-tab links.
+- Added `/dev/previews/about-us` as an unchanged baseline clone of the current About Us page. No leadership section or other new page content was added.
+- Added a server-verified preview access gate and a developer-only API using the existing `requireDev` middleware.
+- Added append-only PostgreSQL preview events, recent activity display, and authenticated Markdown/JSONL exports.
+- Added `dev-previews/README.md`, `LOGGING_POLICY.md`, `PREVIEW_LOG.md`, and a JSONL repository snapshot.
+
+### Verification
+- Repository source and route wiring inspected.
+- Automated build and deployment checks have not yet been run; this work is on a feature branch and is not live.
+
+### Notes
+- The PostgreSQL event table is the live source of truth. Markdown and JSONL files in the repository are documentation/snapshots; current logs are generated from the authenticated export endpoints.
+- Page routes are developer-role protected in the client and require a successful server-side developer-authenticated API check before the preview renders.
+- Further page-management actions must write their corresponding event before being considered complete.
+
+---
+
+
 This is the mandatory change record for the IZY Technologies platform. Every code, configuration, deployment, database, security, content, UI, or behavior change must be documented here in the same commit. Newest entries go first.
 
 Agents must read `AGENTS.md` and the newest entries here before starting work. Never record secret values.
