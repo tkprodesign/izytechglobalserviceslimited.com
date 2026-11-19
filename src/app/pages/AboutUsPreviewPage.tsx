@@ -494,7 +494,7 @@ export function AboutUsPreviewPage() {
       </div>
 
       {/* ── Leadership ───────────────────────────────────── */}
-      <section id="leadership" className="py-20 sm:py-24" style={{ background: "#f5f6f8" }} aria-labelledby="leadership-heading">
+      <section className="py-20 sm:py-24" style={{ background: "#f5f6f8" }} aria-labelledby="leadership-heading">
         <div className="mx-auto max-w-5xl px-5 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="mb-10 sm:mb-14">
             <div className="flex items-center gap-3 mb-4">
@@ -506,10 +506,10 @@ export function AboutUsPreviewPage() {
           </motion.div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
             {[
-              { name: "Israel Ideozu", role: "Chief Executive Officer", image: "/images/leadership/Israel%20Ideozu%20%E2%80%94%20CEO..png", note: "Founder", objectPosition: "center 25%", scale: 1 },
-              { name: "Da-iyiboba Dokubo", role: "Chief Operating Officer", image: "/images/leadership/Da-iyiboba%20Dokubo%20%E2%80%94%20COO.png", note: "", objectPosition: "center 42%", scale: 0.9 },
-              { name: "Barisi Inayor", role: "HR Manager", image: "/images/leadership/Barisi%20Inayor%20%E2%80%94%20HR%20Manager.png", note: "", objectPosition: "center 32%", scale: 0.95 },
-              { name: "Itekena Iyowuna", role: "IT Manager", image: "/images/leadership/Itekena%20Iyowuna%20%E2%80%94%20IT%20Manager.png", note: "", objectPosition: "center 33%", scale: 1.1 },
+              { name: "Israel Ideozu", role: "Chief Executive Officer", image: "/images/leadership/Israel%20Ideozu%20%E2%80%94%20CEO..png", note: "Founder" },
+              { name: "Da-iyiboba Dokubo", role: "Chief Operating Officer", image: "/images/leadership/Da-iyiboba%20Dokubo%20%E2%80%94%20COO.png", note: "" },
+              { name: "Barisi Inayor", role: "HR Manager", image: "/images/leadership/Barisi%20Inayor%20%E2%80%94%20HR%20Manager.png", note: "" },
+              { name: "Itekena Iyowuna", role: "IT Manager", image: "/images/leadership/Itekena%20Iyowuna%20%E2%80%94%20IT%20Manager.png", note: "" },
             ].map((leader, i) => (
               <motion.article key={leader.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.45, delay: i * 0.06 }} className="group overflow-hidden border border-[#041627]/[0.06] bg-white transition-colors duration-300 hover:border-[#F0A20E]/50">
                 <div className="relative aspect-[4/5] overflow-hidden bg-[#e8edf1]">
@@ -518,8 +518,7 @@ export function AboutUsPreviewPage() {
                     alt={leader.name}
                     loading="lazy"
                     decoding="async"
-                    className="absolute inset-0 h-full w-full object-cover"
-                    style={{ objectFit: "cover", objectPosition: leader.objectPosition, transform: `scale(${leader.scale})`, transition: "transform 500ms ease" }}
+                    className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.025]"
                   />
                   <div className="absolute inset-x-0 bottom-0 h-1 bg-[#F0A20E] scale-x-0 origin-left transition-transform duration-300 group-hover:scale-x-100" />
                 </div>
