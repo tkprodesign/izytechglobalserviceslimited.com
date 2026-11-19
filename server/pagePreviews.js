@@ -40,6 +40,17 @@ function createPagePreviewsRouter({ db, requireDev }) {
       `).then(() => db.query(`
         CREATE INDEX IF NOT EXISTS dev_preview_events_created_idx
         ON dev_preview_events (created_at DESC, id DESC)
+      `)).then(() => db.query(`
+        INSERT INTO dev_preview_events
+          (page_id, event_type, page_title, page_url, details, actor)
+        SELECT 'about-us-baseline', 'page_created', 'About Us — Baseline Clone',
+               '/dev/previews/about-us',
+               '{"source":"repository clone","note":"Copied from the current production About Us page without content additions."}'::jsonb,
+               'system'
+        WHERE NOT EXISTS (
+          SELECT 1 FROM dev_preview_events
+          WHERE page_id = 'about-us-baseline' AND event_type = 'page_created'
+        )
       `));
     }
     return tableReady;
