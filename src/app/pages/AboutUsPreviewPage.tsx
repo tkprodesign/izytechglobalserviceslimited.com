@@ -523,11 +523,11 @@ export function AboutUsPreviewPage() {
                   />
                   {i === 0 && (
                     <div className="pointer-events-none absolute inset-0 z-10" aria-label="CEO portrait crop proportions: 9 percent top, 91 percent below">
-                      <div className="absolute inset-x-0 top-0 flex items-center justify-center border-2 border-dashed border-[#F0A20E] bg-[#041627]/25 text-white" style={{ height: "9%" }}>
-                        <span className="rounded bg-[#041627]/85 px-2 py-0.5 text-xs font-bold tracking-wide">9%</span>
+                      <div className="absolute inset-x-0 top-0 flex items-center justify-center border-2 border-dashed border-[#F0A20E] bg-[#041627]/25 text-white" style={{ height: "5%" }}>
+                        <span className="rounded bg-[#041627]/85 px-2 py-0.5 text-xs font-bold tracking-wide">5%</span>
                       </div>
-                      <div className="absolute inset-x-0 bottom-0 flex items-center justify-center border-2 border-dashed border-[#40B9E8] bg-[#041627]/10 text-white" style={{ top: "9%" }}>
-                        <span className="rounded bg-[#041627]/85 px-2 py-0.5 text-xs font-bold tracking-wide">91%</span>
+                      <div className="absolute inset-x-0 bottom-0 flex items-center justify-center border-2 border-dashed border-[#40B9E8] bg-[#041627]/10 text-white" style={{ top: "5%" }}>
+                        <span className="rounded bg-[#041627]/85 px-2 py-0.5 text-xs font-bold tracking-wide">95%</span>
                       </div>
                     </div>
                   )}
