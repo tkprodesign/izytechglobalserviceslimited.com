@@ -46,7 +46,7 @@ export function ServicesPage() {
       </div>
 
       {/* Services list */}
-      <div className="py-20 bg-white">
+      <div id="services-list-2026-11-19" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6 space-y-6">
           {services.map((s, i) => {
             const Icon = s.icon;
