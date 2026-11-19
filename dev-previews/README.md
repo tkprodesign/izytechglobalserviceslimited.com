@@ -7,7 +7,7 @@ This workspace is served only through the developer panel. It is not a separate 
 - About Us baseline clone: `/dev/previews/about-us`
 
 ## Access
-The frontend route checks the developer role, and preview pages also call the developer-only API before rendering. The API uses the existing server-side `requireDev` middleware. Admin-only and unauthenticated sessions are denied.
+The preview catalogue and individual preview pages are intentionally public, including when opened through their `/dev/previews` URLs. This does not make the Developer Dashboard or other `/dev` tools public. Preview event history and exports remain protected by the existing server-side `requireDev` middleware. Signed-in developers continue to have preview opens recorded; public visitors are not blocked when they cannot access the logging API.
 
 ## Logging
 The PostgreSQL table `dev_preview_events` is the source of truth. The API provides:
