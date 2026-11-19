@@ -507,7 +507,7 @@ export function AboutUsPreviewPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
             {[
               { name: "Israel Ideozu", role: "Chief Executive Officer", image: "/images/leadership/Israel%20Ideozu%20%E2%80%94%20CEO..png", note: "Founder", objectPosition: "center 25%", scale: 1 },
-              { name: "Da-iyiboba Dokubo", role: "Chief Operating Officer", image: "/images/leadership/Da-iyiboba%20Dokubo%20%E2%80%94%20COO.png", note: "", objectPosition: "center 42%", scale: 0.9 },
+              { name: "Da-iyiboba Dokubo", role: "Chief Operating Officer", image: "/images/leadership/Da-iyiboba%20Dokubo%20%E2%80%94%20COO.png", note: "", objectPosition: "center 20%", scale: 0.85 },
               { name: "Barisi Inayor", role: "HR Manager", image: "/images/leadership/Barisi%20Inayor%20%E2%80%94%20HR%20Manager.png", note: "", objectPosition: "center 32%", scale: 0.95 },
               { name: "Itekena Iyowuna", role: "IT Manager", image: "/images/leadership/Itekena%20Iyowuna%20%E2%80%94%20IT%20Manager.png", note: "", objectPosition: "center 33%", scale: 1.1 },
             ].map((leader, i) => (
