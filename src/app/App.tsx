@@ -357,10 +357,10 @@ export default function App() {
 
       {/* Developer-only */}
       <Route path="/dev/previews" element={
-        <ProtectedRoute requiredRole="developer"><PreviewAccessGate pageId="preview-catalog" title="Page Previews" url="/dev/previews"><PagePreviewsPage /></PreviewAccessGate></ProtectedRoute>
+        <PreviewAccessGate pageId="preview-catalog" title="Page Previews" url="/dev/previews"><PagePreviewsPage /></PreviewAccessGate>
       } />
       <Route path="/dev/previews/about-us" element={
-        <ProtectedRoute requiredRole="developer"><PreviewAccessGate pageId="about-us-baseline" title="About Us — Baseline Clone" url="/dev/previews/about-us"><AboutUsPreviewPage /></PreviewAccessGate></ProtectedRoute>
+        <PreviewAccessGate pageId="about-us-baseline" title="About Us — Baseline Clone" url="/dev/previews/about-us"><AboutUsPreviewPage /></PreviewAccessGate>
       } />
       <Route path="/dev/dashboard" element={
         <ProtectedRoute requiredRole="developer"><DevDashboard /></ProtectedRoute>
