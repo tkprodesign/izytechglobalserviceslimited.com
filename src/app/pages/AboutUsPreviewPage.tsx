@@ -89,6 +89,34 @@ function Counter({ to, suffix }: { to: number; suffix: string }) {
   return <span ref={ref}>{count}{suffix}</span>;
 }
 
+type PortraitCropGuideProps = {
+  topPercent?: number;
+};
+
+function PortraitCropGuide({ topPercent = 2 }: PortraitCropGuideProps) {
+  const bottomPercent = 100 - topPercent;
+
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 z-10"
+      aria-label={`Portrait crop proportions: ${topPercent} percent top, ${bottomPercent} percent below`}
+    >
+      <div
+        className="absolute inset-x-0 top-0 flex items-center justify-center border-2 border-dashed border-[#F0A20E] bg-[#041627]/25 text-white"
+        style={{ height: `${topPercent}%` }}
+      >
+        <span className="rounded bg-[#041627]/85 px-2 py-0.5 text-xs font-bold tracking-wide">{topPercent}%</span>
+      </div>
+      <div
+        className="absolute inset-x-0 bottom-0 flex items-center justify-center border-2 border-dashed border-[#40B9E8] bg-[#041627]/10 text-white"
+        style={{ top: `${topPercent}%` }}
+      >
+        <span className="rounded bg-[#041627]/85 px-2 py-0.5 text-xs font-bold tracking-wide">{bottomPercent}%</span>
+      </div>
+    </div>
+  );
+}
+
 export function AboutUsPreviewPage() {
   return (
     <PageLayout>
@@ -506,10 +534,10 @@ export function AboutUsPreviewPage() {
           </motion.div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
             {[
-              { name: "Israel Ideozu", role: "Chief Executive Officer", image: "/images/leadership/Israel%20Ideozu%20%E2%80%94%20CEO..png", note: "Founder" },
-              { name: "Da-iyiboba Dokubo", role: "Chief Operating Officer", image: "/images/leadership/Da-iyiboba%20Dokubo%20%E2%80%94%20COO.png", note: "" },
-              { name: "Barisi Inayor", role: "HR Manager", image: "/images/leadership/Barisi%20Inayor%20%E2%80%94%20HR%20Manager.png", note: "" },
-              { name: "Itekena Iyowuna", role: "IT Manager", image: "/images/leadership/Itekena%20Iyowuna%20%E2%80%94%20IT%20Manager.png", note: "" },
+              { name: "Israel Ideozu", role: "Chief Executive Officer", image: "/images/leadership/Israel%20Ideozu%20%E2%80%94%20CEO..png", note: "Founder", cropGuide: { enabled: false, topPercent: 2 } },
+              { name: "Da-iyiboba Dokubo", role: "Chief Operating Officer", image: "/images/leadership/Da-iyiboba%20Dokubo%20%E2%80%94%20COO.png", note: "", cropGuide: { enabled: false, topPercent: 2 } },
+              { name: "Barisi Inayor", role: "HR Manager", image: "/images/leadership/Barisi%20Inayor%20%E2%80%94%20HR%20Manager.png", note: "", cropGuide: { enabled: false, topPercent: 2 } },
+              { name: "Itekena Iyowuna", role: "IT Manager", image: "/images/leadership/Itekena%20Iyowuna%20%E2%80%94%20IT%20Manager.png", note: "", cropGuide: { enabled: false, topPercent: 2 } },
             ].map((leader, i) => (
               <motion.article key={leader.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.45, delay: i * 0.06 }} className="group overflow-hidden border border-[#041627]/[0.06] bg-white transition-colors duration-300 hover:border-[#F0A20E]/50">
                 <div className="relative aspect-[4/5] overflow-hidden bg-[#e8edf1]">
@@ -521,16 +549,7 @@ export function AboutUsPreviewPage() {
                     className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.025]"
                     style={i === 0 ? { objectPosition: "center 38.2%" } : undefined}
                   />
-                  {i === 0 && (
-                    <div className="pointer-events-none absolute inset-0 z-10" aria-label="CEO portrait crop proportions: 2 percent top, 98 percent below">
-                      <div className="absolute inset-x-0 top-0 flex items-center justify-center border-2 border-dashed border-[#F0A20E] bg-[#041627]/25 text-white" style={{ height: "2%" }}>
-                        <span className="rounded bg-[#041627]/85 px-2 py-0.5 text-xs font-bold tracking-wide">2%</span>
-                      </div>
-                      <div className="absolute inset-x-0 bottom-0 flex items-center justify-center border-2 border-dashed border-[#40B9E8] bg-[#041627]/10 text-white" style={{ top: "2%" }}>
-                        <span className="rounded bg-[#041627]/85 px-2 py-0.5 text-xs font-bold tracking-wide">98%</span>
-                      </div>
-                    </div>
-                  )}
+                  {leader.cropGuide.enabled && <PortraitCropGuide topPercent={leader.cropGuide.topPercent} />}
                   <div className="absolute inset-x-0 bottom-0 h-1 bg-[#F0A20E] scale-x-0 origin-left transition-transform duration-300 group-hover:scale-x-100" />
                 </div>
                 <div className="p-5 sm:p-6">
