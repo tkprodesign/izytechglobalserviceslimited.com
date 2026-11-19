@@ -151,3 +151,13 @@ The store keeps the non-checkout terminology but makes the product-selection wor
 - the Store keeps a prominent bottom `YOUR SELECTION · REVIEW NOW` action
 
 Do not remove all of these entry points at once; the store has no conventional shopping-cart checkout, so the selection review must remain easy to find.
+
+## 9. Developer Page Previews
+
+- The Page Previews catalogue is available at `/dev/previews` from the Developer Panel only.
+- The first baseline clone is `/dev/previews/about-us`, copied from `src/app/pages/AboutPage.tsx` into `src/app/pages/AboutUsPreviewPage.tsx` without adding content.
+- Both routes use the existing developer-role route guard and a server-verified access gate backed by `/api/dev/previews` and `requireDev`.
+- Preview event history is stored append-only in PostgreSQL table `dev_preview_events`. The API supports recent events, event insertion, and Markdown/JSONL exports.
+- Logging policy and repository snapshots live in `dev-previews/`. Database records are authoritative; tracked Markdown/JSONL files are not automatically rewritten at runtime.
+- Do not add admin access to these routes. Any new preview management action must be server-side developer protected and must record its event in the same operation where practical.
+- This feature is currently on branch `feature/dev-page-previews`; it is not live until reviewed, merged, and successfully deployed.

@@ -110,6 +110,9 @@ const ContactsPage = lazy(() => import("./admin/ContactsPage").then(m => ({ defa
 const QuotesPage = lazy(() => import("./admin/QuotesPage").then(m => ({ default: m.QuotesPage })));
 const DevSystemPage = lazy(() => import("./admin/DevSystemPage").then(m => ({ default: m.DevSystemPage })));
 const DevDashboard = lazy(() => import("./admin/DevDashboard").then(m => ({ default: m.DevDashboard })));
+const PagePreviewsPage = lazy(() => import("./admin/PagePreviewsPage").then(m => ({ default: m.PagePreviewsPage })));
+const PreviewAccessGate = lazy(() => import("./admin/PreviewAccessGate").then(m => ({ default: m.PreviewAccessGate })));
+const AboutUsPreviewPage = lazy(() => import("./pages/AboutUsPreviewPage").then(m => ({ default: m.AboutUsPreviewPage })));
 const ServicesContentPage = lazy(() => import("./admin/ServicesContentPage").then(m => ({ default: m.ServicesContentPage })));
 const EmailPage = lazy(() => import("./admin/EmailPage").then(m => ({ default: m.EmailPage })));
 const SocialsPage = lazy(() => import("./admin/SocialsPage").then(m => ({ default: m.SocialsPage })));
@@ -353,6 +356,12 @@ export default function App() {
       } />
 
       {/* Developer-only */}
+      <Route path="/dev/previews" element={
+        <ProtectedRoute requiredRole="developer"><PreviewAccessGate pageId="preview-catalog" title="Page Previews" url="/dev/previews"><PagePreviewsPage /></PreviewAccessGate></ProtectedRoute>
+      } />
+      <Route path="/dev/previews/about-us" element={
+        <ProtectedRoute requiredRole="developer"><PreviewAccessGate pageId="about-us-baseline" title="About Us — Baseline Clone" url="/dev/previews/about-us"><AboutUsPreviewPage /></PreviewAccessGate></ProtectedRoute>
+      } />
       <Route path="/dev/dashboard" element={
         <ProtectedRoute requiredRole="developer"><DevDashboard /></ProtectedRoute>
       } />
