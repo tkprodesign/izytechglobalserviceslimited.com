@@ -249,3 +249,7 @@ Added top padding (`pt-44` mobile, `lg:pt-24` desktop) to the hero content block
 ### About Us preview — Leadership section
 - Added a responsive four-card leadership section after Achievements and before Looking Ahead in the developer-only About Us preview.
 - Uses portrait placeholders pending approved portrait assets. Production About Us page remains unchanged.
+
+
+## 2026-11-19
+- Completed the About Us developer preview leadership section with the four existing portrait assets; moved it to the final section before the footer. Production page unchanged.
