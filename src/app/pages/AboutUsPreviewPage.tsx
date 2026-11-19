@@ -547,7 +547,7 @@ export function AboutUsPreviewPage() {
                     loading="lazy"
                     decoding="async"
                     className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.025]"
-                    style={i === 0 ? { objectPosition: "center 36%" } : i === 1 ? { objectPosition: "center top" } : i === 2 ? { transform: "scale(1.08) translate(-5px, -7px)", transformOrigin: "center center" } : undefined}
+                    style={i === 0 ? { objectPosition: "center 33.8%" } : i === 1 ? { objectPosition: "center top" } : i === 2 ? { transform: "scale(1.08) translate(-5px, -7px)", transformOrigin: "center center" } : undefined}
                   />
                   {leader.cropGuide.enabled && <PortraitCropGuide topPercent={leader.cropGuide.topPercent} />}
                   <div className="absolute inset-x-0 bottom-0 h-1 bg-[#F0A20E] scale-x-0 origin-left transition-transform duration-300 group-hover:scale-x-100" />
